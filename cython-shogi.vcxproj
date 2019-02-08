@@ -152,10 +152,24 @@
     <ClCompile Include="hand.cpp" />
     <ClCompile Include="init.cpp" />
     <ClCompile Include="move.cpp" />
-    <ClCompile Include="movePicker.cpp" />
     <ClCompile Include="mt64bit.cpp" />
     <ClCompile Include="position.cpp" />
     <ClCompile Include="square.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="bitboard.hpp" />
+    <ClInclude Include="color.hpp" />
+    <ClInclude Include="common.hpp" />
+    <ClInclude Include="generateMoves.hpp" />
+    <ClInclude Include="hand.hpp" />
+    <ClInclude Include="ifdef.hpp" />
+    <ClInclude Include="init.hpp" />
+    <ClInclude Include="move.hpp" />
+    <ClInclude Include="mt64bit.hpp" />
+    <ClInclude Include="overloadEnumOperators.hpp" />
+    <ClInclude Include="piece.hpp" />
+    <ClInclude Include="position.hpp" />
+    <ClInclude Include="square.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

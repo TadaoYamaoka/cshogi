@@ -20,7 +20,6 @@
 */
 
 #include "generateMoves.hpp"
-#include "usi.hpp"
 
 namespace {
     // 角, 飛車の場合

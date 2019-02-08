@@ -26,10 +26,10 @@
 #include "common.hpp"
 #include "hand.hpp"
 #include "bitboard.hpp"
-#include "pieceScore.hpp"
-#include "evalList.hpp"
 #include <stack>
 #include <memory>
+
+using Ply = int;
 
 class Position;
 enum EvalIndex : int32_t;
@@ -63,8 +63,6 @@ struct ChangedLists {
 
 struct StateInfo {
     // Copied when making a move
-    Score material; // stocfish の npMaterial は 先手、後手の点数を配列で持っているけど、
-                    // 特に分ける必要は無い気がする。
     int pliesFromNull;
     int continuousCheck[ColorNum]; // Stockfish には無い。
 
@@ -185,27 +183,19 @@ struct HuffmanCodedPosAndEval {
 static_assert(sizeof(HuffmanCodedPosAndEval) == 38, "");
 
 class Move;
-struct Thread;
-struct Searcher;
 
 class Position {
 public:
     Position() {}
-    explicit Position(Searcher* s) : searcher_(s) {}
     Position(const Position& pos) { *this = pos; }
-    Position(const Position& pos, Thread* th) {
-        *this = pos;
-        thisThread_ = th;
-    }
-    Position(const std::string& sfen, Thread* th, Searcher* s) {
-        set(sfen, th);
-        setSearcher(s);
+    Position(const std::string& sfen) {
+        set(sfen);
     }
 
     Position& operator = (const Position& pos);
-    void set(const std::string& sfen, Thread* th);
-    bool set(const HuffmanCodedPos& hcp, Thread* th);
-    void set(std::mt19937& mt, Thread* th);
+    void set(const std::string& sfen);
+    bool set(const HuffmanCodedPos& hcp);
+    void set(std::mt19937& mt);
 
     Bitboard bbOf(const PieceType pt) const                                            { return byTypeBB_[pt]; }
     Bitboard bbOf(const Color c) const                                                 { return byColorBB_[c]; }
@@ -266,9 +256,6 @@ public:
     Bitboard prevCheckersBB() const { return st_->previous->checkersBB; }
     // 王手が掛かっているか。
     bool inCheck() const            { return checkersBB().isAny(); }
-
-    Score material() const { return st_->material; }
-    Score materialDiff() const { return st_->material - st_->previous->material; }
 
     FORCE_INLINE Square kingSquare(const Color c) const {
         assert(kingSquare_[c] == bbOf(King, c).constFirstOneFromSQ11());
@@ -336,9 +323,6 @@ public:
     void undoMove(const Move move);
     template <bool DO> void doNullMove(StateInfo& backUpSt);
 
-    Score see(const Move move, const int asymmThreshold = 0) const;
-    Score seeSign(const Move move) const;
-
     template <Color US> Move mateMoveIn1Ply();
     Move mateMoveIn1Ply();
 
@@ -362,24 +346,9 @@ public:
     void setNodesSearched(const s64 n) { nodes_ = n; }
     RepetitionType isDraw(const int checkMaxPly = std::numeric_limits<int>::max()) const;
 
-    Thread* thisThread() const { return thisThread_; }
-
     void setStartPosPly(const Ply ply) { gamePly_ = ply; }
 
-    static constexpr int nlist() { return EvalList::ListSize; }
-    EvalIndex list0(const int index) const { return evalList_.list0[index]; }
-    EvalIndex list1(const int index) const { return evalList_.list1[index]; }
-    int squareHandToList(const Square sq) const { return evalList_.squareHandToList[sq]; }
-    Square listToSquareHand(const int i) const { return evalList_.listToSquareHand[i]; }
-    EvalIndex* plist0() { return &evalList_.list0[0]; }
-    EvalIndex* plist1() { return &evalList_.list1[0]; }
-    const EvalIndex* cplist0() const { return &evalList_.list0[0]; }
-    const EvalIndex* cplist1() const { return &evalList_.list1[0]; }
     const ChangedLists& cl() const { return st_->cl; }
-
-    const Searcher* csearcher() const { return searcher_; }
-    Searcher* searcher() const { return searcher_; }
-    void setSearcher(Searcher* s) { searcher_ = s; }
 
 #if !defined NDEBUG
     // for debug
@@ -387,19 +356,6 @@ public:
 #endif
 
     static void initZobrist();
-
-    static Score pieceScore(const Piece pc)            { return PieceScore[pc]; }
-    // Piece を index としても、 PieceType を index としても、
-    // 同じ値が取得出来るようにしているので、PieceType => Piece への変換は必要ない。
-    static Score pieceScore(const PieceType pt)        { return PieceScore[pt]; }
-    static Score capturePieceScore(const Piece pc)     { return CapturePieceScore[pc]; }
-    // Piece を index としても、 PieceType を index としても、
-    // 同じ値が取得出来るようにしているので、PieceType => Piece への変換は必要ない。
-    static Score capturePieceScore(const PieceType pt) { return CapturePieceScore[pt]; }
-    static Score promotePieceScore(const PieceType pt) {
-        assert(pt < Gold);
-        return PromotePieceScore[pt];
-    }
 
 private:
     void clear();
@@ -425,9 +381,7 @@ private:
     // 最後の手が何か覚えておけば、attackersTo() を使用しなくても良いはずで、処理が軽くなる。
     void findCheckers() { st_->checkersBB = attackersToExceptKing(oppositeColor(turn()), kingSquare(turn())); }
 
-    Score computeMaterial() const;
-
-    void xorBBs(const PieceType pt, const Square sq, const Color c);
+	void xorBBs(const PieceType pt, const Square sq, const Color c);
     // turn() 側が
     // pin されて(して)いる駒の Bitboard を返す。
     // BetweenIsUs == true  : 間の駒が自駒。
@@ -466,8 +420,6 @@ private:
 #if !defined NDEBUG
     int debugSetEvalList() const;
 #endif
-    void setEvalList() { evalList_.set(*this); }
-
     Key computeBoardKey() const;
     Key computeHandKey() const;
     Key computeKey() const { return computeBoardKey() + computeHandKey(); }
@@ -492,16 +444,11 @@ private:
     Hand hand_[ColorNum];
     Color turn_;
 
-    EvalList evalList_;
-
     StateInfo startState_;
     StateInfo* st_;
     // 時間管理に使用する。
     Ply gamePly_;
-    Thread* thisThread_;
     s64 nodes_;
-
-    Searcher* searcher_;
 
     static Key zobrist_[PieceTypeNum][SquareNum][ColorNum];
     static const Key zobTurn_ = 1;
