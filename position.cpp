@@ -1797,10 +1797,10 @@ INCORRECT:
     std::cout << "incorrect SFEN string : " << sfen << std::endl;
 }
 
-bool Position::set(const HuffmanCodedPos& hcp) {
+bool Position::set_hcp(const char* hcp_data) {
     clear();
 
-    HuffmanCodedPos tmp = hcp; // ローカルにコピー
+    HuffmanCodedPos tmp(hcp_data); // ローカルにコピー
     BitStream bs(tmp.data);
 
     // 手番

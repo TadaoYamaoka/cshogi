@@ -168,6 +168,11 @@ struct HuffmanCodedPos {
             for (Color c = Black; c < ColorNum; ++c)
                 handCodeToPieceHash[handCodeTable[hp][c].key] = colorAndPieceTypeToPiece(c, handPieceToPieceType(hp));
     }
+	HuffmanCodedPos() {}
+	HuffmanCodedPos(const HuffmanCodedPos&) = default;
+	HuffmanCodedPos(const char* hcp_data) {
+		std::memcpy(data, hcp_data, sizeof(data));
+	}
     void clear() { std::fill(std::begin(data), std::end(data), 0); }
 
     u8 data[32];
@@ -194,7 +199,8 @@ public:
 
     Position& operator = (const Position& pos);
     void set(const std::string& sfen);
-    bool set(const HuffmanCodedPos& hcp);
+	bool set_hcp(const char* hcp_data); // for python
+	bool set(const HuffmanCodedPos& hcp) { set_hcp((const char*)hcp.data); };
     void set(std::mt19937& mt);
 
     Bitboard bbOf(const PieceType pt) const                                            { return byTypeBB_[pt]; }

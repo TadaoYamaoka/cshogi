@@ -240,3 +240,6 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+/cython_shogi.egg-info
+/cshogi.cp36-win_amd64.pyd
+/cshogi.cpp
