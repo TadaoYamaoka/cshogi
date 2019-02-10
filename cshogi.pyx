@@ -134,6 +134,7 @@ cdef extern from "cshogi.h":
 		int drop_move(const int to_square, const int drop_piece_type) const
 		int move_from_usi(const string& usi) const
 		int move_from_csa(const string& csa) const
+		int move_from_move16(const unsigned short move16) const
 		int turn() const
 		int ply() const
 		string toSFEN() const
@@ -189,6 +190,9 @@ cdef class Board:
 
 	def move_from_csa(self, string csa):
 		return self.__board.move_from_csa(csa)
+
+	def move_from_move16(self, unsigned short move16):
+		return self.__board.move_from_move16(move16)
 
 	def leagal_move_list(self):
 		return LegalMoveList(self)

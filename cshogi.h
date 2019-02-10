@@ -73,6 +73,10 @@ public:
 		return csaToMove(pos, csa).value();
 	}
 
+	int move_from_move16(const unsigned short move16) const {
+		return move16toMove(Move(move16), pos).value();
+	}
+
 	int turn() const { return pos.turn(); }
 	int ply() const { return pos.gamePly() + states.size(); }
 	std::string toSFEN() const { return pos.toSFEN(); }
