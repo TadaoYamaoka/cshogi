@@ -305,7 +305,7 @@ cdef class Parser:
 
 	@property
 	def sfen(self):
-		return self.__parser.win
+		return self.__parser.sfen
 
 	@property
 	def endgame(self):
