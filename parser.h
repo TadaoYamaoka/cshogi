@@ -89,7 +89,7 @@ namespace parser {
 			names[0] = names[1] = "";
 			ratings[0] = ratings[1] = 0;
 			moves.clear();
-			win = ColorNum;
+			win = Draw;
 			StateListPtr states = StateListPtr(new std::deque<StateInfo>(1));
 			Position pos;
 			bool pos_initialized = false;
@@ -190,11 +190,11 @@ namespace parser {
 			}
 
 			if (lose_color == Black)
-				win = White;
+				win = WhiteWin;
 			else if (lose_color == White)
-				win = Black;
+				win = BlackWin;
 			else
-				win = ColorNum;
+				win = Draw;
 		}
 
 		static std::string parse_position(const std::vector<std::string>& position_block_lines) {

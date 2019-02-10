@@ -27,6 +27,7 @@ public:
 
 	void set(const std::string& sfen) { pos.set(sfen); }
 	bool set_hcp(const char* hcp) { return pos.set_hcp(hcp); }
+	bool set_psfen(const char* psfen) { return pos.set_psfen(psfen); }
 
 	void reset() {
 		pos.set(DefaultStartPositionSFEN);
@@ -113,5 +114,10 @@ int __move_from(const int move) { return (move >> 7) & 0x7f; }
 int __move_cap(const int move) { return (move >> 20) & 0xf; }
 // 成るかどうか
 bool __move_is_promotion(const int move) { return move & Move::PromoteFlag; }
+
+unsigned short __move16(const int move) { return (unsigned short)move; }
+
+std::string __move_to_usi(const int move) { return Move(move).toUSI(); }
+std::string __move_to_csa(const int move) { return Move(move).toCSA(); }
 
 #endif

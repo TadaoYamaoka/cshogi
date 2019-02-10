@@ -77,6 +77,87 @@ const HuffmanCode HuffmanCodedPos::handCodeTable[HandPieceNum][ColorNum] = {
 HuffmanCodeToPieceHash HuffmanCodedPos::boardCodeToPieceHash;
 HuffmanCodeToPieceHash HuffmanCodedPos::handCodeToPieceHash;
 
+// やねうら王のpacked sfenのハフマン符号
+//   ※　 なのはminiの符号化から、変換が楽になるように単純化。
+//
+//   盤上の1升(NO_PIECE以外) = 2～6bit ( + 成りフラグ1bit+ 先後1bit )
+//   手駒の1枚               = 1～5bit ( + 成りフラグ1bit+ 先後1bit )
+//
+//    空     xxxxx0 + 0    (none)
+//    歩     xxxx01 + 2    xxxx0 + 2
+//    香     xx0011 + 2    xx001 + 2
+//    桂     xx1011 + 2    xx101 + 2
+//    銀     xx0111 + 2    xx011 + 2
+//    金     x01111 + 1    x0111 + 1 // 金は成りフラグはない。
+//    角     011111 + 2    01111 + 2
+//    飛     111111 + 2    11111 + 2
+//
+// すべての駒が盤上にあるとして、
+//     空 81 - 40駒 = 41升 = 41bit
+//     歩      4bit*18駒   = 72bit
+//     香      6bit* 4駒   = 24bit
+//     桂      6bit* 4駒   = 24bit
+//     銀      6bit* 4駒   = 24bit            
+//     金      6bit* 4駒   = 24bit
+//     角      8bit* 2駒   = 16bit
+//     飛      8bit* 2駒   = 16bit
+//                          -------
+//                          241bit + 1bit(手番) + 7bit×2(王の位置先後) = 256bit
+//
+// 盤上の駒が手駒に移動すると盤上の駒が空になるので盤上のその升は1bitで表現でき、
+// 手駒は、盤上の駒より1bit少なく表現できるので結局、全体のbit数に変化はない。
+// ゆえに、この表現において、どんな局面でもこのbit数で表現できる。
+// 手駒に成りフラグは不要だが、これも含めておくと盤上の駒のbit数-1になるので
+// 全体のbit数が固定化できるのでこれも含めておくことにする。
+const HuffmanCode PackedSfen::boardCodeTable[PieceNone] = {
+	{ Binary<         0>::value, 1 }, // Empty
+	{ Binary<         1>::value, 4 }, // BPawn
+	{ Binary<        11>::value, 6 }, // BLance
+	{ Binary<      1011>::value, 6 }, // BKnight
+	{ Binary<       111>::value, 6 }, // BSilver
+	{ Binary<     11111>::value, 8 }, // BBishop
+	{ Binary<    111111>::value, 8 }, // BRook
+	{ Binary<      1111>::value, 6 }, // BGold
+	{ Binary<         0>::value, 0 }, // BKing 玉の位置は別途、位置を符号化する。使用しないので numOfBit を 0 にしておく。
+	{ Binary<       101>::value, 4 }, // BProPawn
+	{ Binary<     10011>::value, 6 }, // BProLance
+	{ Binary<     11011>::value, 6 }, // BProKnight
+	{ Binary<     10111>::value, 6 }, // BProSilver
+	{ Binary<   1011111>::value, 8 }, // BHorse
+	{ Binary<   1111111>::value, 8 }, // BDragona
+	{ Binary<         0>::value, 0 }, // 使用しないので numOfBit を 0 にしておく。
+	{ Binary<         0>::value, 0 }, // 使用しないので numOfBit を 0 にしておく。
+	{ Binary<      1001>::value, 4 }, // WPawn
+	{ Binary<    100011>::value, 6 }, // WLance
+	{ Binary<    101011>::value, 6 }, // WKnight
+	{ Binary<    100111>::value, 6 }, // WSilver
+	{ Binary<  10011111>::value, 8 }, // WBishop
+	{ Binary<  10111111>::value, 8 }, // WRook
+	{ Binary<    101111>::value, 6 }, // WGold
+	{ Binary<         0>::value, 0 }, // WKing 玉の位置は別途、位置を符号化する。
+	{ Binary<      1101>::value, 4 }, // WProPawn
+	{ Binary<    110011>::value, 6 }, // WProLance
+	{ Binary<    111011>::value, 6 }, // WProKnight
+	{ Binary<    110111>::value, 6 }, // WProSilver
+	{ Binary<  11011111>::value, 8 }, // WHorse
+	{ Binary<  11111111>::value, 8 }, // WDragon
+};
+
+// 盤上の bit 数 - 1 で表現出来るようにする。持ち駒があると、盤上には Empty の 1 bit が増えるので、
+// これで局面の bit 数が固定化される。
+const HuffmanCode PackedSfen::handCodeTable[HandPieceNum][ColorNum] = {
+	{ { Binary<        0>::value, 3 },{ Binary<      100>::value, 3 } }, // HPawn
+	{ { Binary<        1>::value, 5 },{ Binary<    10001>::value, 5 } }, // HLance
+	{ { Binary<      101>::value, 5 },{ Binary<    10101>::value, 5 } }, // HKnight
+	{ { Binary<       11>::value, 5 },{ Binary<    10011>::value, 5 } }, // HSilver
+	{ { Binary<      111>::value, 5 },{ Binary<    10111>::value, 5 } }, // HGold
+	{ { Binary<     1111>::value, 7 },{ Binary<  1001111>::value, 7 } }, // HBishop
+	{ { Binary<    11111>::value, 7 },{ Binary<  1011111>::value, 7 } }, // HRook
+};
+
+HuffmanCodeToPieceHash PackedSfen::boardCodeToPieceHash;
+HuffmanCodeToPieceHash PackedSfen::handCodeToPieceHash;
+
 const CharToPieceUSI g_charToPieceUSI;
 
 namespace {
@@ -1859,6 +1940,72 @@ bool Position::set_hcp(const char* hcp_data) {
 INCORRECT_HUFFMAN_CODE:
     std::cout << "incorrect Huffman code." << std::endl;
     return false;
+}
+
+// やねうら王のpacked sfenから読み込む
+bool Position::set_psfen(const char* psfen_data) {
+	clear();
+
+	PackedSfen tmp(psfen_data); // ローカルにコピー
+	BitStream bs(tmp.data);
+
+	// 手番
+	turn_ = static_cast<Color>(bs.getBit());
+
+	// 玉の位置
+	Square sq0 = (Square)bs.getBits(7);
+	Square sq1 = (Square)bs.getBits(7);
+	setPiece(BKing, static_cast<Square>(sq0));
+	setPiece(WKing, static_cast<Square>(sq1));
+
+	// 盤上の駒
+	for (Square sq = SQ11; sq < SquareNum; ++sq) {
+		if (pieceToPieceType(piece(sq)) == King) // piece(sq) は BKing, WKing, Empty のどれか。
+			continue;
+		HuffmanCode hc = { 0, 0 };
+		while (hc.numOfBits <= 8) {
+			hc.code |= bs.getBit() << hc.numOfBits++;
+			if (PackedSfen::boardCodeToPieceHash.value(hc.key) != PieceNone) {
+				const Piece pc = PackedSfen::boardCodeToPieceHash.value(hc.key);
+				if (pc != Empty)
+					setPiece(PackedSfen::boardCodeToPieceHash.value(hc.key), sq);
+				break;
+			}
+		}
+		if (PackedSfen::boardCodeToPieceHash.value(hc.key) == PieceNone)
+			goto INCORRECT_HUFFMAN_CODE;
+	}
+	while (bs.data() != std::end(tmp.data)) {
+		HuffmanCode hc = { 0, 0 };
+		while (hc.numOfBits <= 8) {
+			hc.code |= bs.getBit() << hc.numOfBits++;
+			const Piece pc = PackedSfen::handCodeToPieceHash.value(hc.key);
+			if (pc != PieceNone) {
+				hand_[pieceToColor(pc)].plusOne(pieceTypeToHandPiece(pieceToPieceType(pc)));
+				break;
+			}
+		}
+		if (PackedSfen::handCodeToPieceHash.value(hc.key) == PieceNone)
+			goto INCORRECT_HUFFMAN_CODE;
+	}
+
+	kingSquare_[Black] = bbOf(King, Black).constFirstOneFromSQ11();
+	kingSquare_[White] = bbOf(King, White).constFirstOneFromSQ11();
+	goldsBB_ = bbOf(Gold, ProPawn, ProLance, ProKnight, ProSilver);
+
+	gamePly_ = 1; // ply の情報は持っていないので 1 にしておく。
+
+	st_->boardKey = computeBoardKey();
+	st_->handKey = computeHandKey();
+	st_->hand = hand(turn());
+
+	//setEvalList();
+	findCheckers();
+
+	return true;
+INCORRECT_HUFFMAN_CODE:
+	std::cout << "incorrect Huffman code." << std::endl;
+	return false;
 }
 
 // ランダムな局面を作成する。

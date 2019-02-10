@@ -52,4 +52,7 @@
       <Filter>ソース ファイル\cython-shogi</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="read_csa.py" />
+  </ItemGroup>
 </Project>

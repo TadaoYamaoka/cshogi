@@ -187,6 +187,63 @@ struct HuffmanCodedPosAndEval {
 };
 static_assert(sizeof(HuffmanCodedPosAndEval) == 38, "");
 
+// やねうら王のpacked sfen
+struct PackedSfen {
+	static const HuffmanCode boardCodeTable[PieceNone];
+	static const HuffmanCode handCodeTable[HandPieceNum][ColorNum];
+	static HuffmanCodeToPieceHash boardCodeToPieceHash;
+	static HuffmanCodeToPieceHash handCodeToPieceHash;
+	static void init() {
+		for (Piece pc = Empty; pc <= BDragon; ++pc)
+			if (pieceToPieceType(pc) != King) // 玉は位置で符号化するので、駒の種類では符号化しない。
+				boardCodeToPieceHash[boardCodeTable[pc].key] = pc;
+		for (Piece pc = WPawn; pc <= WDragon; ++pc)
+			if (pieceToPieceType(pc) != King) // 玉は位置で符号化するので、駒の種類では符号化しない。
+				boardCodeToPieceHash[boardCodeTable[pc].key] = pc;
+		for (HandPiece hp = HPawn; hp < HandPieceNum; ++hp)
+			for (Color c = Black; c < ColorNum; ++c)
+				handCodeToPieceHash[handCodeTable[hp][c].key] = colorAndPieceTypeToPiece(c, handPieceToPieceType(hp));
+	}
+	PackedSfen() {}
+	PackedSfen(const PackedSfen&) = default;
+	PackedSfen(const char* psfen_data) {
+		std::memcpy(data, psfen_data, sizeof(data));
+	}
+	void clear() { std::fill(std::begin(data), std::end(data), 0); }
+
+	u8 data[32];
+};
+
+// PackedSfenと評価値が一体化した構造体
+// オプションごとに書き出す内容が異なると教師棋譜を再利用するときに困るので
+// とりあえず、以下のメンバーはオプションによらずすべて書き出しておく。
+struct PackedSfenValue
+{
+	// 局面
+	PackedSfen sfen;
+
+	// Learner::search()から返ってきた評価値
+	s16 score;
+
+	// PVの初手
+	u16 move;
+
+	// 初期局面からの局面の手数。
+	u16 gamePly;
+
+	// この局面の手番側が、ゲームを最終的に勝っているなら1。負けているなら-1。
+	// 引き分けに至った場合は、0。
+	// 引き分けは、教師局面生成コマンドgensfenにおいて、
+	// LEARN_GENSFEN_DRAW_RESULTが有効なときにだけ書き出す。
+	s8 game_result;
+
+	// 教師局面を書き出したファイルを他の人とやりとりするときに
+	// この構造体サイズが不定だと困るため、paddingしてどの環境でも必ず40bytesになるようにしておく。
+	u8 padding;
+
+	// 32 + 2 + 2 + 2 + 1 + 1 = 40bytes
+};
+
 class Move;
 
 class Position {
@@ -201,6 +258,8 @@ public:
     void set(const std::string& sfen);
 	bool set_hcp(const char* hcp_data); // for python
 	bool set(const HuffmanCodedPos& hcp) { set_hcp((const char*)hcp.data); };
+	bool set_psfen(const char* psfen_data); // for python
+	bool set(const PackedSfen& psfen) { set_psfen((const char*)psfen.data); };
     void set(std::mt19937& mt);
 
     Bitboard bbOf(const PieceType pt) const                                            { return byTypeBB_[pt]; }

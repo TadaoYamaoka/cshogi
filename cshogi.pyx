@@ -22,6 +22,19 @@ HuffmanCodedPosAndEval = np.dtype([
     ('dummy', np.uint8),
     ])
 
+PackedSfen = np.dtype([
+    ('sfen', np.uint8, 32),
+    ])
+
+PackedSfenValue = np.dtype([
+    ('sfen', np.uint8, 32),
+    ('score', np.int16),
+    ('move', np.uint16),
+    ('gamePly', np.uint16),
+    ('game_result', np.uint8),
+    ('padding', np.uint8),
+    ])
+
 SQUARES = [
 	A1, B1, C1, D1, E1, F1, G1, H1, I1,
 	A2, B2, C2, D2, E2, F2, G2, H2, I2,
@@ -35,6 +48,10 @@ SQUARES = [
 ] = range(81)
 
 COLORS = [BLACK, WHITE] = range(2)
+
+GAME_RESULT = [
+    Draw, BlackWin, WhiteWin,
+] = range(3)
 
 PIECE_TYPES_WITH_NONE = [NONE,
            PAWN,      LANCE,      KNIGHT,      SILVER,
@@ -106,6 +123,7 @@ cdef extern from "cshogi.h":
 		__Board() except +
 		__Board(const string& sfen) except +
 		bool set_hcp(const char* hcp)
+		bool set_psfen(const char* psfen)
 		void reset()
 		void dump() const
 		void push(const int move)
@@ -135,8 +153,12 @@ cdef class Board:
 			self.__board = __Board(sfen)
 
 	def set_hcp(self, hcp):
-		cdef char[::1] data = hcp['hcp'].flatten()
+		cdef char[::1] data = hcp
 		return self.__board.set_hcp(&data[0])
+
+	def set_psfen(self, psfen):
+		cdef char[::1] data = psfen
+		return self.__board.set_psfen(&data[0])
 
 	def reset(self):
 		self.__board.reset()
@@ -183,7 +205,7 @@ cdef class Board:
 		return self.__board.toSFEN()
 
 	def to_hcp(self, hcp):
-		cdef char[::1] data = hcp['hcp'].flatten()
+		cdef char[::1] data = hcp
 		return self.__board.toHuffmanCodedPos(&data[0])
 
 	def piece(self, int sq):
@@ -212,7 +234,9 @@ cdef extern from "cshogi.h":
 	int __move_from(const int move)
 	int __move_cap(const int move)
 	bool __move_is_promotion(const int move)
-
+	unsigned short __move16(const int move)
+	string __move_to_usi(const int move)
+	string __move_to_csa(const int move)
 
 cdef class LegalMoveList:
 	cdef __LegalMoveList __ml
@@ -244,6 +268,15 @@ def move_cap(int move):
 
 def move_is_promotion(int move):
 	return __move_is_promotion(move)
+
+def move16(int move):
+	return __move16(move)
+
+def move_to_usi(int move):
+	return __move_to_usi(move)
+
+def move_to_csa(int move):
+	return __move_to_csa(move)
 
 cdef extern from "parser.h" namespace "parser":
 	cdef cppclass __Parser:
