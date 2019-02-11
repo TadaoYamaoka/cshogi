@@ -170,6 +170,16 @@ cdef class Board:
 	def push(self, int move):
 		self.__board.push(move)
 
+	def push_usi(self, string usi):
+		move = self.__board.move_from_usi(usi)
+		self.__board.push(move)
+		return move
+
+	def push_csa(self, string csa):
+		move = self.__board.move_from_csa(csa)
+		self.__board.push(move)
+		return move
+
 	def pop(self, int move):
 		self.__board.pop(move)
 
