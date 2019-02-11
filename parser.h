@@ -124,7 +124,10 @@ namespace parser {
 						if (last == std::string::npos)
 							last = line.size();
 						scores.resize(moves.size());
-						scores[moves.size() - 1] = std::stoi(line.substr(4, last - 4));
+						try {
+							scores[moves.size() - 1] = std::stoi(line.substr(4, last - 4));
+						}
+						catch (std::invalid_argument& e) {}
 					}
 
 				}

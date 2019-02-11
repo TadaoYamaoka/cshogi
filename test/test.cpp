@@ -3,7 +3,7 @@
 
 void test_parser() {
 	parser::__Parser parser;
-	parser.parse_csa_file(R"(R:\wdoor+floodgate-300-10F+1c_note_test+coduck_pi2_600MHz_1c+20161218120004.csa)");
+	parser.parse_csa_file(R"(R:\csa\0\wdoor+floodgate-600-10F+ABC-XYZ+pinaniwa+20160519230005.csa)");
 
 	std::cout << parser.sfen << std::endl;
 	for (int m : parser.moves) {
@@ -29,7 +29,8 @@ int main()
 	Position::initZobrist();
 	HuffmanCodedPos::init();
 
-	test_position();
+	//test_position();
+	test_parser();
 
 	return 0;
 }
