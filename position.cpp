@@ -1523,7 +1523,6 @@ void Position::print(std::ostream& os) const {
 
 std::string Position::toSFEN(const Ply ply) const {
     std::stringstream ss;
-    ss << "sfen ";
     int space = 0;
     for (Rank rank = Rank1; rank != Rank9Wall; rank += RankDeltaS) {
         for (File file = File9; file != File1Wall; file += FileDeltaE) {
