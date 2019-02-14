@@ -33,8 +33,10 @@ public:
 		pos.set(DefaultStartPositionSFEN);
 	}
 
-	void dump() const {
-		pos.print();
+	std::string dump() const {
+		std::stringstream ss;
+		pos.print(ss);
+		return ss.str();
 	}
 
 	void push(const int move) {

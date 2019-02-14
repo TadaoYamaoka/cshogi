@@ -427,8 +427,6 @@ void Position::doMove(const Move move, StateInfo& newSt, const CheckInfo& ci, co
     newSt.previous = st_;
     st_ = &newSt;
 
-    st_->cl.size = 1;
-
     const Color us = turn();
     const Square to = move.to();
     const PieceType ptCaptured = move.cap();
@@ -1506,21 +1504,21 @@ void Position::initZobrist() {
     zobExclusion_ = g_mt64bit.random() & ~UINT64_C(1);
 }
 
-void Position::print() const {
-    std::cout << "'  9  8  7  6  5  4  3  2  1" << std::endl;
+void Position::print(std::ostream& os) const {
+    os << "'  9  8  7  6  5  4  3  2  1\n";
     int i = 0;
     for (Rank r = Rank1; r != Rank9Wall; r += RankDeltaS) {
         ++i;
-        std::cout << "P" << i;
+        os << "P" << i;
         for (File f = File9; f != File1Wall; f += FileDeltaE)
-            std::cout << pieceToCharCSA(piece(makeSquare(f, r)));
-        std::cout << std::endl;
+            os << pieceToCharCSA(piece(makeSquare(f, r)));
+        os << "\n";
     }
-    printHand(Black);
-    printHand(White);
-    std::cout << (turn() == Black ? "+" : "-") << std::endl;
-    std::cout << std::endl;
-    std::cout << "key = " << getKey() << std::endl;
+    printHand(os, Black);
+    printHand(os, White);
+    os << (turn() == Black ? "+" : "-") << "\n";
+    os << "\n";
+    os << "key = " << getKey();
 }
 
 std::string Position::toSFEN(const Ply ply) const {
@@ -1706,7 +1704,7 @@ incorrect_position:
     std::cout << "Error! failedStep = " << failedStep << std::endl;
     std::cout << "prevKey = " << prevKey << std::endl;
     std::cout << "currKey = " << getKey() << std::endl;
-    print();
+    print(std::cout);
     return false;
 }
 #endif
@@ -1774,24 +1772,24 @@ RepetitionType Position::isDraw(const int checkMaxPly) const {
 }
 
 namespace {
-    void printHandPiece(const Position& pos, const HandPiece hp, const Color c, const std::string& str) {
+	void printHandPiece(std::ostream& os, const Position& pos, const HandPiece hp, const Color c, const std::string& str) {
         if (pos.hand(c).numOf(hp)) {
             const char* sign = (c == Black ? "+" : "-");
-            std::cout << "P" << sign;
+            os << "P" << sign;
             for (u32 i = 0; i < pos.hand(c).numOf(hp); ++i)
-                std::cout << "00" << str;
-            std::cout << std::endl;
+                os << "00" << str;
+            os << "\n";
         }
     }
 }
-void Position::printHand(const Color c) const {
-    printHandPiece(*this, HPawn  , c, "FU");
-    printHandPiece(*this, HLance , c, "KY");
-    printHandPiece(*this, HKnight, c, "KE");
-    printHandPiece(*this, HSilver, c, "GI");
-    printHandPiece(*this, HGold  , c, "KI");
-    printHandPiece(*this, HBishop, c, "KA");
-    printHandPiece(*this, HRook  , c, "HI");
+void Position::printHand(std::ostream& os, const Color c) const {
+    printHandPiece(os, *this, HPawn  , c, "FU");
+    printHandPiece(os, *this, HLance , c, "KY");
+    printHandPiece(os, *this, HKnight, c, "KE");
+    printHandPiece(os, *this, HSilver, c, "GI");
+    printHandPiece(os, *this, HGold  , c, "KI");
+    printHandPiece(os, *this, HBishop, c, "KA");
+    printHandPiece(os, *this, HRook  , c, "HI");
 }
 
 Position& Position::operator = (const Position& pos) {

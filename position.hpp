@@ -50,17 +50,6 @@ struct CheckInfo {
     Bitboard checkBB[PieceTypeNum];
 };
 
-struct ChangedListPair {
-    EvalIndex newlist[2];
-    EvalIndex oldlist[2];
-};
-
-struct ChangedLists {
-    ChangedListPair clistpair[2]; // 一手で動く駒は最大2つ。(動く駒、取られる駒)
-    int listindex[2]; // 一手で動く駒は最大2つ。(動く駒、取られる駒)
-    size_t size;
-};
-
 struct StateInfo {
     // Copied when making a move
     int pliesFromNull;
@@ -75,7 +64,6 @@ struct StateInfo {
 #endif
     StateInfo* previous;
     Hand hand; // 手番側の持ち駒
-    ChangedLists cl;
 
     Key key() const { return boardKey + handKey; }
 };
@@ -386,7 +374,6 @@ public:
     void doMove(const Move move, StateInfo& newSt);
     void doMove(const Move move, StateInfo& newSt, const CheckInfo& ci, const bool moveIsCheck);
     void undoMove(const Move move);
-    template <bool DO> void doNullMove(StateInfo& backUpSt);
 
     template <Color US> Move mateMoveIn1Ply();
     Move mateMoveIn1Ply();
@@ -401,7 +388,7 @@ public:
         static_assert(zobTurn_ == 1, "");
         return getKey() >> 1;
     }
-    void print() const;
+	void print(std::ostream& os) const;
     std::string toSFEN(const Ply ply) const;
     std::string toSFEN() const { return toSFEN(gamePly()); }
 
@@ -412,8 +399,6 @@ public:
     RepetitionType isDraw(const int checkMaxPly = std::numeric_limits<int>::max()) const;
 
     void setStartPosPly(const Ply ply) { gamePly_ = ply; }
-
-    const ChangedLists& cl() const { return st_->cl; }
 
 #if !defined NDEBUG
     // for debug
@@ -482,14 +467,11 @@ private:
         return result;
     }
 
-#if !defined NDEBUG
-    int debugSetEvalList() const;
-#endif
     Key computeBoardKey() const;
     Key computeHandKey() const;
     Key computeKey() const { return computeBoardKey() + computeHandKey(); }
 
-    void printHand(const Color c) const;
+    void printHand(std::ostream& os, const Color c) const;
 
     static Key zobrist(const PieceType pt, const Square sq, const Color c) { return zobrist_[pt][sq][c]; }
     static Key zobTurn()                                                   { return zobTurn_; }

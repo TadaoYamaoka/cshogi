@@ -9,6 +9,7 @@ from libcpp.vector cimport vector
 from libcpp cimport bool
 
 import numpy as np
+cimport numpy as np
 
 HuffmanCodedPos = np.dtype([
     ('hcp', np.uint8, 32),
@@ -122,10 +123,11 @@ cdef extern from "cshogi.h":
 	cdef cppclass __Board:
 		__Board() except +
 		__Board(const string& sfen) except +
+		bool set(const string& sfen)
 		bool set_hcp(const char* hcp)
 		bool set_psfen(const char* psfen)
 		void reset()
-		void dump() const
+		string dump() const
 		void push(const int move)
 		void pop(const int move)
 		bool is_game_over() const
@@ -153,19 +155,22 @@ cdef class Board:
 		else:
 			self.__board = __Board(sfen)
 
-	def set_hcp(self, hcp):
+	def set_sfen(self, string sfen):
+		self.__board.set(sfen)
+
+	def set_hcp(self, np.ndarray hcp):
 		cdef char[::1] data = hcp
 		return self.__board.set_hcp(&data[0])
 
-	def set_psfen(self, psfen):
+	def set_psfen(self, np.ndarray psfen):
 		cdef char[::1] data = psfen
 		return self.__board.set_psfen(&data[0])
 
 	def reset(self):
 		self.__board.reset()
 
-	def dump(self):
-		self.__board.dump()
+	def __repr__(self):
+		return self.__board.dump().decode('utf-8')
 
 	def push(self, int move):
 		self.__board.push(move)
@@ -177,6 +182,11 @@ cdef class Board:
 
 	def push_csa(self, string csa):
 		move = self.__board.move_from_csa(csa)
+		self.__board.push(move)
+		return move
+
+	def push_move16(self, unsigned short move16):
+		move = self.__board.move_from_move16(move16)
 		self.__board.push(move)
 		return move
 
@@ -218,7 +228,7 @@ cdef class Board:
 	def sfen(self):
 		return self.__board.toSFEN()
 
-	def to_hcp(self, hcp):
+	def to_hcp(self, np.ndarray hcp):
 		cdef char[::1] data = hcp
 		return self.__board.toHuffmanCodedPos(&data[0])
 
