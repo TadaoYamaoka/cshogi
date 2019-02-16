@@ -323,10 +323,10 @@ def move_is_drop(int move):
 	return __move_is_drop(move)
 
 def move_from_piece_type(int move):
-	return move_from_piece_type(move)
+	return __move_from_piece_type(move)
 
 def move_drop_hand_piece(int move):
-	return move_drop_hand_piece(move)
+	return __move_drop_hand_piece(move)
 
 def move16(int move):
 	return __move16(move)
