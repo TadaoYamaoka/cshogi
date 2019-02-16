@@ -147,7 +147,8 @@ cdef extern from "cshogi.h":
 		long long getKey()
 		bool moveIsPseudoLegal(const int move)
 		bool moveIsLegal(const int move)
-		vector[unsigned int] pieces_in_hand(const int color)
+		vector[int] pieces_in_hand(const int color)
+		vector[int] pieces()
 
 cdef class Board:
 	cdef __Board __board
@@ -256,6 +257,10 @@ cdef class Board:
 	@property
 	def pieces_in_hand(self):
 		return (self.__board.pieces_in_hand(BLACK), self.__board.pieces_in_hand(WHITE))
+
+	@property
+	def pieces(self):
+		return self.__board.pieces()
 
 cdef extern from "cshogi.h":
 	cdef cppclass __LegalMoveList:

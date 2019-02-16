@@ -90,17 +90,61 @@ public:
 	bool moveIsPseudoLegal(const int move) const { return pos.moveIsPseudoLegal(Move(move)); }
 	bool moveIsLegal(const int move) const { return pos.moveIsLegal(Move(move)); }
 
-	std::vector<unsigned int> pieces_in_hand(const int color) const {
+	std::vector<int> pieces_in_hand(const int color) const {
 		Hand h = pos.hand(Black);
-		return std::vector<unsigned int>{
-			h.numOf<HPawn>(), h.numOf<HLance>(), h.numOf<HKnight>(), h.numOf<HSilver>(), h.numOf<HGold>(), h.numOf<HBishop>(), h.numOf<HRook>()
+		return std::vector<int>{
+			(int)h.numOf<HPawn>(), (int)h.numOf<HLance>(), (int)h.numOf<HKnight>(), (int)h.numOf<HSilver>(), (int)h.numOf<HGold>(), (int)h.numOf<HBishop>(), (int)h.numOf<HRook>()
 		};
+	}
+
+	std::vector<int> pieces() const {
+		std::vector<int> board(81);
+
+		bbToVector(Pawn, Black, BPawn, board);
+		bbToVector(Lance, Black, BLance, board);
+		bbToVector(Knight, Black, BKnight, board);
+		bbToVector(Silver, Black, BSilver, board);
+		bbToVector(Bishop, Black, BBishop, board);
+		bbToVector(Rook, Black, BRook, board);
+		bbToVector(Gold, Black, BGold, board);
+		bbToVector(King, Black, BKing, board);
+		bbToVector(ProPawn, Black, BProPawn, board);
+		bbToVector(ProLance, Black, BProLance, board);
+		bbToVector(ProKnight, Black, BProKnight, board);
+		bbToVector(ProSilver, Black, BProSilver, board);
+		bbToVector(Horse, Black, BHorse, board);
+		bbToVector(Dragon, Black, BDragon, board);
+
+		bbToVector(Pawn, White, WPawn, board);
+		bbToVector(Lance, White, WLance, board);
+		bbToVector(Knight, White, WKnight, board);
+		bbToVector(Silver, White, WSilver, board);
+		bbToVector(Bishop, White, WBishop, board);
+		bbToVector(Rook, White, WRook, board);
+		bbToVector(Gold, White, WGold, board);
+		bbToVector(King, White, WKing, board);
+		bbToVector(ProPawn, White, WProPawn, board);
+		bbToVector(ProLance, White, WProLance, board);
+		bbToVector(ProKnight, White, WProKnight, board);
+		bbToVector(ProSilver, White, WProSilver, board);
+		bbToVector(Horse, White, WHorse, board);
+		bbToVector(Dragon, White, WDragon, board);
+
+		return board;
 	}
 
 	Position pos;
 
 private:
 	std::vector<StateInfo> states;
+
+	void bbToVector(PieceType pt, Color c, Piece piece, std::vector<int>& board) const {
+		Bitboard bb = pos.bbOf(pt, c);
+		while (bb) {
+			const Square sq = bb.firstOneFromSQ11();
+			board[sq] = piece;
+		}
+	}
 };
 
 class __LegalMoveList
