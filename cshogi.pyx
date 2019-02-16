@@ -127,24 +127,25 @@ cdef extern from "cshogi.h":
 		bool set_hcp(const char* hcp)
 		bool set_psfen(const char* psfen)
 		void reset()
-		string dump() const
+		string dump()
 		void push(const int move)
 		void pop(const int move)
-		bool is_game_over() const
-		int isDraw() const
-		int move(const int from_square, const int to_square, const bool promotion) const
-		int drop_move(const int to_square, const int drop_piece_type) const
-		int move_from_usi(const string& usi) const
-		int move_from_csa(const string& csa) const
-		int move_from_move16(const unsigned short move16) const
-		int turn() const
-		int ply() const
-		string toSFEN() const
-		void toHuffmanCodedPos(char* data) const
-		int piece(const int sq) const
-		bool inCheck() const
+		bool is_game_over()
+		int isDraw()
+		int move(const int from_square, const int to_square, const bool promotion)
+		int drop_move(const int to_square, const int drop_piece_type)
+		int move_from_usi(const string& usi)
+		int move_from_csa(const string& csa)
+		int move_from_move16(const unsigned short move16)
+		int turn()
+		int ply()
+		string toSFEN()
+		void toHuffmanCodedPos(char* data)
+		int piece(const int sq)
+		bool inCheck()
 		int mateMoveIn1Ply()
-		long long getKey() const
+		long long getKey()
+		bool moveIsPseudoLegal(const Move move)
 
 cdef class Board:
 	cdef __Board __board
@@ -244,15 +245,18 @@ cdef class Board:
 	def zobrist_hash(self):
 		return self.__board.getKey()
 
+	def is_pseudo_legal(self, int move):
+		return self.__board.moveIsPseudoLegal(move)
+
 
 cdef extern from "cshogi.h":
 	cdef cppclass __LegalMoveList:
 		__LegalMoveList() except +
 		__LegalMoveList(const __Board& board) except +
-		bool end() const
-		int move() const
+		bool end()
+		int move()
 		void next()
-		int size() const
+		int size()
 
 	int __move_to(const int move)
 	int __move_from(const int move)
