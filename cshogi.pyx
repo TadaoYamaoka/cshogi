@@ -50,7 +50,7 @@ SQUARES = [
 
 COLORS = [BLACK, WHITE] = range(2)
 
-GAME_RESULT = [
+GAME_RESULTS = [
     DRAW, BLACK_WIN, WHITE_WIN,
 ] = range(3)
 
