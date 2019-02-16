@@ -173,6 +173,8 @@ int __move_from(const int move) { return (move >> 7) & 0x7f; }
 int __move_cap(const int move) { return (move >> 20) & 0xf; }
 // 成るかどうか
 bool __move_is_promotion(const int move) { return move & Move::PromoteFlag; }
+// 駒打ちか
+bool __move_is_drop(const int move) { return __move_from(move) >= 81; }
 
 unsigned short __move16(const int move) { return (unsigned short)move; }
 

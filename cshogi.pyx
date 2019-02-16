@@ -284,6 +284,7 @@ cdef extern from "cshogi.h":
 	unsigned short __move16(const int move)
 	string __move_to_usi(const int move)
 	string __move_to_csa(const int move)
+	bool __move_is_drop(const int move)
 
 cdef class LegalMoveList:
 	cdef __LegalMoveList __ml
@@ -324,6 +325,9 @@ def move_to_usi(int move):
 
 def move_to_csa(int move):
 	return __move_to_csa(move)
+
+def move_is_drop(int move):
+	return __move_is_drop(move)
 
 cdef extern from "parser.h" namespace "parser":
 	cdef cppclass __Parser:
