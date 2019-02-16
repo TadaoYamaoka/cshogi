@@ -51,7 +51,7 @@ SQUARES = [
 COLORS = [BLACK, WHITE] = range(2)
 
 GAME_RESULT = [
-    Draw, BlackWin, WhiteWin,
+    DRAW, BLACK_WIN, WHITE_WIN,
 ] = range(3)
 
 PIECE_TYPES_WITH_NONE = [NONE,
