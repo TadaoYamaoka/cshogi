@@ -367,9 +367,7 @@ public:
     bool pseudoLegalMoveIsLegal(const Move move, const Bitboard& pinned) const;
     bool pseudoLegalMoveIsEvasion(const Move move, const Bitboard& pinned) const;
     template <bool Searching = true> bool moveIsPseudoLegal(const Move move) const;
-#if !defined NDEBUG
     bool moveIsLegal(const Move move) const;
-#endif
 
     void doMove(const Move move, StateInfo& newSt);
     void doMove(const Move move, StateInfo& newSt, const CheckInfo& ci, const bool moveIsCheck);

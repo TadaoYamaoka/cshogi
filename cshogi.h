@@ -88,6 +88,7 @@ public:
 	int mateMoveIn1Ply() { return pos.mateMoveIn1Ply().value(); }
 	long long getKey() const { return pos.getKey(); }
 	bool moveIsPseudoLegal(const int move) const { return pos.moveIsPseudoLegal(Move(move)); }
+	bool moveIsLegal(const int move) const { return pos.moveIsLegal(Move(move)); }
 
 	Position pos;
 

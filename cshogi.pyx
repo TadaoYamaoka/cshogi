@@ -146,6 +146,7 @@ cdef extern from "cshogi.h":
 		int mateMoveIn1Ply()
 		long long getKey()
 		bool moveIsPseudoLegal(const int move)
+		bool moveIsLegal(const int move)
 
 cdef class Board:
 	cdef __Board __board
@@ -247,6 +248,9 @@ cdef class Board:
 
 	def is_pseudo_legal(self, int move):
 		return self.__board.moveIsPseudoLegal(move)
+
+	def is_legal(self, int move):
+		return self.__board.moveIsLegal(move)
 
 
 cdef extern from "cshogi.h":
