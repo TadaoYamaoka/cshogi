@@ -90,6 +90,13 @@ public:
 	bool moveIsPseudoLegal(const int move) const { return pos.moveIsPseudoLegal(Move(move)); }
 	bool moveIsLegal(const int move) const { return pos.moveIsLegal(Move(move)); }
 
+	std::vector<unsigned int> pieces_in_hand(const int color) const {
+		Hand h = pos.hand(Black);
+		return std::vector<unsigned int>{
+			h.numOf<HPawn>(), h.numOf<HLance>(), h.numOf<HKnight>(), h.numOf<HSilver>(), h.numOf<HGold>(), h.numOf<HBishop>(), h.numOf<HRook>()
+		};
+	}
+
 	Position pos;
 
 private:
