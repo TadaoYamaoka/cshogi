@@ -91,7 +91,7 @@ public:
 	bool moveIsLegal(const int move) const { return pos.moveIsLegal(Move(move)); }
 
 	std::vector<int> pieces_in_hand(const int color) const {
-		Hand h = pos.hand(Black);
+		Hand h = pos.hand((Color)color);
 		return std::vector<int>{
 			(int)h.numOf<HPawn>(), (int)h.numOf<HLance>(), (int)h.numOf<HKnight>(), (int)h.numOf<HSilver>(), (int)h.numOf<HGold>(), (int)h.numOf<HBishop>(), (int)h.numOf<HRook>()
 		};
