@@ -175,6 +175,10 @@ int __move_cap(const int move) { return (move >> 20) & 0xf; }
 bool __move_is_promotion(const int move) { return move & Move::PromoteFlag; }
 // 駒打ちか
 bool __move_is_drop(const int move) { return __move_from(move) >= 81; }
+// 移動する駒の種類
+int __move_from_piece_type(const int move) { return (move >> 16) & 0xf; };
+// 打つ駒の種類
+int __move_drop_hand_piece(const int move) { return pieceTypeToHandPiece((PieceType)__move_from(move) - SquareNum + 1); }
 
 unsigned short __move16(const int move) { return (unsigned short)move; }
 

@@ -282,6 +282,8 @@ cdef extern from "cshogi.h":
 	int __move_cap(const int move)
 	bool __move_is_promotion(const int move)
 	bool __move_is_drop(const int move)
+	int __move_from_piece_type(const int move)
+	int __move_drop_hand_piece(const int move)
 	unsigned short __move16(const int move)
 	string __move_to_usi(const int move)
 	string __move_to_csa(const int move)
@@ -319,6 +321,12 @@ def move_is_promotion(int move):
 
 def move_is_drop(int move):
 	return __move_is_drop(move)
+
+def move_from_piece_type(int move):
+	return move_from_piece_type(move)
+
+def move_drop_hand_piece(int move):
+	return move_drop_hand_piece(move)
 
 def move16(int move):
 	return __move16(move)
