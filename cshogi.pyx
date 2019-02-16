@@ -145,7 +145,7 @@ cdef extern from "cshogi.h":
 		bool inCheck()
 		int mateMoveIn1Ply()
 		long long getKey()
-		bool moveIsPseudoLegal(const Move move)
+		bool moveIsPseudoLegal(const int move)
 
 cdef class Board:
 	cdef __Board __board

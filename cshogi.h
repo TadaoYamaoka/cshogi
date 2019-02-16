@@ -87,7 +87,7 @@ public:
 	bool inCheck() const { return pos.inCheck(); }
 	int mateMoveIn1Ply() { return pos.mateMoveIn1Ply().value(); }
 	long long getKey() const { return pos.getKey(); }
-	bool moveIsPseudoLegal(const Move move) const { pos.moveIsPseudoLegal(move); }
+	bool moveIsPseudoLegal(const int move) const { return pos.moveIsPseudoLegal(Move(move)); }
 
 	Position pos;
 
