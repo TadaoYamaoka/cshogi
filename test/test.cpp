@@ -39,6 +39,24 @@ void test_draw() {
 	}
 }
 
+void test_copy() {
+	__Board board;
+
+	auto move = board.move_from_usi("7g7f");
+	board.push(move);
+	std::cout << board.dump() << std::endl;
+	std::cout << board.ply() << std::endl;
+
+	__Board board2(board);
+	move = board2.move_from_usi("3c3d");
+	board2.push(move);
+	std::cout << board2.dump() << std::endl;
+	std::cout << board2.ply() << std::endl;
+
+	std::cout << board.dump() << std::endl;
+	std::cout << board.ply() << std::endl;
+}
+
 int main()
 {
 	initTable();
@@ -47,7 +65,8 @@ int main()
 
 	//test_position();
 	//test_parser();
-	test_draw();
+	//test_draw();
+	test_copy();
 
 	return 0;
 }

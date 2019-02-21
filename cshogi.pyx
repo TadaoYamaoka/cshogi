@@ -129,6 +129,7 @@ cdef extern from "cshogi.h":
 	cdef cppclass __Board:
 		__Board() except +
 		__Board(const string& sfen) except +
+		__Board(const __Board& board) except +
 		bool set(const string& sfen)
 		bool set_hcp(const char* hcp)
 		bool set_psfen(const char* psfen)
@@ -159,11 +160,19 @@ cdef extern from "cshogi.h":
 cdef class Board:
 	cdef __Board __board
 
-	def __cinit__(self, sfen=None):
-		if sfen is None:
-			self.__board = __Board()
-		else:
+	def __cinit__(self, string sfen=b'', Board board=None):
+		if sfen != b'':
 			self.__board = __Board(sfen)
+		elif board is not None:
+			self.__board = __Board(board.__board)
+		else:
+			self.__board = __Board()
+
+	def __copy__(self):
+		return Board(board=self)
+
+	def copy(self):
+		return Board(board=self)
 
 	def set_sfen(self, string sfen):
 		self.__board.set(sfen)

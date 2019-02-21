@@ -25,11 +25,21 @@ public:
 	__Board(const std::string& sfen) : pos(sfen) {}
 	~__Board() {}
 
-	void set(const std::string& sfen) { pos.set(sfen); }
-	bool set_hcp(const char* hcp) { return pos.set_hcp(hcp); }
-	bool set_psfen(const char* psfen) { return pos.set_psfen(psfen); }
+	void set(const std::string& sfen) {
+		states.clear();
+		pos.set(sfen);
+	}
+	bool set_hcp(const char* hcp) {
+		states.clear();
+		return pos.set_hcp(hcp);
+	}
+	bool set_psfen(const char* psfen) {
+		states.clear();
+		return pos.set_psfen(psfen);
+	}
 
 	void reset() {
+		states.clear();
 		pos.set(DefaultStartPositionSFEN);
 	}
 
