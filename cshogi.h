@@ -136,7 +136,7 @@ public:
 	Position pos;
 
 private:
-	std::vector<StateInfo> states;
+	std::deque<StateInfo> states;
 
 	void bbToVector(PieceType pt, Color c, Piece piece, std::vector<int>& board) const {
 		Bitboard bb = pos.bbOf(pt, c);

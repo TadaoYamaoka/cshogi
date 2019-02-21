@@ -23,6 +23,22 @@ void test_position() {
 	}
 }
 
+void test_draw() {
+	parser::__Parser parser;
+	parser.parse_csa_file("R:\\test\\wdoor+floodgate-300-10F+15gou_i3_2c+ArgoCorse1.10b+20180204233002.csa");
+
+	__Board board;
+	board.set(parser.sfen);
+
+	for (auto move : parser.moves) {
+		std::cout << __to_usi(move) << std::endl;
+		if (board.isDraw() == RepetitionDraw) {
+			std::cout << "draw" << std::endl;
+		}
+		board.push(move);
+	}
+}
+
 int main()
 {
 	initTable();
@@ -30,7 +46,8 @@ int main()
 	HuffmanCodedPos::init();
 
 	//test_position();
-	test_parser();
+	//test_parser();
+	test_draw();
 
 	return 0;
 }

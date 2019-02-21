@@ -13,43 +13,43 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="ソース ファイル\cython-shogi">
+    <Filter Include="ソース ファイル\cshogi">
       <UniqueIdentifier>{3af25f30-ca3a-49bd-a23b-1cb7f4668069}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\bitboard.cpp">
-      <Filter>ソース ファイル\cython-shogi</Filter>
+      <Filter>ソース ファイル\cshogi</Filter>
     </ClCompile>
     <ClCompile Include="..\common.cpp">
-      <Filter>ソース ファイル\cython-shogi</Filter>
+      <Filter>ソース ファイル\cshogi</Filter>
     </ClCompile>
     <ClCompile Include="..\generateMoves.cpp">
-      <Filter>ソース ファイル\cython-shogi</Filter>
+      <Filter>ソース ファイル\cshogi</Filter>
     </ClCompile>
     <ClCompile Include="..\hand.cpp">
-      <Filter>ソース ファイル\cython-shogi</Filter>
+      <Filter>ソース ファイル\cshogi</Filter>
     </ClCompile>
     <ClCompile Include="..\init.cpp">
-      <Filter>ソース ファイル\cython-shogi</Filter>
+      <Filter>ソース ファイル\cshogi</Filter>
     </ClCompile>
     <ClCompile Include="..\move.cpp">
-      <Filter>ソース ファイル\cython-shogi</Filter>
+      <Filter>ソース ファイル\cshogi</Filter>
     </ClCompile>
     <ClCompile Include="..\mt64bit.cpp">
-      <Filter>ソース ファイル\cython-shogi</Filter>
+      <Filter>ソース ファイル\cshogi</Filter>
     </ClCompile>
     <ClCompile Include="..\position.cpp">
-      <Filter>ソース ファイル\cython-shogi</Filter>
+      <Filter>ソース ファイル\cshogi</Filter>
     </ClCompile>
     <ClCompile Include="..\square.cpp">
-      <Filter>ソース ファイル\cython-shogi</Filter>
+      <Filter>ソース ファイル\cshogi</Filter>
     </ClCompile>
     <ClCompile Include="test.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="..\usi.cpp">
-      <Filter>ソース ファイル\cython-shogi</Filter>
+      <Filter>ソース ファイル\cshogi</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
