@@ -170,6 +170,8 @@ namespace parser {
 						lose_color = Black;
 					else if (line == "%-ILLEGAL_ACTION")
 						lose_color = White;
+					else if (line == "%KACHI")
+						lose_color = oppositeColor(pos.turn());
 
 					endgame = line;
 
