@@ -29,9 +29,9 @@ public:
 		states.clear();
 		pos.set(sfen);
 	}
-	bool set_hcp(const char* hcp) {
+	bool set_hcp(const unsigned char* hcp) {
 		states.clear();
-		return pos.set_hcp(hcp);
+		return pos.set_hcp((const char*)hcp);
 	}
 	bool set_psfen(const char* psfen) {
 		states.clear();
