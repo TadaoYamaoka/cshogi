@@ -11,15 +11,20 @@ from libcpp cimport bool
 import numpy as np
 cimport numpy as np
 
+dtypeHcp = np.dtype((np.uint8, 32))
+dtypeEval = np.dtype(np.int16)
+dtypeMove = np.dtype(np.int16)
+dtypeGameResult = np.dtype(np.int8)
+
 HuffmanCodedPos = np.dtype([
-    ('hcp', np.uint8, 32),
+    ('hcp', dtypeHcp),
     ])
 
 HuffmanCodedPosAndEval = np.dtype([
-    ('hcp', np.uint8, 32),
-    ('eval', np.int16),
-    ('bestMove16', np.uint16),
-    ('gameResult', np.uint8),
+    ('hcp', dtypeHcp),
+    ('eval', dtypeEval),
+    ('bestMove16', dtypeMove),
+    ('gameResult', dtypeGameResult),
     ('dummy', np.uint8),
     ])
 
