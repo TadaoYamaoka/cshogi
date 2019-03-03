@@ -6,6 +6,8 @@
 #include "generateMoves.hpp"
 #include "usi.hpp"
 
+bool nyugyoku(const Position& pos);
+
 void HuffmanCodedPos_init() {
 	HuffmanCodedPos::init();
 }
@@ -99,6 +101,7 @@ public:
 	long long getKey() const { return pos.getKey(); }
 	bool moveIsPseudoLegal(const int move) const { return pos.moveIsPseudoLegal(Move(move)); }
 	bool moveIsLegal(const int move) const { return pos.moveIsLegal(Move(move)); }
+	bool is_nyugyoku() const { return nyugyoku(pos); }
 
 	std::vector<int> pieces_in_hand(const int color) const {
 		Hand h = pos.hand((Color)color);

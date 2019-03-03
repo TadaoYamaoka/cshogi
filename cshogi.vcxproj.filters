@@ -51,6 +51,9 @@
     <ClCompile Include="usi.cpp">
       <Filter>ソース ファイル\Apery</Filter>
     </ClCompile>
+    <ClCompile Include="search.cpp">
+      <Filter>ソース ファイル\Apery</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bitboard.hpp">

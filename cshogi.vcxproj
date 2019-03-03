@@ -150,6 +150,7 @@
     <ClCompile Include="move.cpp" />
     <ClCompile Include="mt64bit.cpp" />
     <ClCompile Include="position.cpp" />
+    <ClCompile Include="search.cpp" />
     <ClCompile Include="square.cpp" />
     <ClCompile Include="usi.cpp" />
   </ItemGroup>

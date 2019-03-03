@@ -1,4 +1,4 @@
-﻿# distutils: sources = ["bitboard.cpp", "common.cpp", "generateMoves.cpp", "hand.cpp", "init.cpp", "move.cpp", "mt64bit.cpp", "position.cpp", "square.cpp", "usi.cpp"]
+﻿# distutils: sources = ["bitboard.cpp", "common.cpp", "generateMoves.cpp", "hand.cpp", "init.cpp", "move.cpp", "mt64bit.cpp", "position.cpp", "search.cpp", "square.cpp", "usi.cpp"]
 # distutils: language = c++
 # distutils: define_macros=HAVE_SSE4
 # distutils: define_macros=HAVE_BMI2
@@ -161,6 +161,7 @@ cdef extern from "cshogi.h":
 		bool moveIsLegal(const int move)
 		vector[int] pieces_in_hand(const int color)
 		vector[int] pieces()
+		bool is_nyugyoku()
 
 cdef class Board:
 	cdef __Board __board
@@ -281,6 +282,9 @@ cdef class Board:
 	@property
 	def pieces(self):
 		return self.__board.pieces()
+
+	def is_nyugyoku(self):
+		return self.__board.is_nyugyoku()
 
 cdef extern from "cshogi.h":
 	cdef cppclass __LegalMoveList:
