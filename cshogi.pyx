@@ -239,7 +239,8 @@ cdef class Board:
 	def move_from_move16(self, unsigned short move16):
 		return self.__board.move_from_move16(move16)
 
-	def leagal_move_list(self):
+	@property
+	def leagal_moves(self):
 		return LegalMoveList(self)
 
 	@property
