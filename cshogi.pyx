@@ -248,7 +248,7 @@ cdef class Board:
 		return self.__board.turn()
 
 	@property
-	def ply(self):
+	def move_number(self):
 		return self.__board.ply()
 
 	def sfen(self):
