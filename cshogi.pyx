@@ -240,7 +240,7 @@ cdef class Board:
 		return self.__board.move_from_move16(move16)
 
 	@property
-	def leagal_moves(self):
+	def legal_moves(self):
 		return LegalMoveList(self)
 
 	@property
