@@ -13,7 +13,7 @@ cimport numpy as np
 
 dtypeHcp = np.dtype((np.uint8, 32))
 dtypeEval = np.dtype(np.int16)
-dtypeMove = np.dtype(np.int16)
+dtypeMove16 = np.dtype(np.int16)
 dtypeGameResult = np.dtype(np.int8)
 
 HuffmanCodedPos = np.dtype([
@@ -23,7 +23,7 @@ HuffmanCodedPos = np.dtype([
 HuffmanCodedPosAndEval = np.dtype([
     ('hcp', dtypeHcp),
     ('eval', dtypeEval),
-    ('bestMove16', dtypeMove),
+    ('bestMove16', dtypeMove16),
     ('gameResult', dtypeGameResult),
     ('dummy', np.uint8),
     ])
