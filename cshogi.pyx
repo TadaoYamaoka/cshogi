@@ -156,12 +156,13 @@ cdef extern from "cshogi.h":
 		int piece(const int sq)
 		bool inCheck()
 		int mateMoveIn1Ply()
-		long long getKey()
+		unsigned long long getKey()
 		bool moveIsPseudoLegal(const int move)
 		bool moveIsLegal(const int move)
 		vector[int] pieces_in_hand(const int color)
 		vector[int] pieces()
 		bool is_nyugyoku()
+		void piece_planes(char* mem)
 
 cdef class Board:
 	cdef __Board __board
@@ -255,8 +256,7 @@ cdef class Board:
 		return self.__board.toSFEN()
 
 	def to_hcp(self, np.ndarray hcp):
-		cdef char[::1] data = hcp
-		return self.__board.toHuffmanCodedPos(&data[0])
+		return self.__board.toHuffmanCodedPos(hcp.data)
 
 	def piece(self, int sq):
 		return self.__board.piece(sq)
@@ -286,6 +286,9 @@ cdef class Board:
 
 	def is_nyugyoku(self):
 		return self.__board.is_nyugyoku()
+
+	def piece_planes(self, np.ndarray features):
+		return self.__board.piece_planes(features.data)
 
 cdef extern from "cshogi.h":
 	cdef cppclass __LegalMoveList:
@@ -408,3 +411,27 @@ cdef class Parser:
 	@property
 	def win(self):
 		return self.__parser.win
+
+cdef extern from "cshogi.h":
+	cdef cppclass __NodeHash:
+		__NodeHash() except +
+		void SetHashSize(const unsigned int hash_size)
+		void NewGeneration()
+		unsigned int SearchEmptyIndex(const unsigned long long hash, const int color, const int moves)
+		unsigned int FindSameHashIndex(const unsigned long long hash, const int moves)
+
+cdef class NodeHash:
+	cdef __NodeHash __node_hash
+
+	def __cinit__(self, unsigned int hash_size):
+		self.__node_hash = __NodeHash()
+		self.__node_hash.SetHashSize(hash_size)
+
+	def new_generation(self):
+		self.__node_hash.NewGeneration()
+
+	def search_empty_index(self, unsigned long long hash, int color, int moves):
+		return self.__node_hash.SearchEmptyIndex(hash, color, moves)
+
+	def find_same_hash_index(self, unsigned long long hash, int moves):
+		return self.__node_hash.FindSameHashIndex(hash, moves)

@@ -127,7 +127,7 @@ namespace parser {
 						try {
 							scores[moves.size() - 1] = std::stoi(line.substr(4, last - 4));
 						}
-						catch (std::invalid_argument& e) {}
+						catch (std::invalid_argument&) {}
 					}
 
 				}

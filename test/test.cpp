@@ -57,6 +57,25 @@ void test_copy() {
 	std::cout << board.ply() << std::endl;
 }
 
+void test_piece_planes() {
+	__Board board;
+
+	float data[81 * 28]{};
+	board.piece_planes((char*)data);
+
+	for (int i = 0; i < 28; ++i) {
+		for (Square sq = SQ11; sq < SquareNum; ++sq)
+			std::cout << data[i * 81 + sq];
+		std::cout << std::endl;
+	}
+}
+
+void test_node_hash() {
+	__NodeHash node_hash(4096);
+
+	node_hash.NewGeneration();
+}
+
 int main()
 {
 	initTable();
@@ -66,7 +85,9 @@ int main()
 	//test_position();
 	//test_parser();
 	//test_draw();
-	test_copy();
+	//test_copy();
+	//test_piece_planes();
+	test_node_hash();
 
 	return 0;
 }

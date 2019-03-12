@@ -92,13 +92,13 @@ public:
 	}
 
 	int turn() const { return pos.turn(); }
-	int ply() const { return pos.gamePly() + states.size(); }
+	int ply() const { return pos.gamePly() + (int)states.size(); }
 	std::string toSFEN() const { return pos.toSFEN(); }
 	void toHuffmanCodedPos(char* data) const { std::memcpy(data, pos.toHuffmanCodedPos().data, sizeof(HuffmanCodedPos)); }
 	int piece(const int sq) const { return (int)pos.piece((Square)sq); }
 	bool inCheck() const { return pos.inCheck(); }
 	int mateMoveIn1Ply() { return pos.mateMoveIn1Ply().value(); }
-	long long getKey() const { return pos.getKey(); }
+	unsigned long long getKey() const { return pos.getKey(); }
 	bool moveIsPseudoLegal(const int move) const { return pos.moveIsPseudoLegal(Move(move)); }
 	bool moveIsLegal(const int move) const { return pos.moveIsLegal(Move(move)); }
 	bool is_nyugyoku() const { return nyugyoku(pos); }
@@ -146,6 +146,22 @@ public:
 		return board;
 	}
 
+	void piece_planes(char* mem) const {
+		// P1 piece 14 planes
+		// P2 piece 14 planes
+		float* data = (float*)mem;
+		for (Color c = Black; c < ColorNum; ++c) {
+			for (PieceType pt = Pawn; pt < PieceTypeNum; ++pt) {
+				Bitboard bb = pos.bbOf(pt, c);
+				while (bb) {
+					const Square sq = bb.firstOneFromSQ11();
+					data[sq] = 1.0f;
+				}
+				data += 81;
+			}
+		}
+	}
+
 	Position pos;
 
 private:
@@ -171,7 +187,7 @@ public:
 	bool end() const { return ml->end(); }
 	int move() const { return ml->move().value(); }
 	void next() { ++(*ml); }
-	int size() const { return ml->size(); }
+	int size() const { return (int)ml->size(); }
 
 private:
 	std::shared_ptr<MoveList<Legal>> ml;
@@ -197,5 +213,115 @@ unsigned short __move16(const int move) { return (unsigned short)move; }
 
 std::string __move_to_usi(const int move) { return Move(move).toUSI(); }
 std::string __move_to_csa(const int move) { return Move(move).toCSA(); }
+
+struct node_hash_t {
+	unsigned long long hash;
+	Color color;
+	int moves;
+	unsigned int generation;
+};
+
+class __NodeHash
+{
+public:
+	~__NodeHash() {
+		delete[] node_hash;
+	}
+
+	//  ハッシュテーブルのサイズの設定
+	void SetHashSize(const unsigned int hash_size) {
+		if (!(hash_size & (hash_size - 1))) {
+			uct_hash_size = hash_size;
+			uct_hash_limit = hash_size * 9 / 10;
+		}
+		else {
+			throw std::domain_error("Hash size must be 2 ^ n");
+		}
+
+		node_hash = new node_hash_t[hash_size];
+
+		if (node_hash == nullptr) {
+			throw std::bad_alloc();
+		}
+
+		used = 0;
+		enough_size = true;
+
+		for (unsigned int i = 0; i < uct_hash_size; i++) {
+			node_hash[i].generation = 0;
+		}
+	}
+
+	// 世代を新しくする
+	void NewGeneration() {
+		enough_size = true;
+		generation++;
+		// 世代を使い切ったときは1から振りなおす
+		if (generation == 0)
+			generation = 1;
+	}
+
+	// 未使用のインデックスを探す
+	unsigned int SearchEmptyIndex(const unsigned long long hash, const int color, const int moves) {
+		const unsigned int key = TransHash(hash);
+		unsigned int i = key;
+
+		do {
+			if (node_hash[i].generation != generation) {
+				node_hash[i].hash = hash;
+				node_hash[i].moves = moves;
+				node_hash[i].color = (Color)color;
+				node_hash[i].generation = generation;
+				used++;
+				if (used > uct_hash_limit)
+					enough_size = false;
+				return i;
+			}
+			i++;
+			if (i >= uct_hash_size) i = 0;
+		} while (i != key);
+
+		return uct_hash_size;
+	}
+
+	// ハッシュ値に対応するインデックスを返す
+	unsigned int FindSameHashIndex(const unsigned long long hash, const int moves) const {
+		const unsigned int key = TransHash(hash);
+		unsigned int i = key;
+
+		do {
+			if (node_hash[i].generation != generation) {
+				return uct_hash_size;
+			}
+			else if (node_hash[i].hash == hash &&
+				node_hash[i].moves == moves &&
+				node_hash[i].generation == generation) {
+				return i;
+			}
+			i++;
+			if (i >= uct_hash_size) i = 0;
+		} while (i != key);
+
+		return uct_hash_size;
+	}
+
+private:
+	//  UCT用ハッシュテーブルのサイズ
+	unsigned int uct_hash_size;
+	unsigned int uct_hash_limit;
+
+	//  UCT用ハッシュテーブル
+	node_hash_t* node_hash = nullptr;
+	unsigned int used;
+	bool enough_size;
+
+	// 世代
+	unsigned int generation;
+
+	//  インデックスの取得
+	unsigned int TransHash(const unsigned long long hash) const {
+		return ((hash & 0xffffffff) ^ ((hash >> 32) & 0xffffffff)) & (uct_hash_size - 1);
+	}
+};
 
 #endif
