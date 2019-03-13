@@ -261,6 +261,21 @@ public:
 			generation = 1;
 	}
 
+	// 古いノードを削除する
+	void DeleteOldNodes(const int moves) {
+		used = 0;
+		enough_size = true;
+
+		for (unsigned int i = 0; i < uct_hash_size; i++) {
+			if (node_hash[i].generation != 0 && node_hash[i].moves < moves) {
+				node_hash[i].generation = 0;
+			}
+			else {
+				used++;
+			}
+		}
+	}
+
 	// 未使用のインデックスを探す
 	unsigned int SearchEmptyIndex(const unsigned long long hash, const int color, const int moves) {
 		const unsigned int key = TransHash(hash);
