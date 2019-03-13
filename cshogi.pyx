@@ -417,7 +417,7 @@ cdef extern from "cshogi.h":
 		__NodeHash() except +
 		void SetHashSize(const unsigned int hash_size)
 		void Clear()
-		void DeleteOldNodes(const int moves)
+		void DeleteOldHash(const int moves)
 		unsigned int SearchEmptyIndex(const unsigned long long hash, const int color, const int moves)
 		unsigned int FindSameHashIndex(const unsigned long long hash, const int moves)
 		bool CheckEnoughSize()
@@ -432,8 +432,8 @@ cdef class NodeHash:
 	def clear(self):
 		self.__node_hash.Clear()
 
-	def delete_old_nodes(self, int moves):
-		self.__node_hash.DeleteOldNodes(moves)
+	def delete_old_hash(self, int moves):
+		self.__node_hash.DeleteOldHash(moves)
 
 	def search_empty_index(self, unsigned long long hash, int color, int moves):
 		return self.__node_hash.SearchEmptyIndex(hash, color, moves)

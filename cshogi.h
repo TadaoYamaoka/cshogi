@@ -261,17 +261,17 @@ public:
 			generation = 1;
 	}
 
-	// 古いノードを削除する
-	void DeleteOldNodes(const int moves) {
+	// 古いハッシュを削除する
+	void DeleteOldHash(const int moves) {
 		used = 0;
 		enough_size = true;
 
 		for (unsigned int i = 0; i < uct_hash_size; i++) {
-			if (node_hash[i].generation != 0 && node_hash[i].moves < moves) {
-				node_hash[i].generation = 0;
-			}
-			else {
-				used++;
+			if (node_hash[i].generation != 0) {
+				if (node_hash[i].moves < moves)
+					node_hash[i].generation = 0;
+				else
+					used++;
 			}
 		}
 	}
