@@ -420,6 +420,7 @@ cdef extern from "cshogi.h":
 		void DeleteOldNodes(const int moves)
 		unsigned int SearchEmptyIndex(const unsigned long long hash, const int color, const int moves)
 		unsigned int FindSameHashIndex(const unsigned long long hash, const int moves)
+		bool CheckEnoughSize()
 
 cdef class NodeHash:
 	cdef __NodeHash __node_hash
@@ -439,3 +440,7 @@ cdef class NodeHash:
 
 	def find_same_hash_index(self, unsigned long long hash, int moves):
 		return self.__node_hash.FindSameHashIndex(hash, moves)
+
+	@property
+	def enough_size(self):
+		return self.__node_hash.CheckEnoughSize()

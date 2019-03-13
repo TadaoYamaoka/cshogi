@@ -320,6 +320,9 @@ public:
 		return uct_hash_size;
 	}
 
+	//  ハッシュ表が埋まっていないか確認
+	bool CheckEnoughSize() const { return enough_size; }
+
 private:
 	//  UCT用ハッシュテーブルのサイズ
 	unsigned int uct_hash_size;
