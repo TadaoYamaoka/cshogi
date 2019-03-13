@@ -323,6 +323,9 @@ public:
 	//  ハッシュ表が埋まっていないか確認
 	bool CheckEnoughSize() const { return enough_size; }
 
+	// ハッシュ使用率を取得
+	double GetHashUsageRate() const { return double(used) / uct_hash_size; }
+
 private:
 	//  UCT用ハッシュテーブルのサイズ
 	unsigned int uct_hash_size;

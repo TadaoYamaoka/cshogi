@@ -421,6 +421,7 @@ cdef extern from "cshogi.h":
 		unsigned int SearchEmptyIndex(const unsigned long long hash, const int color, const int moves)
 		unsigned int FindSameHashIndex(const unsigned long long hash, const int moves)
 		bool CheckEnoughSize()
+		double GetHashUsageRate()
 
 cdef class NodeHash:
 	cdef __NodeHash __node_hash
@@ -444,3 +445,7 @@ cdef class NodeHash:
 	@property
 	def enough_size(self):
 		return self.__node_hash.CheckEnoughSize()
+
+	@property
+	def usage_rate(self):
+		return self.__node_hash.GetHashUsageRate()
