@@ -252,8 +252,8 @@ public:
 		}
 	}
 
-	// 世代を新しくする
-	void NewGeneration() {
+	// ハッシュをクリアする（世代を新しくする）
+	void Clear() {
 		enough_size = true;
 		generation++;
 		// 世代を使い切ったときは1から振りなおす
@@ -316,7 +316,7 @@ private:
 	bool enough_size;
 
 	// 世代
-	unsigned int generation;
+	unsigned int generation = 1;
 
 	//  インデックスの取得
 	unsigned int TransHash(const unsigned long long hash) const {
