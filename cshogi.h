@@ -216,8 +216,8 @@ std::string __move_to_csa(const int move) { return Move(move).toCSA(); }
 
 struct node_hash_t {
 	unsigned long long hash;
-	Color color;
 	int moves;
+	int repetition;
 	unsigned int generation;
 };
 
@@ -277,7 +277,7 @@ public:
 	}
 
 	// 未使用のインデックスを探す
-	unsigned int SearchEmptyIndex(const unsigned long long hash, const int color, const int moves) {
+	unsigned int SearchEmptyIndex(const unsigned long long hash, const int moves, const int repetition) {
 		const unsigned int key = TransHash(hash);
 		unsigned int i = key;
 
@@ -285,7 +285,7 @@ public:
 			if (node_hash[i].generation != generation) {
 				node_hash[i].hash = hash;
 				node_hash[i].moves = moves;
-				node_hash[i].color = (Color)color;
+				node_hash[i].repetition = repetition;
 				node_hash[i].generation = generation;
 				used++;
 				if (used > uct_hash_limit)
@@ -300,7 +300,7 @@ public:
 	}
 
 	// ハッシュ値に対応するインデックスを返す
-	unsigned int FindSameHashIndex(const unsigned long long hash, const int moves) const {
+	unsigned int FindSameHashIndex(const unsigned long long hash, const int moves, const int repetition) const {
 		const unsigned int key = TransHash(hash);
 		unsigned int i = key;
 
@@ -310,6 +310,7 @@ public:
 			}
 			else if (node_hash[i].hash == hash &&
 				node_hash[i].moves == moves &&
+				node_hash[i].repetition == repetition &&
 				node_hash[i].generation == generation) {
 				return i;
 			}

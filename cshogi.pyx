@@ -418,8 +418,8 @@ cdef extern from "cshogi.h":
 		void SetHashSize(const unsigned int hash_size)
 		void Clear()
 		void DeleteOldHash(const int moves)
-		unsigned int SearchEmptyIndex(const unsigned long long hash, const int color, const int moves)
-		unsigned int FindSameHashIndex(const unsigned long long hash, const int moves)
+		unsigned int SearchEmptyIndex(const unsigned long long hash, const int moves, int repetition)
+		unsigned int FindSameHashIndex(const unsigned long long hash, const int moves, const int repetition)
 		bool CheckEnoughSize()
 		double GetHashUsageRate()
 
@@ -436,11 +436,11 @@ cdef class NodeHash:
 	def delete_old_hash(self, int moves):
 		self.__node_hash.DeleteOldHash(moves)
 
-	def search_empty_index(self, unsigned long long hash, int color, int moves):
-		return self.__node_hash.SearchEmptyIndex(hash, color, moves)
+	def search_empty_index(self, unsigned long long hash, int moves, int repetition=0):
+		return self.__node_hash.SearchEmptyIndex(hash, moves, repetition)
 
-	def find_same_hash_index(self, unsigned long long hash, int moves):
-		return self.__node_hash.FindSameHashIndex(hash, moves)
+	def find_same_hash_index(self, unsigned long long hash, int moves, int repetition=0):
+		return self.__node_hash.FindSameHashIndex(hash, moves, repetition)
 
 	@property
 	def enough_size(self):
