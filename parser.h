@@ -112,7 +112,7 @@ namespace parser {
 				else if (line[0] == '\'') {
 					// Commnet
 					// rating
-					if (line.substr(0, 128) == "'black_rate:") {
+					if (line.substr(0, 12) == "'black_rate:") {
 						auto first = line.find_first_of(":", 12);
 						if (first != std::string::npos) {
 							ratings[0] = std::stof(line.substr(first + 1));
