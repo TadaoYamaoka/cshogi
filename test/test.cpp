@@ -3,7 +3,7 @@
 
 void test_parser() {
 	parser::__Parser parser;
-	parser.parse_csa_file(R"(R:\csa\0\wdoor+floodgate-600-10F+ABC-XYZ+pinaniwa+20160519230005.csa)");
+	parser.parse_csa_file(R"(R:\test\wdoor+floodgate-600-10+catshogi+tanuki-_5500U+20151011200002.csa)");
 
 	std::cout << parser.sfen << std::endl;
 	for (int m : parser.moves) {
@@ -71,9 +71,10 @@ void test_piece_planes() {
 }
 
 void test_node_hash() {
-	__NodeHash node_hash(4096);
+	__NodeHash node_hash;
+	node_hash.SetHashSize(4096);
 
-	node_hash.NewGeneration();
+	node_hash.Clear();
 }
 
 int main()
@@ -83,11 +84,11 @@ int main()
 	HuffmanCodedPos::init();
 
 	//test_position();
-	//test_parser();
+	test_parser();
 	//test_draw();
 	//test_copy();
 	//test_piece_planes();
-	test_node_hash();
+	//test_node_hash();
 
 	return 0;
 }

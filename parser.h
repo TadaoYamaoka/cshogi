@@ -10,6 +10,12 @@
 namespace parser {
 	std::vector<char> COLOR_SYMBOLS = { '+', '-' };
 
+	std::string& rtrim(std::string& str, const std::string& chars = " ")
+	{
+		str.erase(str.find_last_not_of(chars) + 1);
+		return str;
+	}
+
 	class StringToPieceCSA : public std::map<std::string, Piece> {
 	public:
 		StringToPieceCSA() {
@@ -151,7 +157,7 @@ namespace parser {
 					else {
 						if (!pos_initialized)
 							throw std::domain_error("Board infomation is not defined before a special move");
-						Move move = csaToMove(pos, line.substr(1));
+						Move move = csaToMove(pos, rtrim(line.substr(1)));
 						moves.push_back(move.value());
 						states->push_back(StateInfo());
 						pos.doMove(move, states->back());
