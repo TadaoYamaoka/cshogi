@@ -163,6 +163,7 @@ cdef extern from "cshogi.h":
 		vector[int] pieces()
 		bool is_nyugyoku()
 		void piece_planes(char* mem)
+		bool isOK()
 
 cdef class Board:
 	cdef __Board __board
@@ -289,6 +290,9 @@ cdef class Board:
 
 	def piece_planes(self, np.ndarray features):
 		return self.__board.piece_planes(features.data)
+
+	def is_ok(self):
+		return self.__board.isOK()
 
 cdef extern from "cshogi.h":
 	cdef cppclass __LegalMoveList:

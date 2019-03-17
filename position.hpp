@@ -398,10 +398,8 @@ public:
 
     void setStartPosPly(const Ply ply) { gamePly_ = ply; }
 
-#if !defined NDEBUG
     // for debug
     bool isOK() const;
-#endif
 
     static void initZobrist();
 

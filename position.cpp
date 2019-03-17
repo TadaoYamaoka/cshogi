@@ -1599,7 +1599,6 @@ HuffmanCodedPos Position::toHuffmanCodedPos() const {
     return result;
 }
 
-#if !defined NDEBUG
 bool Position::isOK() const {
     static Key prevKey;
     const bool debugAll = true;
@@ -1704,7 +1703,6 @@ incorrect_position:
     print(std::cout);
     return false;
 }
-#endif
 
 Key Position::computeBoardKey() const {
     Key result = 0;
