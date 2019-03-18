@@ -10,10 +10,9 @@
 namespace parser {
 	std::vector<char> COLOR_SYMBOLS = { '+', '-' };
 
-	std::string& rtrim(std::string& str, const std::string& chars = " ")
+	std::string rtrim(const std::string& str, const std::string& chars = " ")
 	{
-		str.erase(str.find_last_not_of(chars) + 1);
-		return str;
+		return str.substr(0, str.find_last_not_of(chars) + 1);
 	}
 
 	class StringToPieceCSA : public std::map<std::string, Piece> {
