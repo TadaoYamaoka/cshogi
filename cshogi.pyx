@@ -136,8 +136,8 @@ cdef extern from "cshogi.h":
 		__Board(const string& sfen) except +
 		__Board(const __Board& board) except +
 		bool set(const string& sfen)
-		bool set_hcp(const unsigned char* hcp)
-		bool set_psfen(const char* psfen)
+		bool set_hcp(char* hcp)
+		bool set_psfen(char* psfen)
 		void reset()
 		string dump()
 		void push(const int move)
@@ -186,12 +186,10 @@ cdef class Board:
 		self.__board.set(sfen)
 
 	def set_hcp(self, np.ndarray hcp):
-		cdef const unsigned char[::1] data = hcp
-		return self.__board.set_hcp(&data[0])
+		return self.__board.set_hcp(hcp.data)
 
 	def set_psfen(self, np.ndarray psfen):
-		cdef char[::1] data = psfen
-		return self.__board.set_psfen(&data[0])
+		return self.__board.set_psfen(psfen.data)
 
 	def reset(self):
 		self.__board.reset()
