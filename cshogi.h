@@ -5,11 +5,16 @@
 #include "position.hpp"
 #include "generateMoves.hpp"
 #include "usi.hpp"
+#include "book.hpp"
 
 bool nyugyoku(const Position& pos);
 
 void HuffmanCodedPos_init() {
 	HuffmanCodedPos::init();
+}
+
+void Book_init() {
+	Book::init();
 }
 
 std::string __to_usi(const int move) {
@@ -161,6 +166,10 @@ public:
 				data += 81;
 			}
 		}
+	}
+
+	unsigned long long bookKey() {
+		return Book::bookKey(pos);
 	}
 
 	Position pos;

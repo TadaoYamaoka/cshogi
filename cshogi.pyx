@@ -1,4 +1,4 @@
-﻿# distutils: sources = ["bitboard.cpp", "common.cpp", "generateMoves.cpp", "hand.cpp", "init.cpp", "move.cpp", "mt64bit.cpp", "position.cpp", "search.cpp", "square.cpp", "usi.cpp"]
+﻿# distutils: sources = ["bitboard.cpp", "common.cpp", "generateMoves.cpp", "hand.cpp", "init.cpp", "move.cpp", "mt64bit.cpp", "position.cpp", "search.cpp", "square.cpp", "usi.cpp", "book.cpp"]
 # distutils: language = c++
 # distutils: define_macros=HAVE_SSE4
 # distutils: define_macros=HAVE_BMI2
@@ -40,6 +40,14 @@ PackedSfenValue = np.dtype([
     ('game_result', np.uint8),
     ('padding', np.uint8),
     ])
+
+dtypeKey = np.dtype(np.uint64)
+BookEntry = np.dtype([
+    ('key', dtypeKey),
+    ('fromToPro', dtypeMove16),
+    ('count', np.uint16),
+    ('score', np.int32),
+	])
 
 SQUARES = [
 	A1, B1, C1, D1, E1, F1, G1, H1, I1,
@@ -117,8 +125,10 @@ Position.initZobrist()
 
 cdef extern from "cshogi.h":
 	void HuffmanCodedPos_init()
+	void Book_init()
 
 HuffmanCodedPos_init()
+Book_init()
 
 cdef extern from "cshogi.h":
 	string __to_usi(const int move)
@@ -164,6 +174,7 @@ cdef extern from "cshogi.h":
 		bool is_nyugyoku()
 		void piece_planes(char* mem)
 		bool isOK()
+		unsigned long long bookKey()
 
 cdef class Board:
 	cdef __Board __board
@@ -291,6 +302,9 @@ cdef class Board:
 
 	def is_ok(self):
 		return self.__board.isOK()
+
+	def book_key(self):
+		return self.__board.bookKey()
 
 cdef extern from "cshogi.h":
 	cdef cppclass __LegalMoveList:

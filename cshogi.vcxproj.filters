@@ -54,6 +54,9 @@
     <ClCompile Include="search.cpp">
       <Filter>ソース ファイル\Apery</Filter>
     </ClCompile>
+    <ClCompile Include="book.cpp">
+      <Filter>ソース ファイル\Apery</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bitboard.hpp">
@@ -103,6 +106,9 @@
     </ClInclude>
     <ClInclude Include="parser.h">
       <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="book.hpp">
+      <Filter>ヘッダー ファイル\Apery</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
