@@ -51,6 +51,9 @@
     <ClCompile Include="..\usi.cpp">
       <Filter>ソース ファイル\cshogi</Filter>
     </ClCompile>
+    <ClCompile Include="..\book.cpp">
+      <Filter>ソース ファイル\cshogi</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="read_csa.py" />

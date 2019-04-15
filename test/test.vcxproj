@@ -145,6 +145,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\bitboard.cpp" />
+    <ClCompile Include="..\book.cpp" />
     <ClCompile Include="..\common.cpp" />
     <ClCompile Include="..\generateMoves.cpp" />
     <ClCompile Include="..\hand.cpp" />

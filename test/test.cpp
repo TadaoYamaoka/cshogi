@@ -70,13 +70,6 @@ void test_piece_planes() {
 	}
 }
 
-void test_node_hash() {
-	__NodeHash node_hash;
-	node_hash.SetHashSize(4096);
-
-	node_hash.Clear();
-}
-
 int main()
 {
 	initTable();
@@ -88,7 +81,6 @@ int main()
 	//test_draw();
 	//test_copy();
 	//test_piece_planes();
-	//test_node_hash();
 
 	return 0;
 }
