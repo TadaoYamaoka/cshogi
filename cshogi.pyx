@@ -125,9 +125,11 @@ Position.initZobrist()
 
 cdef extern from "cshogi.h":
 	void HuffmanCodedPos_init()
+	void PackedSfen_init()
 	void Book_init()
 
 HuffmanCodedPos_init()
+PackedSfen_init()
 Book_init()
 
 cdef extern from "cshogi.h":

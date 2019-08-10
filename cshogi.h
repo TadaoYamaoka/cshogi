@@ -13,6 +13,10 @@ void HuffmanCodedPos_init() {
 	HuffmanCodedPos::init();
 }
 
+void PackedSfen_init() {
+	PackedSfen::init();
+}
+
 void Book_init() {
 	Book::init();
 }
