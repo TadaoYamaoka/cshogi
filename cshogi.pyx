@@ -111,6 +111,63 @@ REPETITION_TYPES = [
     REPETITION_SUPERIOR, REPETITION_INFERIOR
 ] = range(6)
 
+SVG_PIECE_DEFS = [
+	'<g id="black-pawn"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">歩</text></g>',
+	'<g id="black-lance"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">香</text></g>',
+	'<g id="black-knight"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">桂</text></g>',
+	'<g id="black-silver"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">銀</text></g>',
+	'<g id="black-gold"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">金</text></g>',
+	'<g id="black-bishop"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">角</text></g>',
+	'<g id="black-rook"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">飛</text></g>',
+	'<g id="black-king"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">王</text></g>',
+	'<g id="black-pro-pawn"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">と</text></g>',
+	'<g id="black-pro-lance" transform="scale(1.0, 0.5)"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="18">成</text><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="34">香</text></g>',
+	'<g id="black-pro-knight" transform="scale(1.0, 0.5)"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="18">成</text><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="34">桂</text></g>',
+	'<g id="black-pro-silver" transform="scale(1.0, 0.5)"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="18">成</text><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="34">銀</text></g>',
+	'<g id="black-horse"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">馬</text></g>',
+	'<g id="black-dragon"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">龍</text></g>',
+	'<g id="white-pawn" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">歩</text></g>',
+	'<g id="white-lance" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">香</text></g>',
+	'<g id="white-knight" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">桂</text></g>',
+	'<g id="white-silver" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">銀</text></g>',
+	'<g id="white-gold" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">金</text></g>',
+	'<g id="white-bishop" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">角</text></g>',
+	'<g id="white-rook" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">飛</text></g>',
+	'<g id="white-king" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">王</text></g>',
+	'<g id="white-pro-pawn" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">と</text></g>',
+	'<g id="white-pro-lance" transform="scale(1.0, 0.5) rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-22">成</text><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-6">香</text></g>',
+	'<g id="white-pro-knight" transform="scale(1.0, 0.5) rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-22">成</text><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-6">桂</text></g>',
+	'<g id="white-pro-silver" transform="scale(1.0, 0.5) rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-22">成</text><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-6">銀</text></g>',
+	'<g id="white-horse" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">馬</text></g>',
+	'<g id="white-dragon" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">龍</text></g>',
+]
+SVG_PIECE_DEF_IDS = [None,
+	"black-pawn", "black-lance", "black-knight", "black-silver",
+	"black-bishop", "black-rook",
+	"black-gold",
+	"black-king",
+	"black-pro-pawn", "black-pro-lance", "black-pro-knight", "black-pro-silver",
+	"black-horse", "black-dragon", None, None,
+	"white-pawn", "white-lance", "white-knight", "white-silver",
+	"white-bishop", "white-rook",
+	"white-gold",
+	"white-king",
+	"white-pro-pawn", "white-pro-lance", "white-pro-knight", "white-pro-silver",
+	"white-horse", "white-dragon",
+]
+HAND_PIECE_STRS = [
+	"歩", "香", "桂", "銀",
+	"金",
+	"角", "飛",
+]
+JAPANESE_NUMBERS = [ None, "一", "二", "三", "四", "五", "六", "七", "八", "九" ]
+SVG_SQUARES = '<g stroke="black"><rect x="20" y="10" width="181" height="181" fill="none" stroke-width="1.5" /><line x1="20.5" y1="30.5" x2="200.5" y2="30.5" stroke-width="1.0" /><line x1="20.5" y1="50.5" x2="200.5" y2="50.5" stroke-width="1.0" /><line x1="20.5" y1="70.5" x2="200.5" y2="70.5" stroke-width="1.0" /><line x1="20.5" y1="90.5" x2="200.5" y2="90.5" stroke-width="1.0" /><line x1="20.5" y1="110.5" x2="200.5" y2="110.5" stroke-width="1.0" /><line x1="20.5" y1="130.5" x2="200.5" y2="130.5" stroke-width="1.0" /><line x1="20.5" y1="150.5" x2="200.5" y2="150.5" stroke-width="1.0" /><line x1="20.5" y1="170.5" x2="200.5" y2="170.5" stroke-width="1.0" /><line x1="40.5" y1="10.5" x2="40.5" y2="203.5" stroke-width="1.0" /><line x1="60.5" y1="10.5" x2="60.5" y2="203.5" stroke-width="1.0" /><line x1="80.5" y1="10.5" x2="80.5" y2="203.5" stroke-width="1.0" /><line x1="100.5" y1="10.5" x2="100.5" y2="203.5" stroke-width="1.0" /><line x1="120.5" y1="10.5" x2="120.5" y2="203.5" stroke-width="1.0" /><line x1="140.5" y1="10.5" x2="140.5" y2="203.5" stroke-width="1.0" /><line x1="160.5" y1="10.5" x2="160.5" y2="203.5" stroke-width="1.0" /><line x1="180.5" y1="10.5" x2="180.5" y2="203.5" stroke-width="1.0" /></g>'
+SVG_COORDINATES = '<g><text font-family="serif" text-anchor="middle" font-size="8" x="30.5" y="8">9</text><text font-family="serif" text-anchor="middle" font-size="8" x="50.5" y="8">8</text><text font-family="serif" text-anchor="middle" font-size="8" x="70.5" y="8">7</text><text font-family="serif" text-anchor="middle" font-size="8" x="90.5" y="8">6</text><text font-family="serif" text-anchor="middle" font-size="8" x="110.5" y="8">5</text><text font-family="serif" text-anchor="middle" font-size="8" x="130.5" y="8">4</text><text font-family="serif" text-anchor="middle" font-size="8" x="150.5" y="8">3</text><text font-family="serif" text-anchor="middle" font-size="8" x="170.5" y="8">2</text><text font-family="serif" text-anchor="middle" font-size="8" x="190.5" y="8">1</text><text font-family="serif" font-size="8" x="203.5" y="23">一</text><text font-family="serif" font-size="8" x="203.5" y="43">二</text><text font-family="serif" font-size="8" x="203.5" y="63">三</text><text font-family="serif" font-size="8" x="203.5" y="83">四</text><text font-family="serif" font-size="8" x="203.5" y="103">五</text><text font-family="serif" font-size="8" x="203.5" y="123">六</text><text font-family="serif" font-size="8" x="203.5" y="143">七</text><text font-family="serif" font-size="8" x="203.5" y="163">八</text><text font-family="serif" font-size="8" x="203.5" y="183">九</text></g>'
+
+class SvgWrapper(str):
+	def _repr_svg_(self):
+		return self
+
 cdef extern from "init.hpp":
 	void initTable()
 
@@ -307,6 +364,94 @@ cdef class Board:
 
 	def book_key(self):
 		return self.__board.bookKey()
+
+	def to_svg(self, lastmove = None):
+		import xml.etree.ElementTree as ET
+
+		width = 230
+		height = 192
+
+		svg = ET.Element("svg", {
+			"xmlns": "http://www.w3.org/2000/svg",
+			"version": "1.1",
+			"xmlns:xlink": "http://www.w3.org/1999/xlink",
+			"width": str(width),
+			"height": str(height),
+			"viewBox": "0 0 {} {}".format(width, height),
+		})
+
+		defs = ET.SubElement(svg, "defs")
+		for piece_def in SVG_PIECE_DEFS:
+			defs.append(ET.fromstring(piece_def))
+
+		if lastmove is not None:
+			i, j = divmod(move_to(lastmove), 9)
+			ET.SubElement(svg, "rect", {
+				"x": str(20.5 + (8 - i) * 20),
+				"y": str(10.5 + j * 20),
+				"width": str(20),
+				"height": str(20),
+				"fill": "#ff8d67"
+			})
+
+		svg.append(ET.fromstring(SVG_SQUARES))
+		svg.append(ET.fromstring(SVG_COORDINATES))
+
+		for sq in SQUARES:
+			pc = self.__board.piece(sq)
+			if pc != NONE:
+				i, j = divmod(sq, 9)
+				x = 20.5 + (8 - i) * 20
+				y = 10.5 + j * 20
+
+				ET.SubElement(svg, "use", {
+					"xlink:href": "#{}".format(SVG_PIECE_DEF_IDS[pc]),
+					"x": str(x),
+					"y": str(y),
+				})
+
+		hand_pieces = [[], []]
+		for c in COLORS:
+			i = 0
+			for hp, n in zip(HAND_PIECES, self.__board.pieces_in_hand(c)):
+				if n >= 2:
+					hand_pieces[c].append((i, JAPANESE_NUMBERS[n]))
+					i += 1
+				if n >= 1:
+					hand_pieces[c].append((i, HAND_PIECE_STRS[hp]))
+					i += 1
+			i += 1
+			hand_pieces[c].append((i, "手"))
+			i += 1
+			hand_pieces[c].append((i, "先" if c == BLACK else "後"))
+			i += 1
+			hand_pieces[c].append(( i, "☗" if c == BLACK else "☖"))
+
+		for c in COLORS:
+			if c == BLACK:
+				x = 214
+				y = 190
+			else:
+				x = -16
+				y = -10
+			scale = 1
+			if len(hand_pieces[c]) + 1 > 13:
+				scale = 13.0 / (len(hand_pieces[c]) + 1)
+			for i, text in hand_pieces[c]:
+				e = ET.SubElement(svg, "text", {
+					"font-family": "serif",
+					"font-size": str(14 * scale),
+				})
+				e.set("x", str(x))
+				e.set("y", str(y - 14 * scale * i))
+				if c == WHITE:
+					e.set("transform", "rotate(180)")
+				e.text = text
+
+		return SvgWrapper(ET.tostring(svg).decode("utf-8"))
+	
+	def _repr_svg_(self):
+		return self.to_svg()
 
 cdef extern from "cshogi.h":
 	cdef cppclass __LegalMoveList:
