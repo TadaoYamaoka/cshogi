@@ -11,6 +11,8 @@ from libcpp cimport bool
 import numpy as np
 cimport numpy as np
 
+import locale
+
 dtypeHcp = np.dtype((np.uint8, 32))
 dtypeEval = np.dtype(np.int16)
 dtypeMove16 = np.dtype(np.int16)
@@ -162,7 +164,7 @@ HAND_PIECE_STRS = [
 ]
 JAPANESE_NUMBERS = [ None, "一", "二", "三", "四", "五", "六", "七", "八", "九" ]
 SVG_SQUARES = '<g stroke="black"><rect x="20" y="10" width="181" height="181" fill="none" stroke-width="1.5" /><line x1="20.5" y1="30.5" x2="200.5" y2="30.5" stroke-width="1.0" /><line x1="20.5" y1="50.5" x2="200.5" y2="50.5" stroke-width="1.0" /><line x1="20.5" y1="70.5" x2="200.5" y2="70.5" stroke-width="1.0" /><line x1="20.5" y1="90.5" x2="200.5" y2="90.5" stroke-width="1.0" /><line x1="20.5" y1="110.5" x2="200.5" y2="110.5" stroke-width="1.0" /><line x1="20.5" y1="130.5" x2="200.5" y2="130.5" stroke-width="1.0" /><line x1="20.5" y1="150.5" x2="200.5" y2="150.5" stroke-width="1.0" /><line x1="20.5" y1="170.5" x2="200.5" y2="170.5" stroke-width="1.0" /><line x1="40.5" y1="10.5" x2="40.5" y2="203.5" stroke-width="1.0" /><line x1="60.5" y1="10.5" x2="60.5" y2="203.5" stroke-width="1.0" /><line x1="80.5" y1="10.5" x2="80.5" y2="203.5" stroke-width="1.0" /><line x1="100.5" y1="10.5" x2="100.5" y2="203.5" stroke-width="1.0" /><line x1="120.5" y1="10.5" x2="120.5" y2="203.5" stroke-width="1.0" /><line x1="140.5" y1="10.5" x2="140.5" y2="203.5" stroke-width="1.0" /><line x1="160.5" y1="10.5" x2="160.5" y2="203.5" stroke-width="1.0" /><line x1="180.5" y1="10.5" x2="180.5" y2="203.5" stroke-width="1.0" /></g>'
-SVG_COORDINATES = '<g><text font-family="serif" text-anchor="middle" font-size="8" x="30.5" y="8">9</text><text font-family="serif" text-anchor="middle" font-size="8" x="50.5" y="8">8</text><text font-family="serif" text-anchor="middle" font-size="8" x="70.5" y="8">7</text><text font-family="serif" text-anchor="middle" font-size="8" x="90.5" y="8">6</text><text font-family="serif" text-anchor="middle" font-size="8" x="110.5" y="8">5</text><text font-family="serif" text-anchor="middle" font-size="8" x="130.5" y="8">4</text><text font-family="serif" text-anchor="middle" font-size="8" x="150.5" y="8">3</text><text font-family="serif" text-anchor="middle" font-size="8" x="170.5" y="8">2</text><text font-family="serif" text-anchor="middle" font-size="8" x="190.5" y="8">1</text><text font-family="serif" font-size="8" x="203.5" y="23">一</text><text font-family="serif" font-size="8" x="203.5" y="43">二</text><text font-family="serif" font-size="8" x="203.5" y="63">三</text><text font-family="serif" font-size="8" x="203.5" y="83">四</text><text font-family="serif" font-size="8" x="203.5" y="103">五</text><text font-family="serif" font-size="8" x="203.5" y="123">六</text><text font-family="serif" font-size="8" x="203.5" y="143">七</text><text font-family="serif" font-size="8" x="203.5" y="163">八</text><text font-family="serif" font-size="8" x="203.5" y="183">九</text></g>'
+SVG_COORDINATES = '<g><text font-family="serif" text-anchor="middle" font-size="9" x="30.5" y="8">9</text><text font-family="serif" text-anchor="middle" font-size="9" x="50.5" y="8">8</text><text font-family="serif" text-anchor="middle" font-size="9" x="70.5" y="8">7</text><text font-family="serif" text-anchor="middle" font-size="9" x="90.5" y="8">6</text><text font-family="serif" text-anchor="middle" font-size="9" x="110.5" y="8">5</text><text font-family="serif" text-anchor="middle" font-size="9" x="130.5" y="8">4</text><text font-family="serif" text-anchor="middle" font-size="9" x="150.5" y="8">3</text><text font-family="serif" text-anchor="middle" font-size="9" x="170.5" y="8">2</text><text font-family="serif" text-anchor="middle" font-size="9" x="190.5" y="8">1</text><text font-family="serif" font-size="9" x="203.5" y="23">一</text><text font-family="serif" font-size="9" x="203.5" y="43">二</text><text font-family="serif" font-size="9" x="203.5" y="63">三</text><text font-family="serif" font-size="9" x="203.5" y="83">四</text><text font-family="serif" font-size="9" x="203.5" y="103">五</text><text font-family="serif" font-size="9" x="203.5" y="123">六</text><text font-family="serif" font-size="9" x="203.5" y="143">七</text><text font-family="serif" font-size="9" x="203.5" y="163">八</text><text font-family="serif" font-size="9" x="203.5" y="183">九</text></g>'
 
 class SvgWrapper(str):
 	def _repr_svg_(self):
@@ -238,9 +240,11 @@ cdef extern from "cshogi.h":
 cdef class Board:
 	cdef __Board __board
 
-	def __cinit__(self, string sfen=b'', Board board=None):
-		if sfen != b'':
-			self.__board = __Board(sfen)
+	def __cinit__(self, str sfen=None, Board board=None):
+		cdef string sfen_b
+		if sfen:
+			sfen_b = sfen.encode('ascii')
+			self.__board = __Board(sfen_b)
 		elif board is not None:
 			self.__board = __Board(board.__board)
 		else:
@@ -252,8 +256,9 @@ cdef class Board:
 	def copy(self):
 		return Board(board=self)
 
-	def set_sfen(self, string sfen):
-		self.__board.set(sfen)
+	def set_sfen(self, str sfen):
+		cdef string sfen_b = sfen.encode('ascii')
+		self.__board.set(sfen_b)
 
 	def set_hcp(self, np.ndarray hcp):
 		return self.__board.set_hcp(hcp.data)
@@ -265,18 +270,20 @@ cdef class Board:
 		self.__board.reset()
 
 	def __repr__(self):
-		return self.__board.dump().decode('utf-8')
+		return self.__board.dump().decode('ascii')
 
 	def push(self, int move):
 		self.__board.push(move)
 
-	def push_usi(self, string usi):
-		move = self.__board.move_from_usi(usi)
+	def push_usi(self, str usi):
+		cdef string usi_b = usi.encode('ascii')
+		move = self.__board.move_from_usi(usi_b)
 		self.__board.push(move)
 		return move
 
-	def push_csa(self, string csa):
-		move = self.__board.move_from_csa(csa)
+	def push_csa(self, str csa):
+		cdef string csa_b = csa.encode('ascii')
+		move = self.__board.move_from_csa(csa_b)
 		self.__board.push(move)
 		return move
 
@@ -300,11 +307,13 @@ cdef class Board:
 	def drop_move(self, int to_square, int drop_piece_type):
 		return self.__board.drop_move(to_square, drop_piece_type)
 
-	def move_from_usi(self, string usi):
-		return self.__board.move_from_usi(usi)
+	def move_from_usi(self, str usi):
+		cdef string usi_b = usi.encode('ascii')
+		return self.__board.move_from_usi(usi_b)
 
-	def move_from_csa(self, string csa):
-		return self.__board.move_from_csa(csa)
+	def move_from_csa(self, str csa):
+		cdef string csa_b = csa.encode('ascii')
+		return self.__board.move_from_csa(csa_b)
 
 	def move_from_move16(self, unsigned short move16):
 		return self.__board.move_from_move16(move16)
@@ -322,7 +331,7 @@ cdef class Board:
 		return self.__board.ply()
 
 	def sfen(self):
-		return self.__board.toSFEN()
+		return self.__board.toSFEN().decode('ascii')
 
 	def to_hcp(self, np.ndarray hcp):
 		return self.__board.toHuffmanCodedPos(hcp.data)
@@ -391,8 +400,17 @@ cdef class Board:
 				"y": str(10.5 + j * 20),
 				"width": str(20),
 				"height": str(20),
-				"fill": "#ff8d67"
+				"fill": "#f6b94d"
 			})
+			if not move_is_drop(lastmove):
+				i, j = divmod(move_from(lastmove), 9)
+				ET.SubElement(svg, "rect", {
+					"x": str(20.5 + (8 - i) * 20),
+					"y": str(10.5 + j * 20),
+					"width": str(20),
+					"height": str(20),
+					"fill": "#fdf0e3"
+				})
 
 		svg.append(ET.fromstring(SVG_SQUARES))
 		svg.append(ET.fromstring(SVG_COORDINATES))
@@ -517,10 +535,13 @@ def move16(int move):
 	return __move16(move)
 
 def move_to_usi(int move):
-	return __move_to_usi(move)
+	return __move_to_usi(move).decode('ascii')
 
 def move_to_csa(int move):
-	return __move_to_csa(move)
+	return __move_to_csa(move).decode('ascii')
+
+def opponent(color):
+	return BLACK if color == WHITE else WHITE
 
 cdef extern from "parser.h" namespace "parser":
 	cdef cppclass __Parser:
@@ -541,11 +562,13 @@ cdef class Parser:
 	def __cinit__(self):
 		self.__parser = __Parser()
 
-	def parse_csa_file(self, string path):
-		self.__parser.parse_csa_file(path)
+	def parse_csa_file(self, str path):
+		cdef string path_b = path.encode(locale.getpreferredencoding())
+		self.__parser.parse_csa_file(path_b)
 
-	def parse_csa_str(self, string csa_str):
-		self.__parser.parse_csa_str(csa_str)
+	def parse_csa_str(self, str csa_str):
+		cdef string csa_str_b = csa_str.encode('utf-8')
+		self.__parser.parse_csa_str(csa_str_b)
 
 	@property
 	def sfen(self):
