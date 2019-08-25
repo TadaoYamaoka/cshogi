@@ -1,4 +1,4 @@
-﻿# distutils: sources = ["bitboard.cpp", "common.cpp", "generateMoves.cpp", "hand.cpp", "init.cpp", "move.cpp", "mt64bit.cpp", "position.cpp", "search.cpp", "square.cpp", "usi.cpp", "book.cpp"]
+﻿# distutils: sources = ["src/bitboard.cpp", "src/common.cpp", "src/generateMoves.cpp", "src/hand.cpp", "src/init.cpp", "src/move.cpp", "src/mt64bit.cpp", "src/position.cpp", "src/search.cpp", "src/square.cpp", "src/usi.cpp", "src/book.cpp"]
 # distutils: language = c++
 # distutils: define_macros=HAVE_SSE4
 # distutils: define_macros=HAVE_BMI2

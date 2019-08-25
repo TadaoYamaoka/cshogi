@@ -21,94 +21,94 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="bitboard.cpp">
-      <Filter>ソース ファイル\Apery</Filter>
-    </ClCompile>
-    <ClCompile Include="common.cpp">
-      <Filter>ソース ファイル\Apery</Filter>
-    </ClCompile>
-    <ClCompile Include="generateMoves.cpp">
-      <Filter>ソース ファイル\Apery</Filter>
-    </ClCompile>
-    <ClCompile Include="hand.cpp">
-      <Filter>ソース ファイル\Apery</Filter>
-    </ClCompile>
-    <ClCompile Include="init.cpp">
-      <Filter>ソース ファイル\Apery</Filter>
-    </ClCompile>
-    <ClCompile Include="move.cpp">
-      <Filter>ソース ファイル\Apery</Filter>
-    </ClCompile>
-    <ClCompile Include="mt64bit.cpp">
-      <Filter>ソース ファイル\Apery</Filter>
-    </ClCompile>
-    <ClCompile Include="position.cpp">
-      <Filter>ソース ファイル\Apery</Filter>
-    </ClCompile>
-    <ClCompile Include="square.cpp">
-      <Filter>ソース ファイル\Apery</Filter>
-    </ClCompile>
-    <ClCompile Include="usi.cpp">
-      <Filter>ソース ファイル\Apery</Filter>
-    </ClCompile>
-    <ClCompile Include="search.cpp">
-      <Filter>ソース ファイル\Apery</Filter>
-    </ClCompile>
-    <ClCompile Include="book.cpp">
-      <Filter>ソース ファイル\Apery</Filter>
-    </ClCompile>
+    <ClInclude Include="src\bitboard.hpp">
+      <Filter>ヘッダー ファイル\Apery</Filter>
+    </ClInclude>
+    <ClInclude Include="src\book.hpp">
+      <Filter>ヘッダー ファイル\Apery</Filter>
+    </ClInclude>
+    <ClInclude Include="src\color.hpp">
+      <Filter>ヘッダー ファイル\Apery</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common.hpp">
+      <Filter>ヘッダー ファイル\Apery</Filter>
+    </ClInclude>
+    <ClInclude Include="src\generateMoves.hpp">
+      <Filter>ヘッダー ファイル\Apery</Filter>
+    </ClInclude>
+    <ClInclude Include="src\hand.hpp">
+      <Filter>ヘッダー ファイル\Apery</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ifdef.hpp">
+      <Filter>ヘッダー ファイル\Apery</Filter>
+    </ClInclude>
+    <ClInclude Include="src\init.hpp">
+      <Filter>ヘッダー ファイル\Apery</Filter>
+    </ClInclude>
+    <ClInclude Include="src\move.hpp">
+      <Filter>ヘッダー ファイル\Apery</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mt64bit.hpp">
+      <Filter>ヘッダー ファイル\Apery</Filter>
+    </ClInclude>
+    <ClInclude Include="src\overloadEnumOperators.hpp">
+      <Filter>ヘッダー ファイル\Apery</Filter>
+    </ClInclude>
+    <ClInclude Include="src\piece.hpp">
+      <Filter>ヘッダー ファイル\Apery</Filter>
+    </ClInclude>
+    <ClInclude Include="src\position.hpp">
+      <Filter>ヘッダー ファイル\Apery</Filter>
+    </ClInclude>
+    <ClInclude Include="src\square.hpp">
+      <Filter>ヘッダー ファイル\Apery</Filter>
+    </ClInclude>
+    <ClInclude Include="src\usi.hpp">
+      <Filter>ヘッダー ファイル\Apery</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cshogi.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\parser.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="bitboard.hpp">
-      <Filter>ヘッダー ファイル\Apery</Filter>
-    </ClInclude>
-    <ClInclude Include="color.hpp">
-      <Filter>ヘッダー ファイル\Apery</Filter>
-    </ClInclude>
-    <ClInclude Include="common.hpp">
-      <Filter>ヘッダー ファイル\Apery</Filter>
-    </ClInclude>
-    <ClInclude Include="generateMoves.hpp">
-      <Filter>ヘッダー ファイル\Apery</Filter>
-    </ClInclude>
-    <ClInclude Include="hand.hpp">
-      <Filter>ヘッダー ファイル\Apery</Filter>
-    </ClInclude>
-    <ClInclude Include="ifdef.hpp">
-      <Filter>ヘッダー ファイル\Apery</Filter>
-    </ClInclude>
-    <ClInclude Include="init.hpp">
-      <Filter>ヘッダー ファイル\Apery</Filter>
-    </ClInclude>
-    <ClInclude Include="move.hpp">
-      <Filter>ヘッダー ファイル\Apery</Filter>
-    </ClInclude>
-    <ClInclude Include="mt64bit.hpp">
-      <Filter>ヘッダー ファイル\Apery</Filter>
-    </ClInclude>
-    <ClInclude Include="overloadEnumOperators.hpp">
-      <Filter>ヘッダー ファイル\Apery</Filter>
-    </ClInclude>
-    <ClInclude Include="piece.hpp">
-      <Filter>ヘッダー ファイル\Apery</Filter>
-    </ClInclude>
-    <ClInclude Include="position.hpp">
-      <Filter>ヘッダー ファイル\Apery</Filter>
-    </ClInclude>
-    <ClInclude Include="square.hpp">
-      <Filter>ヘッダー ファイル\Apery</Filter>
-    </ClInclude>
-    <ClInclude Include="cshogi.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="usi.hpp">
-      <Filter>ヘッダー ファイル\Apery</Filter>
-    </ClInclude>
-    <ClInclude Include="parser.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="book.hpp">
-      <Filter>ヘッダー ファイル\Apery</Filter>
-    </ClInclude>
+    <ClCompile Include="src\bitboard.cpp">
+      <Filter>ソース ファイル\Apery</Filter>
+    </ClCompile>
+    <ClCompile Include="src\book.cpp">
+      <Filter>ソース ファイル\Apery</Filter>
+    </ClCompile>
+    <ClCompile Include="src\common.cpp">
+      <Filter>ソース ファイル\Apery</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generateMoves.cpp">
+      <Filter>ソース ファイル\Apery</Filter>
+    </ClCompile>
+    <ClCompile Include="src\hand.cpp">
+      <Filter>ソース ファイル\Apery</Filter>
+    </ClCompile>
+    <ClCompile Include="src\init.cpp">
+      <Filter>ソース ファイル\Apery</Filter>
+    </ClCompile>
+    <ClCompile Include="src\move.cpp">
+      <Filter>ソース ファイル\Apery</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mt64bit.cpp">
+      <Filter>ソース ファイル\Apery</Filter>
+    </ClCompile>
+    <ClCompile Include="src\position.cpp">
+      <Filter>ソース ファイル\Apery</Filter>
+    </ClCompile>
+    <ClCompile Include="src\search.cpp">
+      <Filter>ソース ファイル\Apery</Filter>
+    </ClCompile>
+    <ClCompile Include="src\square.cpp">
+      <Filter>ソース ファイル\Apery</Filter>
+    </ClCompile>
+    <ClCompile Include="src\usi.cpp">
+      <Filter>ソース ファイル\Apery</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
