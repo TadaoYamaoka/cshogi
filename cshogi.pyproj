@@ -4,14 +4,16 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>c58161f3-5e7c-4d35-b844-824bb8c01998</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>
-    </StartupFile>
+    <StartupFile>cshogi\cli.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>cshogi</Name>
     <RootNamespace>cshogi</RootNamespace>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <CommandLineArguments>E:\game\shogi\gikou2_win\gikou.exe E:\game\shogi\apery_wcsc28\bin\apery_wcsc28_bmi2.exe --games 2</CommandLineArguments>
+    <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -23,11 +25,15 @@
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="cshogi\" />
+    <Folder Include="cshogi\usi\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="cshogi\_cshogi.pyx" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="cshogi\cli.py" />
+    <Compile Include="cshogi\usi\Engine.py" />
+    <Compile Include="cshogi\usi\__init__.py" />
     <Compile Include="cshogi\__init__.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />

@@ -1515,8 +1515,6 @@ void Position::print(std::ostream& os) const {
     printHand(os, Black);
     printHand(os, White);
     os << (turn() == Black ? "+" : "-") << "\n";
-    os << "\n";
-    os << "key = " << getKey();
 }
 
 std::string Position::toSFEN(const Ply ply) const {

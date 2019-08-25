@@ -243,3 +243,4 @@ ModelManifest.xml
 *.egg-info
 *.pyd
 /cshogi.cpp
+__pycache__

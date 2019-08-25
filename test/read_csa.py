@@ -12,7 +12,7 @@ def read_kifu_cython(kifu_list):
     positions = []
     parser = cshogi.Parser()
     for filepath in kifu_list:
-        parser.parse_csa_file(filepath.encode('utf-8'))
+        parser.parse_csa_file(filepath)
         board = cshogi.Board()
         for move, score in zip(parser.moves, parser.scores):
             hcpe = np.empty(1, dtype=cshogi.HuffmanCodedPosAndEval)
