@@ -244,3 +244,4 @@ ModelManifest.xml
 *.pyd
 /cshogi.cpp
 __pycache__
+/cshogi/_cshogi.cpp

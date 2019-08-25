@@ -5,6 +5,6 @@ import numpy
 
 setup(name='cshogi',
       version='0.0.1',
-      packages=[''],
+      packages=['cshogi', 'cshogi.usi'],
       ext_modules=cythonize("cshogi/_cshogi.pyx"),
       include_dirs = ["src", numpy.get_include()])
