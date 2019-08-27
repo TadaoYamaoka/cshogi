@@ -374,7 +374,7 @@ cdef class Board:
 	def book_key(self):
 		return self.__board.bookKey()
 
-	def to_svg(self, lastmove = None):
+	def to_svg(self, lastmove=None, scale=1.0):
 		import xml.etree.ElementTree as ET
 
 		width = 230
@@ -384,8 +384,8 @@ cdef class Board:
 			"xmlns": "http://www.w3.org/2000/svg",
 			"version": "1.1",
 			"xmlns:xlink": "http://www.w3.org/1999/xlink",
-			"width": str(width),
-			"height": str(height),
+			"width": str(width * scale),
+			"height": str(height * scale),
 			"viewBox": "0 0 {} {}".format(width, height),
 		})
 
