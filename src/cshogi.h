@@ -75,7 +75,7 @@ public:
 		return ml.size() == 0;
 	}
 
-	int isDraw() const { return (int)pos.isDraw(); }
+	int isDraw(const int checkMaxPly) const { return (int)pos.isDraw(checkMaxPly); }
 
 	int move(const int from_square, const int to_square, const bool promotion) const {
 		if (promotion)

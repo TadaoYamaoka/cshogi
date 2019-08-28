@@ -12,6 +12,7 @@ import numpy as np
 cimport numpy as np
 
 import locale
+import sys
 
 dtypeHcp = np.dtype((np.uint8, 32))
 dtypeEval = np.dtype(np.int16)
@@ -214,7 +215,7 @@ cdef extern from "cshogi.h":
 		void push(const int move)
 		void pop(const int move)
 		bool is_game_over()
-		int isDraw()
+		int isDraw(const int checkMaxPly)
 		int move(const int from_square, const int to_square, const bool promotion)
 		int drop_move(const int to_square, const int drop_piece_type)
 		int move_from_usi(const string& usi)
@@ -298,8 +299,8 @@ cdef class Board:
 	def is_game_over(self):
 		return self.__board.is_game_over()
 
-	def is_draw(self):
-		return self.__board.isDraw()
+	def is_draw(self, int ply=sys.maxint):
+		return self.__board.isDraw(ply)
 
 	def move(self, int from_square, int to_square, bool promotion):
 		return self.__board.move(from_square, to_square, promotion)
