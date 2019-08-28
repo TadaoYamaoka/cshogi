@@ -1,10 +1,28 @@
-﻿from distutils.core import setup
-
-from Cython.Build import cythonize
+﻿from setuptools import setup, Extension
+from setuptools.command.build_ext import build_ext
 import numpy
 
-setup(name='cshogi',
-      version='0.0.1',
-      packages=['cshogi', 'cshogi.usi'],
-      ext_modules=cythonize("cshogi/_cshogi.pyx"),
-      include_dirs = ["src", numpy.get_include()])
+class my_build_ext(build_ext):
+    def build_extensions(self):
+        if self.compiler.compiler_type == 'unix':
+            for e in self.extensions:
+                e.extra_compile_args = ['-msse4.2', '-mbmi2', '-mavx2']
+
+        build_ext.build_extensions(self)
+
+ext_modules = [
+    Extension('cshogi._cshogi',
+        ['cshogi/_cshogi.pyx',
+         "src/bitboard.cpp", "src/common.cpp", "src/generateMoves.cpp", "src/hand.cpp", "src/init.cpp", "src/move.cpp", "src/mt64bit.cpp", "src/position.cpp", "src/search.cpp", "src/square.cpp", "src/usi.cpp", "src/book.cpp"],
+        language='c++',
+        include_dirs = ["src", numpy.get_include()],
+        define_macros=[('HAVE_SSE4', None), ('HAVE_SSE42', None), ('HAVE_BMI2', None), ('HAVE_AVX2', None)])
+]
+
+setup(
+    name='cshogi',
+    version='0.0.1',
+    packages=['cshogi', 'cshogi.usi'],
+    ext_modules=ext_modules,
+    cmdclass={'build_ext': my_build_ext}
+)
