@@ -1,10 +1,4 @@
-﻿# distutils: sources = ["src/bitboard.cpp", "src/common.cpp", "src/generateMoves.cpp", "src/hand.cpp", "src/init.cpp", "src/move.cpp", "src/mt64bit.cpp", "src/position.cpp", "src/search.cpp", "src/square.cpp", "src/usi.cpp", "src/book.cpp"]
-# distutils: language = c++
-# distutils: define_macros=HAVE_SSE4
-# distutils: define_macros=HAVE_BMI2
-# distutils: define_macros=HAVE_AVX2
-
-from libcpp.string cimport string
+﻿from libcpp.string cimport string
 from libcpp.vector cimport vector
 from libcpp cimport bool
 
@@ -12,7 +6,6 @@ import numpy as np
 cimport numpy as np
 
 import locale
-import sys
 
 dtypeHcp = np.dtype((np.uint8, 32))
 dtypeEval = np.dtype(np.int16)
@@ -299,8 +292,13 @@ cdef class Board:
 	def is_game_over(self):
 		return self.__board.is_game_over()
 
-	def is_draw(self, int ply=sys.maxint):
-		return self.__board.isDraw(ply)
+	def is_draw(self, ply=None):
+		cdef int _ply
+		if ply:
+			_ply = ply
+		else:
+			_ply = 2147483648
+		return self.__board.isDraw(_ply)
 
 	def move(self, int from_square, int to_square, bool promotion):
 		return self.__board.move(from_square, to_square, promotion)
