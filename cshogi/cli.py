@@ -147,7 +147,7 @@ def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyo
         elif n % 2 == 0 and win == BLACK or n % 2 == 1 and win == WHITE:
             engine1_won[n % 2] += 1
         else:
-            engine2_won[n % 2] += 1
+            engine2_won[(n + 1) % 2] += 1
 
         # エンジン終了
         for engine in engines:
