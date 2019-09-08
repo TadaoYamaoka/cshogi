@@ -571,15 +571,15 @@ cdef class Parser:
 
 	@property
 	def sfen(self):
-		return self.__parser.sfen
+		return self.__parser.sfen.decode('ascii')
 
 	@property
 	def endgame(self):
-		return self.__parser.endgame
+		return self.__parser.endgame.decode('ascii')
 
 	@property
 	def names(self):
-		return self.__parser.names
+		return [name.decode('ascii') for name in self.__parser.names]
 
 	@property
 	def ratings(self):
