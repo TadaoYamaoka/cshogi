@@ -172,6 +172,30 @@ public:
 		}
 	}
 
+	// 白の場合、盤を反転するバージョン
+	void piece_planes_rotate(char* mem) const {
+		// P1 piece 14 planes
+		// P2 piece 14 planes
+		if (pos.turn() == Black) {
+			// 黒の場合
+			piece_planes(mem);
+			return;
+		}
+		// 白の場合
+		float* data = (float*)mem;
+		for (Color c = White; c >= Black; --c) {
+			for (PieceType pt = Pawn; pt < PieceTypeNum; ++pt) {
+				Bitboard bb = pos.bbOf(pt, c);
+				while (bb) {
+					// 盤面を180度回転
+					const Square sq = SQ99 - bb.firstOneFromSQ11();
+					data[sq] = 1.0f;
+				}
+				data += 81;
+			}
+		}
+	}
+
 	unsigned long long bookKey() {
 		return Book::bookKey(pos);
 	}
@@ -224,6 +248,16 @@ int __move_from_piece_type(const int move) { return (move >> 16) & 0xf; };
 int __move_drop_hand_piece(const int move) { return pieceTypeToHandPiece((PieceType)__move_from(move) - SquareNum + 1); }
 
 unsigned short __move16(const int move) { return (unsigned short)move; }
+
+// 反転
+int __move_rotate(const int move) {
+	int to = __move_to(move);
+	to = SQ99 - to;
+	int from = __move_from(move);
+	if (!__move_is_drop(move))
+		from = SQ99 - from;
+	return (move & 0xffff0000) | to | (from >> 7);
+}
 
 std::string __move_to_usi(const int move) { return Move(move).toUSI(); }
 std::string __move_to_csa(const int move) { return Move(move).toCSA(); }

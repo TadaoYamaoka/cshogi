@@ -12,7 +12,7 @@
     <Name>cshogi</Name>
     <RootNamespace>cshogi</RootNamespace>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>E:\game\shogi\gikou2_win\gikou.exe E:\game\shogi\apery_wcsc28\bin\apery_wcsc28_bmi2.exe --games 2</CommandLineArguments>
+    <CommandLineArguments>E:\game\shogi\Shogidokoro\Engine\Lesserkai.exe E:\game\shogi\apery_wcsc28\bin\apery_wcsc28_bmi2.exe --games 2</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">

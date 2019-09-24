@@ -242,6 +242,7 @@ ModelManifest.xml
 .fake/
 *.egg-info
 *.pyd
-/cshogi.cpp
+*.so
 __pycache__
 /cshogi/_cshogi.cpp
+/dist

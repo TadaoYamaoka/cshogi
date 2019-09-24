@@ -228,6 +228,7 @@ cdef extern from "cshogi.h":
 		vector[int] pieces()
 		bool is_nyugyoku()
 		void piece_planes(char* mem)
+		void piece_planes_rotate(char* mem)
 		bool isOK()
 		unsigned long long bookKey()
 
@@ -367,6 +368,9 @@ cdef class Board:
 	def piece_planes(self, np.ndarray features):
 		return self.__board.piece_planes(features.data)
 
+	def piece_planes_rotate(self, np.ndarray features):
+		return self.__board.piece_planes_rotate(features.data)
+
 	def is_ok(self):
 		return self.__board.isOK()
 
@@ -487,6 +491,7 @@ cdef extern from "cshogi.h":
 	int __move_from_piece_type(const int move)
 	int __move_drop_hand_piece(const int move)
 	unsigned short __move16(const int move)
+	int __move_rotate(const int move)
 	string __move_to_usi(const int move)
 	string __move_to_csa(const int move)
 
@@ -532,6 +537,9 @@ def move_drop_hand_piece(int move):
 
 def move16(int move):
 	return __move16(move)
+
+def move_rotate(int move):
+	return __move_rotate(move)
 
 def move_to_usi(int move):
 	return __move_to_usi(move).decode('ascii')

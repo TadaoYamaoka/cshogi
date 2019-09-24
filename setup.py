@@ -21,7 +21,7 @@ ext_modules = [
 
 setup(
     name='cshogi',
-    version='0.0.1',
+    version='0.0.2',
     packages=['cshogi', 'cshogi.usi'],
     ext_modules=ext_modules,
     cmdclass={'build_ext': my_build_ext}
