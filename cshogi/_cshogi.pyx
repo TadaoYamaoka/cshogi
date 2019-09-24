@@ -33,9 +33,36 @@ PackedSfenValue = np.dtype([
     ('score', np.int16),
     ('move', np.uint16),
     ('gamePly', np.uint16),
-    ('game_result', np.uint8),
+    ('game_result', np.int8),
     ('padding', np.uint8),
     ])
+
+cdef modify_move(np.ndarray[np.uint16_t, ndim=1] move):
+	cdef np.ndarray[np.uint16_t, ndim=1] drop_mask
+	cdef np.ndarray[np.uint16_t, ndim=1] drop_offset
+	cdef np.ndarray[np.uint16_t, ndim=1] promotion_mask
+
+	# 駒打ちのフラグを取り出す
+	drop_mask = move & 0x4000
+
+	drop_flag = drop_mask >> 14
+	drop_offset = (drop_flag * 80) << 7
+	move += drop_offset
+	# 駒打ちのフラグを消す
+	move ^= drop_mask
+
+	# 成りのフラグを取り出す
+	promotion_mask = move & 0x8000
+	promotion_mask |= promotion_mask >> 1
+	# 成りのフラグをbit15からbit14に移動
+	move ^= promotion_mask
+
+	return move
+
+cdef load_packed_sfen_value(str path):
+	packed_sfen_value = np.fromfile(path, dtype=PackedSfenValue)
+	packed_sfen_value['move'] = modify_move(packed_sfen_value['move'])
+	return packed_sfen_value
 
 dtypeKey = np.dtype(np.uint64)
 BookEntry = np.dtype([
