@@ -29,6 +29,8 @@ std::string __to_csa(const int move) {
 	return Move(move).toCSA();
 }
 
+unsigned short __move16_from_psv(const unsigned short move16);
+
 class __Board
 {
 public:
@@ -100,10 +102,15 @@ public:
 		return move16toMove(Move(move16), pos).value();
 	}
 
+	int move_from_psv(const unsigned short move16) const {
+		return move16toMove(Move(__move16_from_psv(move16)), pos).value();
+	}
+
 	int turn() const { return pos.turn(); }
 	int ply() const { return pos.gamePly() + (int)states.size(); }
 	std::string toSFEN() const { return pos.toSFEN(); }
-	void toHuffmanCodedPos(char* data) const { std::memcpy(data, pos.toHuffmanCodedPos().data, sizeof(HuffmanCodedPos)); }
+	void toHuffmanCodedPos(char* data) const { pos.toHuffmanCodedPos((u8*)data); }
+	void toPackedSfen(char* data) const { pos.toPackedSfen((u8*)data); }
 	int piece(const int sq) const { return (int)pos.piece((Square)sq); }
 	bool inCheck() const { return pos.inCheck(); }
 	int mateMoveIn1Ply() { return pos.mateMoveIn1Ply().value(); }
@@ -248,6 +255,32 @@ int __move_from_piece_type(const int move) { return (move >> 16) & 0xf; };
 int __move_drop_hand_piece(const int move) { return pieceTypeToHandPiece((PieceType)__move_from(move) - SquareNum + 1); }
 
 unsigned short __move16(const int move) { return (unsigned short)move; }
+
+unsigned short __move16_from_psv(const unsigned short move16) {
+	const unsigned short MOVE_DROP = 1 << 14;
+	const unsigned short MOVE_PROMOTE = 1 << 15;
+
+	unsigned short to = move16 & 0x7f;
+	unsigned short from = (move16 >> 7) & 0x7f;
+	if ((move16 & MOVE_DROP) != 0) {
+		from += SquareNum - 1;
+	}
+	return to | (from << 7) | ((move16 & MOVE_PROMOTE) != 0 ? Move::PromoteFlag : 0);
+}
+
+unsigned short __move16_to_psv(const unsigned short move16) {
+	const unsigned short MOVE_DROP = 1 << 14;
+	const unsigned short MOVE_PROMOTE = 1 << 15;
+
+	unsigned short to = move16 & 0x7f;
+	unsigned short from = (move16 >> 7) & 0x7f;
+	unsigned short drop = 0;
+	if (from >= 81) {
+		from -= SquareNum - 1;
+		drop = MOVE_DROP;
+	}
+	return to | (from << 7) | drop | ((move16 & Move::PromoteFlag) != 0 ? MOVE_PROMOTE : 0);
+}
 
 // 反転
 int __move_rotate(const int move) {

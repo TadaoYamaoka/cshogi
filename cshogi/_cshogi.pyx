@@ -33,7 +33,7 @@ PackedSfenValue = np.dtype([
     ('score', np.int16),
     ('move', np.uint16),
     ('gamePly', np.uint16),
-    ('game_result', np.uint8),
+    ('game_result', np.int8),
     ('padding', np.uint8),
     ])
 
@@ -214,10 +214,12 @@ cdef extern from "cshogi.h":
 		int move_from_usi(const string& usi)
 		int move_from_csa(const string& csa)
 		int move_from_move16(const unsigned short move16)
+		int move_from_psv(const unsigned short move16)
 		int turn()
 		int ply()
 		string toSFEN()
 		void toHuffmanCodedPos(char* data)
+		void toPackedSfen(char* data)
 		int piece(const int sq)
 		bool inCheck()
 		int mateMoveIn1Ply()
@@ -287,6 +289,11 @@ cdef class Board:
 		self.__board.push(move)
 		return move
 
+	def push_psv(self, unsigned short move16):
+		move = self.__board.move_from_psv(move16)
+		self.__board.push(move)
+		return move
+
 	def pop(self, int move):
 		self.__board.pop(move)
 
@@ -318,6 +325,9 @@ cdef class Board:
 	def move_from_move16(self, unsigned short move16):
 		return self.__board.move_from_move16(move16)
 
+	def move_from_psv(self, unsigned short move16):
+		return self.__board.move_from_psv(move16)
+
 	@property
 	def legal_moves(self):
 		return LegalMoveList(self)
@@ -335,6 +345,9 @@ cdef class Board:
 
 	def to_hcp(self, np.ndarray hcp):
 		return self.__board.toHuffmanCodedPos(hcp.data)
+
+	def to_psfen(self, np.ndarray hcp):
+		return self.__board.toPackedSfen(hcp.data)
 
 	def piece(self, int sq):
 		return self.__board.piece(sq)
@@ -491,6 +504,8 @@ cdef extern from "cshogi.h":
 	int __move_from_piece_type(const int move)
 	int __move_drop_hand_piece(const int move)
 	unsigned short __move16(const int move)
+	unsigned short __move16_from_psv(const unsigned short move16)
+	unsigned short __move16_to_psv(const unsigned short move16)
 	int __move_rotate(const int move)
 	string __move_to_usi(const int move)
 	string __move_to_csa(const int move)
@@ -536,7 +551,13 @@ def move_drop_hand_piece(int move):
 	return __move_drop_hand_piece(move)
 
 def move16(int move):
-	return __move16(move)
+	return __move16_from_psv(move)
+
+def move16_from_psv(unsigned short move16):
+	return __move16_from_psv(move16)
+
+def move16_to_psv(unsigned short move16):
+	return __move16_to_psv(move16)
 
 def move_rotate(int move):
 	return __move_rotate(move)

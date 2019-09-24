@@ -1,6 +1,8 @@
 ﻿#include "cshogi.h"
 #include "parser.h"
 
+#include <fstream>
+
 void test_parser() {
 	parser::__Parser parser;
 	parser.parse_csa_file(R"(R:\test\wdoor+floodgate-600-10+catshogi+tanuki-_5500U+20151011200002.csa)");
@@ -17,7 +19,8 @@ void test_parser() {
 void test_position() {
 	Position pos(DefaultStartPositionSFEN);
 
-	HuffmanCodedPos hcp = pos.toHuffmanCodedPos();
+	HuffmanCodedPos hcp;
+	pos.toHuffmanCodedPos(hcp.data);
 	for (auto d : hcp.data) {
 		std::cout << d << std::endl;
 	}
@@ -32,7 +35,7 @@ void test_draw() {
 
 	for (auto move : parser.moves) {
 		std::cout << __to_usi(move) << std::endl;
-		if (board.isDraw() == RepetitionDraw) {
+		if (board.isDraw(16) == RepetitionDraw) {
 			std::cout << "draw" << std::endl;
 		}
 		board.push(move);
@@ -70,17 +73,34 @@ void test_piece_planes() {
 	}
 }
 
+void test_psv() {
+	__Board board;
+
+	std::ifstream ifs(R"(F:\yane\shuffled_sfen1_100.bin)", std::ifstream::in | std::ifstream::binary | std::ios::ate);
+	const s64 entryNum = ifs.tellg() / sizeof(PackedSfenValue);
+	ifs.seekg(std::ios_base::beg);
+	PackedSfenValue *psvvec = new PackedSfenValue[entryNum];
+	ifs.read(reinterpret_cast<char*>(psvvec), sizeof(PackedSfenValue) * entryNum);
+	ifs.close();
+
+	board.set_psfen((char*)psvvec[0].sfen.data);
+	int move = board.move_from_psv(psvvec[0].move);
+	std::cout << move << std::endl;
+}
+
 int main()
 {
 	initTable();
 	Position::initZobrist();
 	HuffmanCodedPos::init();
+	PackedSfen::init();
 
 	//test_position();
-	test_parser();
+	//test_parser();
 	//test_draw();
 	//test_copy();
 	//test_piece_planes();
+	test_psv();
 
 	return 0;
 }

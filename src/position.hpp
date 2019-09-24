@@ -390,7 +390,8 @@ public:
     std::string toSFEN(const Ply ply) const;
     std::string toSFEN() const { return toSFEN(gamePly()); }
 
-    HuffmanCodedPos toHuffmanCodedPos() const;
+    void toHuffmanCodedPos(u8* data) const;
+	void toPackedSfen(u8* data) const;
 
     s64 nodesSearched() const          { return nodes_; }
     void setNodesSearched(const s64 n) { nodes_ = n; }

@@ -1563,10 +1563,9 @@ std::string Position::toSFEN(const Ply ply) const {
     return ss.str();
 }
 
-HuffmanCodedPos Position::toHuffmanCodedPos() const {
-    HuffmanCodedPos result;
-    result.clear();
-    BitStream bs(result.data);
+void Position::toHuffmanCodedPos(u8* data) const {
+	std::fill(data, data + 32, 0);
+    BitStream bs(data);
     // 手番 (1bit)
     bs.putBit(turn());
 
@@ -1592,9 +1591,38 @@ HuffmanCodedPos Position::toHuffmanCodedPos() const {
                 bs.putBits(hc.code, hc.numOfBits);
         }
     }
-    assert(bs.data() == std::end(result.data));
     assert(bs.curr() == 0);
-    return result;
+}
+
+void Position::toPackedSfen(u8* data) const {
+	std::fill(data, data + 32, 0);
+	BitStream bs(data);
+	// 手番 (1bit)
+	bs.putBit(turn());
+
+	// 玉の位置 (7bit * 2)
+	bs.putBits(kingSquare(Black), 7);
+	bs.putBits(kingSquare(White), 7);
+
+	// 盤上の駒
+	for (Square sq = SQ11; sq < SquareNum; ++sq) {
+		Piece pc = piece(sq);
+		if (pieceToPieceType(pc) == King)
+			continue;
+		const auto hc = PackedSfen::boardCodeTable[pc];
+		bs.putBits(hc.code, hc.numOfBits);
+	}
+
+	// 持ち駒
+	for (Color c = Black; c < ColorNum; ++c) {
+		const Hand h = hand(c);
+		for (HandPiece hp = HPawn; hp < HandPieceNum; ++hp) {
+			const auto hc = PackedSfen::handCodeTable[hp][c];
+			for (u32 n = 0; n < h.numOf(hp); ++n)
+				bs.putBits(hc.code, hc.numOfBits);
+		}
+	}
+	assert(bs.curr() == 0);
 }
 
 bool Position::isOK() const {

@@ -74,14 +74,14 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>..\src\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>..\src\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -144,17 +144,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\bitboard.cpp" />
-    <ClCompile Include="..\book.cpp" />
-    <ClCompile Include="..\common.cpp" />
-    <ClCompile Include="..\generateMoves.cpp" />
-    <ClCompile Include="..\hand.cpp" />
-    <ClCompile Include="..\init.cpp" />
-    <ClCompile Include="..\move.cpp" />
-    <ClCompile Include="..\mt64bit.cpp" />
-    <ClCompile Include="..\position.cpp" />
-    <ClCompile Include="..\square.cpp" />
-    <ClCompile Include="..\usi.cpp" />
+    <ClCompile Include="..\src\bitboard.cpp" />
+    <ClCompile Include="..\src\book.cpp" />
+    <ClCompile Include="..\src\common.cpp" />
+    <ClCompile Include="..\src\generateMoves.cpp" />
+    <ClCompile Include="..\src\hand.cpp" />
+    <ClCompile Include="..\src\init.cpp" />
+    <ClCompile Include="..\src\move.cpp" />
+    <ClCompile Include="..\src\mt64bit.cpp" />
+    <ClCompile Include="..\src\position.cpp" />
+    <ClCompile Include="..\src\square.cpp" />
+    <ClCompile Include="..\src\usi.cpp" />
     <ClCompile Include="test.cpp" />
   </ItemGroup>
   <ItemGroup>

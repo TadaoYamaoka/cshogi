@@ -18,40 +18,40 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\bitboard.cpp">
-      <Filter>ソース ファイル\cshogi</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common.cpp">
-      <Filter>ソース ファイル\cshogi</Filter>
-    </ClCompile>
-    <ClCompile Include="..\generateMoves.cpp">
-      <Filter>ソース ファイル\cshogi</Filter>
-    </ClCompile>
-    <ClCompile Include="..\hand.cpp">
-      <Filter>ソース ファイル\cshogi</Filter>
-    </ClCompile>
-    <ClCompile Include="..\init.cpp">
-      <Filter>ソース ファイル\cshogi</Filter>
-    </ClCompile>
-    <ClCompile Include="..\move.cpp">
-      <Filter>ソース ファイル\cshogi</Filter>
-    </ClCompile>
-    <ClCompile Include="..\mt64bit.cpp">
-      <Filter>ソース ファイル\cshogi</Filter>
-    </ClCompile>
-    <ClCompile Include="..\position.cpp">
-      <Filter>ソース ファイル\cshogi</Filter>
-    </ClCompile>
-    <ClCompile Include="..\square.cpp">
-      <Filter>ソース ファイル\cshogi</Filter>
-    </ClCompile>
     <ClCompile Include="test.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="..\usi.cpp">
+    <ClCompile Include="..\src\bitboard.cpp">
       <Filter>ソース ファイル\cshogi</Filter>
     </ClCompile>
-    <ClCompile Include="..\book.cpp">
+    <ClCompile Include="..\src\book.cpp">
+      <Filter>ソース ファイル\cshogi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common.cpp">
+      <Filter>ソース ファイル\cshogi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\generateMoves.cpp">
+      <Filter>ソース ファイル\cshogi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\hand.cpp">
+      <Filter>ソース ファイル\cshogi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\init.cpp">
+      <Filter>ソース ファイル\cshogi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\move.cpp">
+      <Filter>ソース ファイル\cshogi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\mt64bit.cpp">
+      <Filter>ソース ファイル\cshogi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\position.cpp">
+      <Filter>ソース ファイル\cshogi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\square.cpp">
+      <Filter>ソース ファイル\cshogi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\usi.cpp">
       <Filter>ソース ファイル\cshogi</Filter>
     </ClCompile>
   </ItemGroup>
