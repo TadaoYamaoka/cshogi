@@ -551,7 +551,7 @@ def move_drop_hand_piece(int move):
 	return __move_drop_hand_piece(move)
 
 def move16(int move):
-	return __move16_from_psv(move)
+	return __move16(move)
 
 def move16_from_psv(unsigned short move16):
 	return __move16_from_psv(move16)
