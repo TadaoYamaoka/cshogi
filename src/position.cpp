@@ -1817,7 +1817,6 @@ Position& Position::operator = (const Position& pos) {
     memcpy(this, &pos, sizeof(Position));
     startState_ = *st_;
     st_ = &startState_;
-    nodes_ = 0;
 
     assert(isOK());
     return *this;
