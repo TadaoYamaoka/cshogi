@@ -393,8 +393,6 @@ public:
     void toHuffmanCodedPos(u8* data) const;
 	void toPackedSfen(u8* data) const;
 
-    s64 nodesSearched() const          { return nodes_; }
-    void setNodesSearched(const s64 n) { nodes_ = n; }
     RepetitionType isDraw(const int checkMaxPly = std::numeric_limits<int>::max()) const;
 
     void setStartPosPly(const Ply ply) { gamePly_ = ply; }
@@ -490,9 +488,7 @@ private:
 
     StateInfo startState_;
     StateInfo* st_;
-    // 時間管理に使用する。
     Ply gamePly_;
-    s64 nodes_;
 
     static Key zobrist_[PieceTypeNum][SquareNum][ColorNum];
     static const Key zobTurn_ = 1;
