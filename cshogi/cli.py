@@ -67,6 +67,7 @@ def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyo
         is_game_over = False
         is_nyugyoku = False
         is_illegal = False
+        is_repetition_lose = False
         is_fourfold_repetition = False
         while not is_game_over:
             for engine in engines:
@@ -100,8 +101,13 @@ def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyo
                         # 千日手
                         if repetition_hash[key] == 4:
                             # 連続王手
-                            if board.is_draw() == REPETITION_LOSE:
+                            is_draw = board.is_draw()
+                            if is_draw == REPETITION_WIN:
                                 is_illegal = True
+                                is_game_over = True
+                                break
+                            elif is_draw == REPETITION_LOSE:
+                                is_repetition_lose = True
                                 is_game_over = True
                                 break
                             is_fourfold_repetition = True
@@ -136,6 +142,9 @@ def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyo
             print('まで{}手で入玉宣言'.format(board.move_number - 1))
         elif is_illegal:
             win = opponent(board.turn)
+            print('まで{}手で{}の反則負け'.format(board.move_number - 1, '先手' if win == BLACK else '後手'))
+        elif is_repetition_lose:
+            win = board.turn
             print('まで{}手で{}の反則負け'.format(board.move_number - 1, '先手' if win == BLACK else '後手'))
         else:
             win = opponent(board.turn)
