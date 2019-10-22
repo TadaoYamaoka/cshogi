@@ -305,7 +305,7 @@ cdef class Board:
 		if ply:
 			_ply = ply
 		else:
-			_ply = 2147483648
+			_ply = 2147483647
 		return self.__board.isDraw(_ply)
 
 	def move(self, int from_square, int to_square, bool promotion):
