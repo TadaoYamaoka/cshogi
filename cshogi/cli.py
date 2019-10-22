@@ -99,12 +99,12 @@ def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyo
                         repetition_hash[key] += 1
                         # 千日手
                         if repetition_hash[key] == 4:
+                            # 連続王手
+                            if board.is_draw() == REPETITION_LOSE:
+                                is_illegal = True
+                                is_game_over = True
+                                break
                             is_fourfold_repetition = True
-                            is_game_over = True
-                            break
-                        # 連続王手
-                        if board.is_draw() == REPETITION_LOSE:
-                            is_illegal = True
                             is_game_over = True
                             break
                     else:
