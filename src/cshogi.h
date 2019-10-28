@@ -6,6 +6,7 @@
 #include "generateMoves.hpp"
 #include "usi.hpp"
 #include "book.hpp"
+#include "mate.h"
 
 bool nyugyoku(const Position& pos);
 
@@ -114,6 +115,12 @@ public:
 	int piece(const int sq) const { return (int)pos.piece((Square)sq); }
 	bool inCheck() const { return pos.inCheck(); }
 	int mateMoveIn1Ply() { return pos.mateMoveIn1Ply().value(); }
+	int mateMove(int ply) {
+		return mateMoveInOddPlyReturnMove(pos, ply).value();
+	}
+	bool is_mate(int ply) {
+		return mateMoveInEvenPly(pos, ply);
+	}
 	unsigned long long getKey() const { return pos.getKey(); }
 	bool moveIsPseudoLegal(const int move) const { return pos.moveIsPseudoLegal(Move(move)); }
 	bool moveIsLegal(const int move) const { return pos.moveIsLegal(Move(move)); }
@@ -238,6 +245,7 @@ private:
 	std::shared_ptr<MoveList<Legal>> ml;
 };
 
+int __piece_to_piece_type(const int p) { return (int)pieceToPieceType((Piece)p); }
 
 // 移動先
 int __move_to(const int move) { return (move >> 0) & 0x7f; }

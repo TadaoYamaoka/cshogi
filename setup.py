@@ -13,7 +13,7 @@ class my_build_ext(build_ext):
 ext_modules = [
     Extension('cshogi._cshogi',
         ['cshogi/_cshogi.pyx',
-         "src/bitboard.cpp", "src/common.cpp", "src/generateMoves.cpp", "src/hand.cpp", "src/init.cpp", "src/move.cpp", "src/mt64bit.cpp", "src/position.cpp", "src/search.cpp", "src/square.cpp", "src/usi.cpp", "src/book.cpp"],
+         "src/bitboard.cpp", "src/common.cpp", "src/generateMoves.cpp", "src/hand.cpp", "src/init.cpp", "src/move.cpp", "src/mt64bit.cpp", "src/position.cpp", "src/search.cpp", "src/square.cpp", "src/usi.cpp", "src/book.cpp", "src/mate.cpp"],
         language='c++',
         include_dirs = ["src", numpy.get_include()],
         define_macros=[('HAVE_SSE4', None), ('HAVE_SSE42', None), ('HAVE_BMI2', None), ('HAVE_AVX2', None)])
@@ -21,7 +21,7 @@ ext_modules = [
 
 setup(
     name='cshogi',
-    version='0.0.2',
+    version='0.0.3',
     packages=['cshogi', 'cshogi.usi'],
     ext_modules=ext_modules,
     cmdclass={'build_ext': my_build_ext}

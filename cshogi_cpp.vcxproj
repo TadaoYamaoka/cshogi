@@ -152,6 +152,7 @@
     <ClInclude Include="src\hand.hpp" />
     <ClInclude Include="src\ifdef.hpp" />
     <ClInclude Include="src\init.hpp" />
+    <ClInclude Include="src\mate.h" />
     <ClInclude Include="src\move.hpp" />
     <ClInclude Include="src\mt64bit.hpp" />
     <ClInclude Include="src\overloadEnumOperators.hpp" />
@@ -168,6 +169,7 @@
     <ClCompile Include="src\generateMoves.cpp" />
     <ClCompile Include="src\hand.cpp" />
     <ClCompile Include="src\init.cpp" />
+    <ClCompile Include="src\mate.cpp" />
     <ClCompile Include="src\move.cpp" />
     <ClCompile Include="src\mt64bit.cpp" />
     <ClCompile Include="src\position.cpp" />

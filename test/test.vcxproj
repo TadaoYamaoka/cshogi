@@ -157,9 +157,6 @@
     <ClCompile Include="..\src\usi.cpp" />
     <ClCompile Include="test.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="read_csa.py" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
