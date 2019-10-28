@@ -1,0 +1,1 @@
+﻿from cshogi.gym_shogi.envs.shogi_env import ShogiEnv
