@@ -289,7 +289,7 @@ int __move_rotate(const int move) {
 	int from = __move_from(move);
 	if (!__move_is_drop(move))
 		from = SQ99 - from;
-	return (move & 0xffff0000) | to | (from >> 7);
+	return (move & 0xffff0000) | to | (from << 7);
 }
 
 std::string __move_to_usi(const int move) { return Move(move).toUSI(); }
