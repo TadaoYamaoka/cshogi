@@ -308,17 +308,17 @@ cdef class Board:
 
 	def push_csa(self, str csa):
 		cdef string csa_b = csa.encode('ascii')
-		move = self.__board.move_from_csa(csa_b)
+		cdef int move = self.__board.move_from_csa(csa_b)
 		self.__board.push(move)
 		return move
 
 	def push_move16(self, unsigned short move16):
-		move = self.__board.move_from_move16(move16)
+		cdef int move = self.__board.move_from_move16(move16)
 		self.__board.push(move)
 		return move
 
 	def push_psv(self, unsigned short move16):
-		move = self.__board.move_from_psv(move16)
+		cdef int move = self.__board.move_from_psv(move16)
 		self.__board.push(move)
 		return move
 
