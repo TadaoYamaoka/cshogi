@@ -222,7 +222,9 @@ class Exporter:
             self.kifu = None
 
     def open(self, path):
-        self.kifu = open(path, 'w')
+        _, ext = os.path.splitext(path)
+        enc = 'utf-8' if ext == '.kifu' else 'cp932'
+        self.kifu = open(path, 'w', encoding=enc)
         self.prev_move = None
         self.move_number = 1
 
