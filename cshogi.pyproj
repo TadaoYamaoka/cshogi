@@ -30,11 +30,12 @@
     <Folder Include="cshogi\usi\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="cshogi\gym_shogi\envs\shogi_vec_env.pyx" />
     <Content Include="cshogi\_cshogi.pyx" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="cshogi\cli.py" />
-    <Compile Include="cshogi\gym_shogi\envs\shogi_env.py" />
+    <Compile Include="cshogi\gym_shogi\envs\shogi_env.pyx" />
     <Compile Include="cshogi\gym_shogi\envs\__init__.py" />
     <Compile Include="cshogi\gym_shogi\__init__.py" />
     <Compile Include="cshogi\KIF.py" />
