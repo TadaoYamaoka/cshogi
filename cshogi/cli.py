@@ -11,9 +11,9 @@ try:
 except NameError:
     is_jupyter = False
 
-def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyomi=1000, draw=256, opening=None):
-    engine1 = Engine(engine1, connect=False)
-    engine2 = Engine(engine2, connect=False)
+def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyomi=1000, draw=256, opening=None, display=True, debug=True):
+    engine1 = Engine(engine1, connect=False, debug=debug)
+    engine2 = Engine(engine2, connect=False, debug=debug)
 
     # 初期局面読み込み
     if opening:
@@ -53,11 +53,12 @@ def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyo
                 repetition_hash[board.zobrist_hash()] += 1
 
         # 盤面表示
-        print('開始局面')
-        if is_jupyter:
-            display(SVG(board.to_svg()))
-        else:
-            print(board)
+        if display:
+            print('開始局面')
+            if is_jupyter:
+                display(SVG(board.to_svg()))
+            else:
+                print(board)
 
         # 新規ゲーム
         for engine in engines:
@@ -119,11 +120,12 @@ def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyo
                         break
 
                 # 盤面表示
-                print('{}手目'.format(len(moves)))
-                if is_jupyter:
-                    display(SVG(board.to_svg(move)))
-                else:
-                    print(board)
+                if display:
+                    print('{}手目'.format(len(moves)))
+                    if is_jupyter:
+                        display(SVG(board.to_svg(move)))
+                    else:
+                        print(board)
 
                 # 終局判定
                 if board.is_game_over():
@@ -162,10 +164,16 @@ def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyo
         for engine in engines:
             engine.quit()
 
-    # 勝率表示
-    no_draw = games - draw_count
-    black_won = engine1_won[0] + engine2_won[0]
-    white_won = engine1_won[1] + engine2_won[1]
+        # 勝率表示
+        no_draw = games - draw_count
+        black_won = engine1_won[0] + engine2_won[0]
+        white_won = engine1_won[1] + engine2_won[1]
+
+        # 勝敗状況表示
+        print('対局数{} {} {}勝({:.0f}%) {} {}勝({:.0f}%)'.format(
+            n + 1,
+            engine1.name, sum(engine1_won), sum(engine1_won) / no_draw * 100 if no_draw else 0,
+            engine2.name, sum(engine2_won), sum(engine2_won) / no_draw * 100 if no_draw else 0))
 
     print('')
     print('対局数{} 先手勝ち{}({:.0f}%) 後手勝ち{}({:.0f}%) 引き分け{}'.format(
@@ -205,6 +213,8 @@ if __name__ == '__main__':
     parser.add_argument('--byoyomi', type=int, default=1000)
     parser.add_argument('--draw', type=int, default=256)
     parser.add_argument('--opening', type=str)
+    parser.add_argument('--display', action='store_true')
+    parser.add_argument('--debug', action='store_true')
     args = parser.parse_args()
 
     options_list = [{}, {}]
@@ -219,4 +229,5 @@ if __name__ == '__main__':
 
     main(args.engine1, args.engine2,
         options_list[0], options_list[1],
-        args.games, args.resign, args.byoyomi, args.draw, args.opening)
+        args.games, args.resign, args.byoyomi, args.draw, args.opening,
+        args.display, args.debug)

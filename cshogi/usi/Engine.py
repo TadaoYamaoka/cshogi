@@ -3,13 +3,14 @@ import os.path
 import locale
 
 class Engine:
-    def __init__(self, cmd, connect=True):
+    def __init__(self, cmd, connect=True, debug=False):
         self.cmd = cmd
         if connect:
             self.connect()
         else:
             self.proc = None
             self.name = None
+        self.debug = debug
 
     def connect(self):
         self.proc = subprocess.Popen([self.cmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(self.cmd))
@@ -24,43 +25,53 @@ class Engine:
                 self.name = line[8:].decode('ascii')
             elif line == b'usiok':
                 break
-        print(self.name)
+        if self.debug:
+            print(self.name)
 
     def usi(self):
         cmd = 'usi'
-        print(cmd)
+        if self.debug:
+            print(cmd)
         self.proc.stdin.write(cmd.encode('ascii') + b'\n')
         self.proc.stdin.flush()
 
+        lines = []
         while True:
             self.proc.stdout.flush()
             line = self.proc.stdout.readline().strip().decode(locale.getpreferredencoding())
-            print(line)
+            if self.debug:
+                print(line)
             if line == 'usiok':
                 break
+            lines.append(line)
+        return lines
 
     def setoption(self, name, value):
         cmd = 'setoption name ' + name + ' value ' + str(value)
-        print(cmd)
+        if self.debug:
+            print(cmd)
         self.proc.stdin.write(cmd.encode(locale.getpreferredencoding()) + b'\n')
         self.proc.stdin.flush()
 
     def isready(self):
         cmd = 'isready'
-        print(cmd)
+        if self.debug:
+            print(cmd)
         self.proc.stdin.write(cmd.encode('ascii') + b'\n')
         self.proc.stdin.flush()
 
         while True:
             self.proc.stdout.flush()
             line = self.proc.stdout.readline().strip().decode('ascii')
-            print(line)
+            if self.debug:
+                print(line)
             if line == 'readyok':
                 break
 
     def usinewgame(self):
         cmd = 'usinewgame'
-        print(cmd)
+        if self.debug:
+            print(cmd)
         self.proc.stdin.write(cmd.encode('ascii') + b'\n')
         self.proc.stdin.flush()
 
@@ -68,7 +79,8 @@ class Engine:
         cmd = 'position ' + sfen
         if moves:
             cmd += ' moves ' + ' '.join(moves)
-        print(cmd)
+        if self.debug:
+            print(cmd)
         self.proc.stdin.write(cmd.encode('ascii') + b'\n')
         self.proc.stdin.flush()
 
@@ -88,14 +100,16 @@ class Engine:
                     cmd += ' binc ' + str(binc)
                 if winc is not None:
                     cmd += ' winc ' + str(winc)
-        print(cmd)
+        if self.debug:
+            print(cmd)
         self.proc.stdin.write(cmd.encode('ascii') + b'\n')
         self.proc.stdin.flush()
 
         while True:
             self.proc.stdout.flush()
             line = self.proc.stdout.readline().strip().decode('ascii')
-            print(line)
+            if self.debug:
+                print(line)
             if line[:8] == 'bestmove':
                 items = line[9:].split(' ')
                 if len(items) == 3 and items[1] == 'ponder':
