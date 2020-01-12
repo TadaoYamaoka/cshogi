@@ -222,7 +222,7 @@ if __name__ == '__main__':
         if len(kvs) == 1 and kvs[0] == '':
             continue
         for kv_str in kvs:
-            kv = kv_str.split(':')
+            kv = kv_str.split(':', 1)
             if len(kv) != 2:
                 raise ValueError('options{}'.format(i + 1))
             options_list[i][kv[0]] = kv[1]
