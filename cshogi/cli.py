@@ -11,7 +11,7 @@ try:
 except NameError:
     is_jupyter = False
 
-def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyomi=1000, draw=256, opening=None, display=True, debug=True):
+def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyomi=1000, draw=256, opening=None, is_display=True, debug=True):
     engine1 = Engine(engine1, connect=False, debug=debug)
     engine2 = Engine(engine2, connect=False, debug=debug)
 
@@ -53,7 +53,7 @@ def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyo
                 repetition_hash[board.zobrist_hash()] += 1
 
         # 盤面表示
-        if display:
+        if is_display:
             print('開始局面')
             if is_jupyter:
                 display(SVG(board.to_svg()))
@@ -120,7 +120,7 @@ def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyo
                         break
 
                 # 盤面表示
-                if display:
+                if is_display:
                     print('{}手目'.format(len(moves)))
                     if is_jupyter:
                         display(SVG(board.to_svg(move)))
