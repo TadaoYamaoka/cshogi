@@ -5,12 +5,12 @@ import locale
 class Engine:
     def __init__(self, cmd, connect=True, debug=False):
         self.cmd = cmd
+        self.debug = debug
         if connect:
             self.connect()
         else:
             self.proc = None
             self.name = None
-        self.debug = debug
 
     def connect(self):
         self.proc = subprocess.Popen([self.cmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(self.cmd))
