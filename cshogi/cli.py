@@ -68,6 +68,7 @@ def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyo
         is_game_over = False
         is_nyugyoku = False
         is_illegal = False
+        is_repetition_win = False
         is_repetition_lose = False
         is_fourfold_repetition = False
         while not is_game_over:
@@ -104,7 +105,7 @@ def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyo
                             # 連続王手
                             is_draw = board.is_draw()
                             if is_draw == REPETITION_WIN:
-                                is_illegal = True
+                                is_repetition_win = True
                                 is_game_over = True
                                 break
                             elif is_draw == REPETITION_LOSE:
@@ -138,16 +139,19 @@ def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyo
             print('まで{}手で持将棋'.format(board.move_number))
         elif is_fourfold_repetition:
             win = WIN_DRAW
-            print('まで{}手で千日手'.format(board.move_number - 2))
+            print('まで{}手で千日手'.format(board.move_number - 1))
         elif is_nyugyoku:
             win = board.turn
             print('まで{}手で入玉宣言'.format(board.move_number - 1))
         elif is_illegal:
             win = opponent(board.turn)
-            print('まで{}手で{}の反則負け'.format(board.move_number - 1, '先手' if win == BLACK else '後手'))
-        elif is_repetition_lose:
+            print('まで{}手で{}の反則負け'.format(board.move_number - 1, '先手' if win == WHITE else '後手'))
+        elif is_repetition_win:
             win = board.turn
-            print('まで{}手で{}の反則負け'.format(board.move_number - 1, '先手' if win == BLACK else '後手'))
+            print('まで{}手で{}の反則勝ち'.format(board.move_number - 1, '先手' if win == BLACK else '後手'))
+        elif is_repetition_lose:
+            win = opponent(board.turn)
+            print('まで{}手で{}の反則負け'.format(board.move_number - 1, '先手' if win == WHITE else '後手'))
         else:
             win = opponent(board.turn)
             print('まで{}手で{}の勝ち'.format(board.move_number - 1, '先手' if win == BLACK else '後手'))
