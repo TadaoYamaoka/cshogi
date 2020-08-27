@@ -16,7 +16,7 @@ ext_modules = [
          "src/bitboard.cpp", "src/common.cpp", "src/generateMoves.cpp", "src/hand.cpp", "src/init.cpp", "src/move.cpp", "src/mt64bit.cpp", "src/position.cpp", "src/search.cpp", "src/square.cpp", "src/usi.cpp", "src/book.cpp", "src/mate.cpp"],
         language='c++',
         include_dirs = ["src", numpy.get_include()],
-        define_macros=[('HAVE_SSE4', None), ('HAVE_SSE42', None), ('HAVE_BMI2', None), ('HAVE_AVX2', None)]),
+        define_macros=[('HAVE_SSE4', None), ('HAVE_SSE42', None), ('HAVE_AVX2', None)]),
     Extension('cshogi.gym_shogi.envs.shogi_env',
         ['cshogi/gym_shogi/envs/shogi_env.pyx'],
         language='c++'),
