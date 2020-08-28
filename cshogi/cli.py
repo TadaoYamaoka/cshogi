@@ -219,19 +219,19 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
         print('{} playing Black: {}-{}-{} ({:.1f}%)'.format(
             engine1.name,
             engine1_won[0], engine1_won[2], engine1_won[4],
-            (engine1_won[0] + engine1_won[4] / 2) / total_count * 100))
+            (engine1_won[0] + engine1_won[4] / 2) / (engine1_won[0] + engine1_won[2] + engine1_won[4]) * 100))
         print('{} playing White: {}-{}-{} ({:.1f}%)'.format(
             engine1.name,
             engine1_won[1], engine1_won[3], engine1_won[5],
-            (engine1_won[1] + engine1_won[5] / 2) / total_count * 100))
+            (engine1_won[1] + engine1_won[5] / 2) / (engine1_won[1] + engine1_won[3] + engine1_won[5]) * 100 if n > 0 else 0))
         print('{} playing Black: {}-{}-{} ({:.1f}%)'.format(
             engine2.name,
             engine2_won[0], engine2_won[2], engine2_won[4],
-            (engine2_won[0] + engine2_won[4] / 2) / total_count * 100))
+            (engine2_won[0] + engine2_won[4] / 2) / (engine2_won[0] + engine2_won[2] + engine2_won[4]) * 100 if n > 0 else 0))
         print('{} playing White: {}-{}-{} ({:.1f}%)'.format(
             engine2.name,
             engine2_won[1], engine2_won[3], engine2_won[5],
-            (engine2_won[1] + engine2_won[5] / 2) / total_count * 100))
+            (engine2_won[1] + engine2_won[5] / 2) / (engine2_won[1] + engine2_won[3] + engine2_won[5]) * 100))
 
         # PGN
         if pgn:
