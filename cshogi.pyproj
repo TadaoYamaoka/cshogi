@@ -46,6 +46,9 @@
     <Compile Include="cshogi\usi\Engine.py" />
     <Compile Include="cshogi\usi\__init__.py" />
     <Compile Include="cshogi\__init__.py" />
+    <Compile Include="cshogi\elo.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
