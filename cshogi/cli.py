@@ -42,8 +42,8 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
             opening_moves_list = [line.strip()[15:].split(' ') for line in f]
 
     board = Board()
-    engine1_won = [0, 0]
-    engine2_won = [0, 0]
+    engine1_won = [0, 0, 0, 0, 0, 0]
+    engine2_won = [0, 0, 0, 0, 0, 0]
     draw_count = 0
     WIN_DRAW = 2
     for n in range(games):
@@ -170,7 +170,7 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
         # 結果出力
         if not board.is_game_over() and board.move_number > draw:
             win = WIN_DRAW
-            print('まで{}手で持将棋'.format(board.move_number))
+            print('まで{}手で持将棋'.format(board.move_number - 1))
         elif is_fourfold_repetition:
             win = WIN_DRAW
             print('まで{}手で千日手'.format(board.move_number - 1))
@@ -193,21 +193,45 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
         # 勝敗カウント
         if win == WIN_DRAW:
             draw_count += 1
+            engine1_won[4 + n % 2] += 1
+            engine2_won[4 + (n + 1) % 2] += 1
         elif n % 2 == 0 and win == BLACK or n % 2 == 1 and win == WHITE:
             engine1_won[n % 2] += 1
+            engine2_won[2 + (n + 1) % 2] += 1
         else:
             engine2_won[(n + 1) % 2] += 1
+            engine1_won[2 + n % 2] += 1
 
-        # 勝率表示
-        no_draw = games - draw_count
         black_won = engine1_won[0] + engine2_won[0]
         white_won = engine1_won[1] + engine2_won[1]
+        engine1_won_sum = engine1_won[0] + engine1_won[1]
+        engine2_won_sum = engine2_won[0] + engine2_won[1]
+        total_count = engine1_won_sum + engine2_won_sum + draw_count
 
         # 勝敗状況表示
-        print('対局数{} {} {}勝({:.0f}%) {} {}勝({:.0f}%)'.format(
-            n + 1,
-            engine1.name, sum(engine1_won), sum(engine1_won) / no_draw * 100 if no_draw else 0,
-            engine2.name, sum(engine2_won), sum(engine2_won) / no_draw * 100 if no_draw else 0))
+        print('{} of {} games finished.'.format(n + 1, games))
+        print('{} vs {}: {}-{}-{} ({:.1f}%)'.format(
+            engine1.name, engine2.name, engine1_won_sum, engine2_won_sum, draw_count,
+            (engine1_won_sum + draw_count / 2) / total_count * 100))
+        print('Black vs White: {}-{}-{} ({:.1f}%)'.format(
+            black_won, white_won, draw_count,
+            (black_won + draw_count / 2) / total_count * 100))
+        print('{} playing Black: {}-{}-{} ({:.1f}%)'.format(
+            engine1.name,
+            engine1_won[0], engine1_won[2], engine1_won[4],
+            (engine1_won[0] + engine1_won[4] / 2) / total_count * 100))
+        print('{} playing White: {}-{}-{} ({:.1f}%)'.format(
+            engine1.name,
+            engine1_won[1], engine1_won[3], engine1_won[5],
+            (engine1_won[1] + engine1_won[5] / 2) / total_count * 100))
+        print('{} playing Black: {}-{}-{} ({:.1f}%)'.format(
+            engine2.name,
+            engine2_won[0], engine2_won[2], engine2_won[4],
+            (engine2_won[0] + engine2_won[4] / 2) / total_count * 100))
+        print('{} playing White: {}-{}-{} ({:.1f}%)'.format(
+            engine2.name,
+            engine2_won[1], engine2_won[3], engine2_won[5],
+            (engine2_won[1] + engine2_won[5] / 2) / total_count * 100))
 
         # PGN
         if pgn:
@@ -217,34 +241,8 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
                 result = WHITE_WIN
             else:
                 result = DRAW
-            pgn_exporter.tag_pair([engine.name for engine in engines_order], result)
+            pgn_exporter.tag_pair([engine.name for engine in engines_order], result, round=n+1)
             pgn_exporter.movetext(moves)
-
-    print('')
-    print('対局数{} 先手勝ち{}({:.0f}%) 後手勝ち{}({:.0f}%) 引き分け{}'.format(
-        games,
-        black_won,
-        black_won / no_draw * 100 if no_draw else 0,
-        white_won,
-        white_won / no_draw * 100 if no_draw else 0, draw_count))
-    print('')
-    print(engine1.name)
-    print('勝ち{}({:.0f}%) 先手勝ち{}({:.0f}%) 後手勝ち{}({:.0f}%)'.format(
-        sum(engine1_won),
-        sum(engine1_won) / no_draw * 100 if no_draw else 0,
-        engine1_won[0],
-        engine1_won[0] / no_draw * 100 if no_draw else 0,
-        engine1_won[1],
-        engine1_won[1] / no_draw * 100 if no_draw else 0))
-    print('')
-    print(engine2.name)
-    print('勝ち{}({:.0f}%) 先手勝ち{}({:.0f}%) 後手勝ち{}({:.0f}%)'.format(
-        sum(engine2_won),
-        sum(engine2_won) / no_draw * 100 if no_draw else 0,
-        engine2_won[0],
-        engine2_won[0] / no_draw * 100 if no_draw else 0,
-        engine2_won[1],
-        engine2_won[1] / no_draw * 100 if no_draw else 0))
 
     # PGN
     if pgn:
