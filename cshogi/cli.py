@@ -3,6 +3,7 @@ from collections import defaultdict
 
 from cshogi import *
 from cshogi.usi import Engine
+from cshogi import PGN
 
 try:
     is_jupyter = get_ipython().__class__.__name__ != 'TerminalInteractiveShell'
@@ -11,9 +12,28 @@ try:
 except NameError:
     is_jupyter = False
 
-def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyomi=1000, draw=256, opening=None, is_display=True, debug=True):
-    engine1 = Engine(engine1, connect=False, debug=debug)
-    engine2 = Engine(engine2, connect=False, debug=debug)
+def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign=None, byoyomi=1000, draw=256, opening=None, pgn=None, is_display=True, debug=True):
+    engine1 = Engine(engine1, connect=False)
+    engine2 = Engine(engine2, connect=False)
+
+    # debug
+    if debug:
+        class Listener:
+            def __init__(self, id):
+                self.id = id
+
+            def __call__(self, line):
+                print(self.id + ':' + line)
+
+        listener1 = Listener('1')
+        listener2 = Listener('2')
+    else:
+        listener1 = None
+        listener2 = None
+
+    # PGN
+    if pgn:
+        pgn_exporter = PGN.Exporter(pgn)
 
     # 初期局面読み込み
     if opening:
@@ -29,27 +49,36 @@ def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyo
     for n in range(games):
         # 先後入れ替え
         if n % 2 == 0:
-            engines = (engine1, engine2)
+            engines_order = (engine1, engine2)
+            options_order = (options1, options2)
+            listeners_order = (listener1, listener2)
         else:
-            engines = (engine2, engine1)
+            engines_order = (engine2, engine1)
+            options_order = (options2, options1)
+            listeners_order = (listener2, listener1)
 
         # 接続とエンジン設定
-        for engine, options in zip((engine1, engine2), (options1, options2)):
-            engine.connect()
+        for engine, options, listener in zip(engines_order, options_order, listeners_order):
+            engine.connect(listener=listener)
             for name, value in options.items():
                 engine.setoption(name, value)
-            engine.isready()
+            engine.isready(listener=listener)
+
+        if names:
+            if names[0]: engine1.name = names[0]
+            if names[1]: engine2.name = names[1]
 
         # 初期局設定
         board.reset()
         moves = []
+        usi_moves = []
         repetition_hash = defaultdict(int)
         if opening:
             if n % 2 == 0:
                 opening_moves = random.choice(opening_moves_list)
             for move_usi in opening_moves:
-                board.push_usi(move_usi)
-                moves.append(move_usi)
+                moves.append(board.push_usi(move_usi))
+                usi_moves.append(move_usi)
                 repetition_hash[board.zobrist_hash()] += 1
 
         # 盤面表示
@@ -61,8 +90,8 @@ def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyo
                 print(board)
 
         # 新規ゲーム
-        for engine in engines:
-            engine.usinewgame()
+        for engine, listener in zip(engines_order, listeners_order):
+            engine.usinewgame(listener=listener)
 
         # 対局
         is_game_over = False
@@ -72,17 +101,17 @@ def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyo
         is_repetition_lose = False
         is_fourfold_repetition = False
         while not is_game_over:
-            for engine in engines:
+            for engine, listener in zip(engines_order, listeners_order):
                 # 持将棋
                 if board.move_number > draw:
                     is_game_over = True
                     break
 
                 # position
-                engine.position(moves)
+                engine.position(usi_moves, listener=listener)
 
                 # go
-                bestmove, _ = engine.go(byoyomi=byoyomi)
+                bestmove, _ = engine.go(byoyomi=byoyomi, listener=listener)
 
                 if bestmove == 'resign':
                     # 投了
@@ -97,7 +126,8 @@ def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyo
                     move = board.move_from_usi(bestmove)
                     if board.is_legal(move):
                         board.push(move)
-                        moves.append(bestmove)
+                        moves.append(move)
+                        usi_moves.append(bestmove)
                         key = board.zobrist_hash()
                         repetition_hash[key] += 1
                         # 千日手
@@ -122,7 +152,7 @@ def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyo
 
                 # 盤面表示
                 if is_display:
-                    print('{}手目'.format(len(moves)))
+                    print('{}手目'.format(len(usi_moves)))
                     if is_jupyter:
                         display(SVG(board.to_svg(move)))
                     else:
@@ -132,6 +162,10 @@ def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyo
                 if board.is_game_over():
                     is_game_over = True
                     break
+
+        # エンジン終了
+        for engine, listener in zip(engines_order, listeners_order):
+            engine.quit(listener=listener)
 
         # 結果出力
         if not board.is_game_over() and board.move_number > draw:
@@ -164,10 +198,6 @@ def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyo
         else:
             engine2_won[(n + 1) % 2] += 1
 
-        # エンジン終了
-        for engine in engines:
-            engine.quit()
-
         # 勝率表示
         no_draw = games - draw_count
         black_won = engine1_won[0] + engine2_won[0]
@@ -178,6 +208,17 @@ def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyo
             n + 1,
             engine1.name, sum(engine1_won), sum(engine1_won) / no_draw * 100 if no_draw else 0,
             engine2.name, sum(engine2_won), sum(engine2_won) / no_draw * 100 if no_draw else 0))
+
+        # PGN
+        if pgn:
+            if win == BLACK:
+                result = BLACK_WIN
+            elif win == WHITE:
+                result = WHITE_WIN
+            else:
+                result = DRAW
+            pgn_exporter.tag_pair([engine.name for engine in engines_order], result)
+            pgn_exporter.movetext(moves)
 
     print('')
     print('対局数{} 先手勝ち{}({:.0f}%) 後手勝ち{}({:.0f}%) 引き分け{}'.format(
@@ -205,6 +246,10 @@ def main(engine1, engine2, options1={}, options2={}, games=1, resign=None, byoyo
         engine2_won[1],
         engine2_won[1] / no_draw * 100 if no_draw else 0))
 
+    # PGN
+    if pgn:
+        pgn_exporter.close()
+
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
@@ -212,11 +257,14 @@ if __name__ == '__main__':
     parser.add_argument('engine2')
     parser.add_argument('--options1', type=str, default='')
     parser.add_argument('--options2', type=str, default='')
+    parser.add_argument('--name1', type=str)
+    parser.add_argument('--name2', type=str)
     parser.add_argument('--games', type=int, default=1)
     parser.add_argument('--resign', type=int)
     parser.add_argument('--byoyomi', type=int, default=1000)
     parser.add_argument('--draw', type=int, default=256)
     parser.add_argument('--opening', type=str)
+    parser.add_argument('--pgn', type=str)
     parser.add_argument('--display', action='store_true')
     parser.add_argument('--debug', action='store_true')
     args = parser.parse_args()
@@ -233,5 +281,7 @@ if __name__ == '__main__':
 
     main(args.engine1, args.engine2,
         options_list[0], options_list[1],
+        [args.name1, args.name2],
         args.games, args.resign, args.byoyomi, args.draw, args.opening,
+        args.pgn,
         args.display, args.debug)
