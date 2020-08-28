@@ -40,6 +40,9 @@
     <Compile Include="cshogi\gym_shogi\envs\__init__.py" />
     <Compile Include="cshogi\gym_shogi\__init__.py" />
     <Compile Include="cshogi\KIF.py" />
+    <Compile Include="cshogi\PGN.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="cshogi\usi\Engine.py" />
     <Compile Include="cshogi\usi\__init__.py" />
     <Compile Include="cshogi\__init__.py" />
