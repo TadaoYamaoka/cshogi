@@ -64,7 +64,7 @@ class Engine:
 
         while True:
             self.proc.stdout.flush()
-            line = self.proc.stdout.readline().strip().decode('ascii')
+            line = self.proc.stdout.readline().strip().decode('shift-jis')
             if listener:
                 listener(line)
             if line == 'readyok':
