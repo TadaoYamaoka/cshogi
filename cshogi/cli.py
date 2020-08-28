@@ -1,9 +1,11 @@
 ﻿import random
+import math
 from collections import defaultdict
 
 from cshogi import *
 from cshogi.usi import Engine
 from cshogi import PGN
+from cshogi.elo import Elo
 
 try:
     is_jupyter = get_ipython().__class__.__name__ != 'TerminalInteractiveShell'
@@ -232,6 +234,14 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
             engine2.name,
             engine2_won[1], engine2_won[3], engine2_won[5],
             (engine2_won[1] + engine2_won[5] / 2) / (engine2_won[1] + engine2_won[3] + engine2_won[5]) * 100))
+        elo = Elo(engine1_won_sum, engine2_won_sum, draw_count)
+        if engine1_won_sum > 0 and engine2_won_sum > 0:
+            try:
+                error_margin = elo.error_margin()
+            except ValueError:
+                error_margin = math.nan
+            print('Elo difference: {:.1f} +/- {:.1f}, LOS: {:.1f} %, DrawRatio: {:.1f} %'.format(
+                elo.diff(), error_margin, elo.los(), elo.draw_ratio()))
 
         # PGN
         if pgn:
