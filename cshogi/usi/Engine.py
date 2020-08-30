@@ -3,8 +3,9 @@ import os.path
 import locale
 
 class Engine:
-    def __init__(self, cmd, connect=True):
+    def __init__(self, cmd, connect=True, debug=False):
         self.cmd = cmd
+        self.debug = debug
         if connect:
             self.connect()
         else:
@@ -12,6 +13,7 @@ class Engine:
             self.name = None
 
     def connect(self, listener=None):
+        if self.debug: listener = print
         self.proc = subprocess.Popen([self.cmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(self.cmd))
 
         cmd = 'usi'
@@ -31,6 +33,7 @@ class Engine:
             listener(self.name)
 
     def usi(self, listener=None):
+        if self.debug: listener = print
         cmd = 'usi'
         if listener:
             listener(cmd)
@@ -49,6 +52,7 @@ class Engine:
         return lines
 
     def setoption(self, name, value, listener=None):
+        if self.debug: listener = print
         cmd = 'setoption name ' + name + ' value ' + str(value)
         if listener:
             listener(cmd)
@@ -56,6 +60,7 @@ class Engine:
         self.proc.stdin.flush()
 
     def isready(self, listener=None):
+        if self.debug: listener = print
         cmd = 'isready'
         if listener:
             listener(cmd)
@@ -71,6 +76,7 @@ class Engine:
                 break
 
     def usinewgame(self, listener=None):
+        if self.debug: listener = print
         cmd = 'usinewgame'
         if listener:
             listener(cmd)
@@ -78,6 +84,7 @@ class Engine:
         self.proc.stdin.flush()
 
     def position(self, moves=None, sfen="startpos", listener=None):
+        if self.debug: listener = print
         cmd = 'position ' + sfen
         if moves:
             cmd += ' moves ' + ' '.join(moves)
@@ -87,6 +94,7 @@ class Engine:
         self.proc.stdin.flush()
 
     def go(self, ponder=False, btime=None, wtime=None, byoyomi=None, binc=None, winc=None, listener=None):
+        if self.debug: listener = print
         cmd = 'go'
         if ponder:
             cmd += ' ponder'
@@ -120,6 +128,7 @@ class Engine:
                     return items[0], None
 
     def quit(self, listener=None):
+        if self.debug: listener = print
         cmd = 'quit'
         if listener:
             listener(cmd)
