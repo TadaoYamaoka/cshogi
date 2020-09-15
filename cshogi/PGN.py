@@ -49,7 +49,7 @@ class Exporter:
     def tag_pair(self, names, result, event='?', site='?', starttime=datetime.now(), round=1):
         self.f.write('[Event "' + event +'"]\n')
         self.f.write('[Site "' + site + '"]\n')
-        self.f.write('[Date "' + starttime.strftime('%Y.%m.%d') + '"]\n')
+        self.f.write('[Date "' + (starttime.strftime('%Y.%m.%d') if starttime else '????.??.??') + '"]\n')
         self.f.write('[Round "' + str(round) + '"]\n')
         self.f.write('[White "' + names[0] + '"]\n')
         self.f.write('[Black "' + names[1] + '"]\n')
