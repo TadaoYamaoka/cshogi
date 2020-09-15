@@ -113,7 +113,7 @@ class Parser:
                     '千日手',
                     '詰み',
                     '切れ負け',
-                    '反則か勝ち',
+                    '反則勝ち',
                     '反則負け'
                 ]:
             piece_type = cshogi.PIECE_JAPANESE_SYMBOLS.index(m.group(5))
@@ -197,6 +197,8 @@ class Parser:
                                 win = 'b'
                             else:
                                 win = 'w'
+                        elif m.group(2) == '中断':
+                            win = None
                         else:
                             # TODO: repetition of moves with continuous check
                             win = '-'
