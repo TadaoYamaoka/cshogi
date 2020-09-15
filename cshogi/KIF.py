@@ -143,6 +143,7 @@ class Parser:
     def parse_str(kif_str):
         line_no = 1
 
+        starttime = None
         names = [None, None]
         pieces_in_hand = [{}, {}]
         current_turn = cshogi.BLACK
@@ -157,6 +158,8 @@ class Parser:
             elif '：' in line:
                 (key, value) = line.split('：', 1)
                 value = value.rstrip('　')
+                if key == '開始日時':
+                    starttime = datetime.strptime(value, '%Y/%m/%d %H:%M:%S')
                 if key == '先手' or key == '下手': # sente or shitate
                     # Blacks's name
                     names[cshogi.BLACK] = value
@@ -200,6 +203,7 @@ class Parser:
             line_no += 1
 
         summary = {
+            'starttime': starttime,
             'names': names,
             'sfen': sfen,
             'moves': moves,
