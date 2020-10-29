@@ -1,5 +1,5 @@
 cshogi: 高速なPythonの将棋ライブラリ
-==================================
+====================================
 
 概要
 ----
@@ -15,6 +15,7 @@ cshogiは、盤面管理、合法手生成、指し手の検証、USIプロト�
 
     >>> for move in board.legal_moves:
     ...     print(cshogi.move_to_usi(move))
+
 ::
 
     1g1f
@@ -25,12 +26,13 @@ cshogiは、盤面管理、合法手生成、指し手の検証、USIプロト�
     6g6f
     7g7f
     ...
+
 .. code:: python
 
     >>> board.push_usi('7g7f')
 
 機能
-----
+------
 
 * Python 3.5以上とCython 0.29以上をサポート
 
@@ -157,22 +159,30 @@ cshogiは、盤面管理、合法手生成、指し手の検証、USIプロト�
       >>> cli.main('/content/LesserkaiSrc/Lesserkai/Lesserkai', '/content/LesserkaiSrc/Lesserkai/Lesserkai')
 
 インストール
------------
+-------------
+
+* GitHubのソースからインストール
 
 以下のコマンドでインストールします。インストールにはCythonと対応したC++コンパイラが必要です。
 
 ::
 
     pip install git+https://github.com/TadaoYamaoka/cshogi
-    
+
+* PYPIからインストール
+
+::
+
+    pip install --no-cache-dir cshogi
+
 謝辞
-----
+------
 
 高速化のために多くの部分で
 `Apery <https://github.com/HiraokaTakuya/apery>`_
 のソースを流用しています。
 
 ライセンス
----------
+-----------
 
 cshogiはGPL3の元にライセンスされています。詳細はLICENSEを確認してください。
