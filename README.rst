@@ -173,6 +173,15 @@ cshogiは、盤面管理、合法手生成、指し手の検証、USIプロト�
 
 ::
 
+    pip install cshogi
+
+pipのバージョン19.0以上が必要です。19.0未満の場合は、事前にpipの
+`アップグレード <https://pip.pypa.io/en/stable/installing/#upgrading-pip>`_
+が必要です。
+
+インストールに失敗して、再実行する際は、--no-cache-dirオプションを付けて実行してください。
+::
+
     pip install --no-cache-dir cshogi
 
 謝辞
