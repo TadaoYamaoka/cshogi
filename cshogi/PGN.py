@@ -62,6 +62,7 @@ class Exporter:
         else:
             self.result_str = '*'
         self.f.write('[Result "' + self.result_str + '"]\n\n')
+        self.f.flush()
 
     def movetext(self, moves):
         line = ''
@@ -82,3 +83,4 @@ class Exporter:
                 line = part
 
         self.f.write(line + '\n\n')
+        self.f.flush()
