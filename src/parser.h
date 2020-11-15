@@ -102,10 +102,8 @@ namespace parser {
 			std::string current_turn_str;
 			Color lose_color = ColorNum;
 			std::string line;
-			for (;;) {
+			while (!is.bad() && !is.eof()) {
 				std::getline(is, line);
-				if (is.bad() || is.eof())
-					break;
 				if (line[0] == '\0') {
 				}
 				else if (line[0] == '\'') {
@@ -156,7 +154,7 @@ namespace parser {
 					else {
 						if (!pos_initialized)
 							throw std::domain_error("Board infomation is not defined before a special move");
-						Move move = csaToMove(pos, rtrim(line.substr(1)));
+						Move move = csaToMove(pos, line.substr(1, 6));
 						moves.push_back(move.value());
 						states->push_back(StateInfo());
 						pos.doMove(move, states->back());
@@ -262,6 +260,42 @@ namespace parser {
 							pieces_in_board[rank_index][file_index] = piece;
 
 							file_index += 1;
+						}
+					}
+					else if (line[1] == 'I') { // PI
+						const Piece initial_board[9][9] = {
+							{ WLance, WKnight, WSilver, WGold, WKing, WGold, WSilver, WKnight, WLance },
+							{ Empty, WRook, Empty, Empty, Empty, Empty, Empty, WBishop, Empty },
+							{ WPawn, WPawn, WPawn, WPawn, WPawn, WPawn, WPawn, WPawn, WPawn },
+							{ Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty },
+							{ Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty },
+							{ Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty },
+							{ BPawn, BPawn, BPawn, BPawn, BPawn, BPawn, BPawn, BPawn, BPawn },
+							{ Empty, BBishop, Empty, Empty, Empty, Empty, Empty, BRook, Empty },
+							{ BLance, BKnight, BSilver, BGold, BKing, BGold, BSilver, BKnight, BLance },
+						};
+						for (rank_index = 0; rank_index < 9; ++rank_index) {
+							for (file_index = 0; file_index < 9; ++file_index) {
+								pieces_in_board[rank_index][file_index] = initial_board[rank_index][file_index];
+							}
+						}
+
+						int index = 2;
+						while (index < line.size()) {
+							file_index = line[index] - '1';
+							index += 1;
+							rank_index = line[index] - '1';
+							index += 1;
+							piece = stringToPieceCSA.value(line.substr(index, 2));
+							index += 2;
+							if (rank_index == 0 && file_index == 0) {
+								// piece in hand
+								throw std::domain_error("TODO: Not implemented komaochi in komadai");
+							}
+							if (rank_index < 0 || rank_index >= 9 || file_index < 0 || file_index >= 9 ||
+								pieces_in_board[rank_index][file_index] == Empty || pieces_in_board[rank_index][file_index] != piece)
+								throw std::domain_error("Invalid piece removing on intializing a board");
+							pieces_in_board[rank_index][file_index] = Empty;
 						}
 					}
 					else {

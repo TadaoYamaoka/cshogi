@@ -630,6 +630,22 @@ cdef extern from "parser.h" namespace "parser":
 		void parse_csa_str(const string& csa_str) except +
 
 cdef class Parser:
+	@staticmethod
+	def parse_file(path):
+		with open(path, 'r', newline=None) as f:
+			return Parser.parse_str(f.read())
+
+	@staticmethod
+	def parse_str(csa_str):
+		parsers = []
+		# split multiple matches
+		matches = csa_str.split('\n/\n')
+		for one_csa_str in matches:
+			parser = Parser()
+			parser.parse_csa_str(one_csa_str)
+			parsers.append(parser)
+		return parsers
+
 	cdef __Parser __parser
 
 	def __cinit__(self):

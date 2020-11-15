@@ -1,1 +1,1 @@
-from .cshogi import Parser
+from cshogi import Parser
