@@ -32,11 +32,17 @@ ext_modules = [
 
 setup(
     name='cshogi',
-    version='0.0.6',
+    version='0.0.7',
     packages=['cshogi', 'cshogi.usi', 'cshogi.gym_shogi', 'cshogi.gym_shogi.envs'],
     ext_modules=ext_modules,
     cmdclass={'build_ext': my_build_ext},
     install_requires=['numpy', 'Cython'],
     author='Tadao Yamaoka',
     url='https://github.com/TadaoYamaoka/cshogi',
+    description = 'A fast Python shogi library',
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        'License :: OSI Approved :: GNU General Public License (GPL)',
+        "Operating System :: OS Independent",
+    ],
 )
