@@ -14,7 +14,7 @@ try:
 except NameError:
     is_jupyter = False
 
-def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign=None, byoyomi=1000, draw=256, opening=None, pgn=None, is_display=True, debug=True):
+def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign=None, byoyomi=1000, draw=256, opening=None, pgn=None, no_pgn_moves=False, is_display=True, debug=True):
     engine1 = Engine(engine1, connect=False)
     engine2 = Engine(engine2, connect=False)
 
@@ -252,7 +252,8 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
             else:
                 result = DRAW
             pgn_exporter.tag_pair([engine.name for engine in engines_order], result, round=n+1)
-            pgn_exporter.movetext(moves)
+            if not no_pgn_moves:
+                pgn_exporter.movetext(moves)
 
     # PGN
     if pgn:
@@ -273,6 +274,7 @@ if __name__ == '__main__':
     parser.add_argument('--draw', type=int, default=256)
     parser.add_argument('--opening', type=str)
     parser.add_argument('--pgn', type=str)
+    parser.add_argument('--no-pgn-moves', action='store_true')
     parser.add_argument('--display', action='store_true')
     parser.add_argument('--debug', action='store_true')
     args = parser.parse_args()
@@ -292,4 +294,5 @@ if __name__ == '__main__':
         [args.name1, args.name2],
         args.games, args.resign, args.byoyomi, args.draw, args.opening,
         args.pgn,
+        args.no_pgn_moves,
         args.display, args.debug)
