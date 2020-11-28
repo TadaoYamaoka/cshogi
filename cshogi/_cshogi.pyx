@@ -392,13 +392,13 @@ cdef class Board:
 	def mate_move(self, int ply):
 		assert ply % 2 == 1
 		assert ply >= 3
-		assert not self.__board.inCheck()
+		if self.__board.inCheck():
+			return 0
 		return self.__board.mateMove(ply)
 
 	def is_mate(self, int ply):
 		assert ply % 2 == 0
-		assert self.__board.inCheck()
-		return self.__board.is_mate(ply)
+		return self.__board.inCheck() and self.__board.is_mate(ply)
 
 	def zobrist_hash(self):
 		return self.__board.getKey()
@@ -625,6 +625,7 @@ cdef extern from "parser.h" namespace "parser":
 		vector[float] ratings
 		vector[int] moves
 		vector[int] scores
+		vector[string] comments
 		int win
 		void parse_csa_file(const string& path) except +
 		void parse_csa_str(const string& csa_str) except +
@@ -682,6 +683,10 @@ cdef class Parser:
 	@property
 	def scores(self):
 		return self.__parser.scores
+
+	@property
+	def comments(self):
+		return self.__parser.comments
 
 	@property
 	def win(self):

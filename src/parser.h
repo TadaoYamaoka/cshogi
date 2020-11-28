@@ -68,6 +68,7 @@ namespace parser {
 		std::vector<float> ratings;
 		std::vector<int> moves;
 		std::vector<int> scores;
+		std::vector<std::string> comments;
 		int win;
 
 		__Parser() : names(2), ratings(2) {}
@@ -131,6 +132,8 @@ namespace parser {
 							scores[moves.size() - 1] = std::stoi(line.substr(4, last - 4));
 						}
 						catch (std::invalid_argument&) {}
+						comments.resize(moves.size());
+						comments[moves.size() - 1] = line.substr(4);
 					}
 
 				}
@@ -158,6 +161,11 @@ namespace parser {
 						moves.push_back(move.value());
 						states->push_back(StateInfo());
 						pos.doMove(move, states->back());
+						// Comment
+						comments.resize(moves.size());
+						if (line.substr(7, 2) == ",\'") {
+							comments[moves.size() - 1] = line.substr(9);
+						}
 					}
 				}
 				else if (line[0] == 'T') {
