@@ -14,7 +14,8 @@ try:
 except NameError:
     is_jupyter = False
 
-def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign=None, byoyomi=1000, draw=256, opening=None, pgn=None, no_pgn_moves=False, is_display=True, debug=True):
+def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign=None, byoyomi=1000, draw=256,
+         opening=None, opening_moves=24, opening_seed=None, pgn=None, no_pgn_moves=False, is_display=True, debug=True):
     engine1 = Engine(engine1, connect=False)
     engine2 = Engine(engine2, connect=False)
 
@@ -38,10 +39,14 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
         pgn_exporter = PGN.Exporter(pgn)
 
     # 初期局面読み込み
+    if opening_seed is not None:
+        random.seed(opening_seed)
     if opening:
-        opening_moves_list = []
+        opening_list = []
         with open(opening) as f:
-            opening_moves_list = [line.strip()[15:].split(' ') for line in f]
+            opening_list = [line.strip()[15:].split(' ') for line in f]
+        # シャッフル
+        random.shuffle(opening_list)
 
     board = Board()
     engine1_won = [0, 0, 0, 0, 0, 0]
@@ -76,12 +81,12 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
         usi_moves = []
         repetition_hash = defaultdict(int)
         if opening:
-            if n % 2 == 0:
-                opening_moves = random.choice(opening_moves_list)
-            for move_usi in opening_moves:
+            for move_usi in opening_list[n // 2 % len(opening_list)]:
                 moves.append(board.push_usi(move_usi))
                 usi_moves.append(move_usi)
                 repetition_hash[board.zobrist_hash()] += 1
+                if board.move_number > opening_moves:
+                    break
 
         # 盤面表示
         if is_display:
@@ -273,6 +278,8 @@ if __name__ == '__main__':
     parser.add_argument('--byoyomi', type=int, default=1000)
     parser.add_argument('--draw', type=int, default=256)
     parser.add_argument('--opening', type=str)
+    parser.add_argument('--opening-moves', type=int, default=24)
+    parser.add_argument('--opening-seed', type=int)
     parser.add_argument('--pgn', type=str)
     parser.add_argument('--no-pgn-moves', action='store_true')
     parser.add_argument('--display', action='store_true')
@@ -292,7 +299,8 @@ if __name__ == '__main__':
     main(args.engine1, args.engine2,
         options_list[0], options_list[1],
         [args.name1, args.name2],
-        args.games, args.resign, args.byoyomi, args.draw, args.opening,
+        args.games, args.resign, args.byoyomi, args.draw,
+        args.opening, args.opening_moves, args.opening_seed,
         args.pgn,
         args.no_pgn_moves,
         args.display, args.debug)
