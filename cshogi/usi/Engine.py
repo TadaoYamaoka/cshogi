@@ -135,4 +135,8 @@ class Engine:
         self.proc.stdin.write(cmd.encode('ascii') + b'\n')
         self.proc.stdin.flush()
         self.proc.wait()
+
+        self.proc.stdin.close()
+        self.proc.stdout.close()
+        self.proc.stderr.close()
         self.proc = None
