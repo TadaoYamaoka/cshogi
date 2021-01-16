@@ -632,9 +632,12 @@ cdef extern from "parser.h" namespace "parser":
 
 cdef class Parser:
 	@staticmethod
-	def parse_file(path):
-		with open(path, 'r', newline=None) as f:
-			return Parser.parse_str(f.read())
+	def parse_file(file):
+		if type(file) is str:
+			with open(file, 'r') as f:
+				return Parser.parse_str(f.read())
+		else:
+			return Parser.parse_str(file.read())
 
 	@staticmethod
 	def parse_str(csa_str):
