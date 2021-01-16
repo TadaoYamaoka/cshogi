@@ -175,6 +175,11 @@ namespace parser {
 					// End of the game
 					if (!pos_initialized)
 						throw std::domain_error("Board infomation is not defined before a special move");
+					// Ignore after comma
+					const auto comma_pos = line.find_first_of(',');
+					if (comma_pos != std::string::npos)
+						line = line.substr(0, comma_pos);
+
 					if (line == "%TORYO" || line == "%TIME_UP" || line == "%ILLEGAL_MOVE")
 						lose_color = pos.turn();
 					else if (line == "%+ILLEGAL_ACTION")
