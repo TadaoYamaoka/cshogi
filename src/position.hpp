@@ -414,7 +414,7 @@ public:
 	void print(std::ostream& os) const;
     std::string toSFEN(const Ply ply) const;
     std::string toSFEN() const { return toSFEN(gamePly()); }
-
+    std::string toCSAPos() const;
     void toHuffmanCodedPos(u8* data) const;
 	void toPackedSfen(u8* data) const;
 

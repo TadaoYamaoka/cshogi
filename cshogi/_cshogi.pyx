@@ -242,6 +242,7 @@ cdef extern from "cshogi.h":
 		int turn()
 		int ply()
 		string toSFEN()
+		string toCSAPos()
 		void toHuffmanCodedPos(char* data)
 		void toPackedSfen(char* data)
 		int piece(const int sq)
@@ -370,6 +371,9 @@ cdef class Board:
 
 	def sfen(self):
 		return self.__board.toSFEN().decode('ascii')
+
+	def csa_pos(self):
+		return self.__board.toCSAPos().decode('ascii')
 
 	def to_hcp(self, np.ndarray hcp):
 		return self.__board.toHuffmanCodedPos(hcp.data)

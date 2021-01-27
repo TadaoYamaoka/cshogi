@@ -2794,6 +2794,22 @@ std::string Position::toSFEN(const Ply ply) const {
     return ss.str();
 }
 
+std::string Position::toCSAPos() const {
+    std::stringstream ss;
+    int i = 0;
+    for (Rank r = Rank1; r != Rank9Wall; r += RankDeltaS) {
+        ++i;
+        ss << "P" << i;
+        for (File f = File9; f != File1Wall; f += FileDeltaE)
+            ss << pieceToCharCSA(piece(makeSquare(f, r)));
+        ss << "\n";
+    }
+    printHand(ss, Black);
+    printHand(ss, White);
+    ss << (turn() == Black ? "+" : "-") << "\n";
+    return ss.str();
+}
+
 void Position::toHuffmanCodedPos(u8* data) const {
 	std::fill(data, data + 32, 0);
     BitStream bs(data);

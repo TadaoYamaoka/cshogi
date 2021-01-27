@@ -110,6 +110,7 @@ public:
 	int turn() const { return pos.turn(); }
 	int ply() const { return pos.gamePly() + (int)states.size(); }
 	std::string toSFEN() const { return pos.toSFEN(); }
+	std::string toCSAPos() const { return pos.toCSAPos(); }
 	void toHuffmanCodedPos(char* data) const { pos.toHuffmanCodedPos((u8*)data); }
 	void toPackedSfen(char* data) const { pos.toPackedSfen((u8*)data); }
 	int piece(const int sq) const { return (int)pos.piece((Square)sq); }
