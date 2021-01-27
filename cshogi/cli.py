@@ -1,5 +1,6 @@
 ﻿import random
 import math
+import time
 from collections import defaultdict
 
 from cshogi import *
@@ -14,8 +15,9 @@ try:
 except NameError:
     is_jupyter = False
 
-def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign=None, byoyomi=1000, draw=256,
-         opening=None, opening_moves=24, opening_seed=None, pgn=None, no_pgn_moves=False, is_display=True, debug=True):
+def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign=None,
+         byoyomi=None, btime=None, wtime=None, binc=None, winc=None,
+         draw=256, opening=None, opening_moves=24, opening_seed=None, pgn=None, no_pgn_moves=False, is_display=True, debug=True):
     engine1 = Engine(engine1, connect=False)
     engine2 = Engine(engine2, connect=False)
 
@@ -107,6 +109,9 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
         is_repetition_win = False
         is_repetition_lose = False
         is_fourfold_repetition = False
+        is_timeup = False
+        remain_time = [btime, wtime]
+        inc_time = (binc, winc)
         while not is_game_over:
             for engine, listener in zip(engines_order, listeners_order):
                 # 持将棋
@@ -117,8 +122,21 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
                 # position
                 engine.position(usi_moves, listener=listener)
 
+                start_time = time.perf_counter()
+
                 # go
-                bestmove, _ = engine.go(byoyomi=byoyomi, listener=listener)
+                bestmove, _ = engine.go(byoyomi=byoyomi, btime=remain_time[BLACK], wtime=remain_time[WHITE], binc=binc, winc=winc, listener=listener)
+
+                if remain_time[board.turn] is not None:
+                    if inc_time[board.turn] is not None:
+                        remain_time[board.turn] += inc_time[board.turn]
+                    remain_time[board.turn] -= math.ceil((time.perf_counter() - start_time) * 1000)
+
+                    if remain_time[board.turn] <= 0:
+                        # 時間切れ負け
+                        is_timeup = True
+                        is_game_over = True
+                        break
 
                 if bestmove == 'resign':
                     # 投了
@@ -193,6 +211,9 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
         elif is_repetition_lose:
             win = opponent(board.turn)
             print('まで{}手で{}の反則負け'.format(board.move_number - 1, '先手' if win == WHITE else '後手'))
+        elif is_timeup:
+            win = opponent(board.turn)
+            print('まで{}手で{}の勝ち'.format(board.move_number - 1, '先手' if win == BLACK else '後手'))
         else:
             win = opponent(board.turn)
             print('まで{}手で{}の勝ち'.format(board.move_number - 1, '先手' if win == BLACK else '後手'))
@@ -275,7 +296,11 @@ if __name__ == '__main__':
     parser.add_argument('--name2', type=str)
     parser.add_argument('--games', type=int, default=1)
     parser.add_argument('--resign', type=int)
-    parser.add_argument('--byoyomi', type=int, default=1000)
+    parser.add_argument('--byoyomi', type=int)
+    parser.add_argument('--btime', type=int)
+    parser.add_argument('--wtime', type=int)
+    parser.add_argument('--binc', type=int)
+    parser.add_argument('--winc', type=int)
     parser.add_argument('--draw', type=int, default=256)
     parser.add_argument('--opening', type=str)
     parser.add_argument('--opening-moves', type=int, default=24)
@@ -299,8 +324,9 @@ if __name__ == '__main__':
     main(args.engine1, args.engine2,
         options_list[0], options_list[1],
         [args.name1, args.name2],
-        args.games, args.resign, args.byoyomi, args.draw,
-        args.opening, args.opening_moves, args.opening_seed,
+        args.games, args.resign,
+        args.byoyomi, args.btime, args.wtime, args.binc, args.winc,
+        args.draw, args.opening, args.opening_moves, args.opening_seed,
         args.pgn,
         args.no_pgn_moves,
         args.display, args.debug)
