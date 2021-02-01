@@ -41,7 +41,7 @@ class Exporter:
             self.f = None
 
     def open(self, path):
-        self.f = open(path, 'w', newline='\n')
+        self.f = open(path, 'a', newline='\n')
 
     def close(self):
         self.f.close()
