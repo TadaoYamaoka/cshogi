@@ -93,7 +93,7 @@ class Engine:
         self.proc.stdin.write(cmd.encode('ascii') + b'\n')
         self.proc.stdin.flush()
 
-    def go(self, ponder=False, btime=None, wtime=None, byoyomi=None, binc=None, winc=None, listener=None):
+    def go(self, ponder=False, btime=None, wtime=None, byoyomi=None, binc=None, winc=None, nodes=None, listener=None):
         if self.debug: listener = print
         cmd = 'go'
         if ponder:
@@ -110,6 +110,8 @@ class Engine:
                     cmd += ' binc ' + str(binc)
                 if winc is not None:
                     cmd += ' winc ' + str(winc)
+            if nodes is not None:
+                cmd += ' nodes ' + str(nodes)
         if listener:
             listener(cmd)
         self.proc.stdin.write(cmd.encode('ascii') + b'\n')
