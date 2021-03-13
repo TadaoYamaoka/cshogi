@@ -152,8 +152,10 @@ namespace parser {
 					position_lines.push_back(line);
 				}
 				else if (line[0] == COLOR_SYMBOLS[0] || line[0] == COLOR_SYMBOLS[1]) {
-					if (line.size() == 1)
+					if (line.size() == 1) {
 						current_turn_str = line[0];
+						position_lines.push_back(line);
+					}
 					else {
 						if (!pos_initialized)
 							throw std::domain_error("Board infomation is not defined before a special move");
