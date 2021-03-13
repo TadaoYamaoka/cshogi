@@ -38,7 +38,7 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
 
     # PGN
     if pgn:
-        pgn_exporter = PGN.Exporter(pgn)
+        pgn_exporter = PGN.Exporter(pgn, append=True)
 
     # 初期局面読み込み
     if opening_seed is not None:

@@ -34,14 +34,14 @@ def move_to_san(move):
     return PGN_PIECE_TYPES[cshogi.move_from_piece_type(move)] + move_from + move_to + promotion
 
 class Exporter:
-    def __init__(self, path=None):
+    def __init__(self, path=None, append=False):
         if path:
             self.open(path)
         else:
             self.f = None
 
-    def open(self, path):
-        self.f = open(path, 'a', newline='\n')
+    def open(self, path, append=False):
+        self.f = open(path, 'a' if append else 'w', newline='\n')
 
     def close(self):
         self.f.close()
