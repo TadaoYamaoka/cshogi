@@ -45,7 +45,7 @@ class Exporter:
     def move(self, move, time=None, comment=None, sep='\n'):
         self.f.write(COLOR_SYMBOLS[self.turn])
         self.f.write(cshogi.move_to_csa(move))
-        if time:
+        if time is not None:
             self.f.write(sep)
             self.f.write('T' + str(time))
         if comment:
