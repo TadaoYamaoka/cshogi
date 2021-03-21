@@ -57,3 +57,4 @@ class Exporter:
     def endgame(self, endgame):
         self.f.write(endgame)
         self.f.write('\n')
+        self.f.flush()
