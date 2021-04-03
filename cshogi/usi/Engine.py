@@ -25,6 +25,8 @@ class Engine:
         while True:
             self.proc.stdout.flush()
             line = self.proc.stdout.readline().strip()
+            if line == '':
+                raise EOFError()
             if line[:7] == b'id name':
                 self.name = line[8:].decode('ascii')
             elif line == b'usiok':
@@ -44,6 +46,8 @@ class Engine:
         while True:
             self.proc.stdout.flush()
             line = self.proc.stdout.readline().strip().decode(locale.getpreferredencoding())
+            if line == '':
+                raise EOFError()
             if listener:
                 listener(line)
             if line == 'usiok':
@@ -70,6 +74,8 @@ class Engine:
         while True:
             self.proc.stdout.flush()
             line = self.proc.stdout.readline().strip().decode('shift-jis')
+            if line == '':
+                raise EOFError()
             if listener:
                 listener(line)
             if line == 'readyok':
@@ -120,6 +126,8 @@ class Engine:
         while True:
             self.proc.stdout.flush()
             line = self.proc.stdout.readline().strip().decode('ascii')
+            if line == '':
+                raise EOFError()
             if listener:
                 listener(line)
             if line[:8] == 'bestmove':
