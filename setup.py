@@ -32,7 +32,7 @@ ext_modules = [
 
 setup(
     name='cshogi',
-    version='0.1.6',
+    version='0.1.7',
     packages=['cshogi', 'cshogi.usi', 'cshogi.gym_shogi', 'cshogi.gym_shogi.envs'],
     ext_modules=ext_modules,
     cmdclass={'build_ext': my_build_ext},
