@@ -20,12 +20,7 @@ except NameError:
     is_jupyter = False
 
 re_usi_info = re.compile('^.*score (cp|mate) ([+\-0-9]+).*pv (.*)$')
-def usi_info_to_csa_comment(board, info):
-    m = re_usi_info.match(info)
-
-    # score
-    if m is None:
-        return None
+def to_score(m):
     if m[1] == 'cp':
         score = int(m[2])
     elif m[1] == 'mate':
@@ -33,7 +28,15 @@ def usi_info_to_csa_comment(board, info):
             score = -100000
         else:
             score = 100000
-    score *= 1 - board.turn * 2
+    return score
+
+def usi_info_to_csa_comment(board, info):
+    m = re_usi_info.match(info)
+    if m is None:
+        return None
+
+    # score
+    score = to_socre(m) * (1 - board.turn * 2)
 
     # pv
     pv = []
@@ -46,9 +49,18 @@ def usi_info_to_csa_comment(board, info):
 
     return f"** {score} {' '.join(pv)}"
 
-def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign=None,
+def usi_info_to_score(info):
+    m = re_usi_info.match(info)
+    if m is None:
+        return None
+
+    return to_score(m)
+
+def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign=None, mate_win=False,
          byoyomi=None, btime=None, wtime=None, binc=None, winc=None,
-         draw=256, opening=None, opening_moves=24, opening_seed=None, csa=None, multi_csa=False, pgn=None, no_pgn_moves=False, is_display=True, debug=True):
+         draw=256, opening=None, opening_moves=24, opening_seed=None,
+         keep_process=False,
+         csa=None, multi_csa=False, pgn=None, no_pgn_moves=False, is_display=True, debug=True):
     engine1 = Engine(engine1, connect=False)
     engine2 = Engine(engine2, connect=False)
 
@@ -112,7 +124,8 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
 
         # 接続とエンジン設定
         for engine, options, listener in zip(engines_order, options_order, listeners_order):
-            engine.connect(listener=listener)
+            if engine.proc is None:
+                engine.connect(listener=listener)
             for name, value in options.items():
                 engine.setoption(name, value)
             engine.isready(listener=listener)
@@ -192,6 +205,24 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
                         is_game_over = True
                         break
 
+                score = usi_info_to_score(listener.info)
+                # 投了閾値
+                if resign is not None:
+                    if score is not None and score <= -resign:
+                        # 投了
+                        is_game_over = True
+                        break
+
+                # 詰みを見つけたら終了
+                if mate_win:
+                    if score is not None and score == 100000:
+                        move = board.move_from_usi(bestmove)
+                        if csa:
+                            csa_exporter.move(move, time=int(elapsed_time), comment=usi_info_to_csa_comment(board, listener.info))
+                        board.push(move)
+                        is_game_over = True
+                        break
+
                 if bestmove == 'resign':
                     # 投了
                     is_game_over = True
@@ -245,8 +276,9 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
                     break
 
         # エンジン終了
-        for engine, listener in zip(engines_order, listeners_order):
-            engine.quit(listener=listener)
+        if not keep_process:
+            for engine, listener in zip(engines_order, listeners_order):
+                engine.quit(listener=listener)
 
         # 結果出力
         if not board.is_game_over() and board.move_number > draw:
@@ -357,6 +389,20 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
     if pgn:
         pgn_exporter.close()
 
+    # エンジン終了
+    if keep_process:
+        for engine, listener in zip(engines_order, listeners_order):
+            engine.quit(listener=listener)
+
+    return {
+        'engine1_won': engine1_won_sum,
+        'engine2_won': engine2_won_sum,
+        'black_won': black_won,
+        'white_won': white_won,
+        'draw': draw_count,
+        'total': total_count,
+        }
+
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
@@ -368,6 +414,7 @@ if __name__ == '__main__':
     parser.add_argument('--name2', type=str)
     parser.add_argument('--games', type=int, default=1)
     parser.add_argument('--resign', type=int)
+    parser.add_argument('--mate_win', action='store_true')
     parser.add_argument('--byoyomi', type=int)
     parser.add_argument('--btime', type=int)
     parser.add_argument('--wtime', type=int)
@@ -377,6 +424,7 @@ if __name__ == '__main__':
     parser.add_argument('--opening', type=str)
     parser.add_argument('--opening-moves', type=int, default=24)
     parser.add_argument('--opening-seed', type=int)
+    parser.add_argument('--keep_process', action='store_true')
     parser.add_argument('--csa', type=str)
     parser.add_argument('--multi_csa', action='store_true')
     parser.add_argument('--pgn', type=str)
@@ -398,9 +446,10 @@ if __name__ == '__main__':
     main(args.engine1, args.engine2,
         options_list[0], options_list[1],
         [args.name1, args.name2],
-        args.games, args.resign,
+        args.games, args.resign, args.mate_win,
         args.byoyomi, args.btime, args.wtime, args.binc, args.winc,
         args.draw, args.opening, args.opening_moves, args.opening_seed,
+        args.keep_process,
         args.csa, args.multi_csa,
         args.pgn, args.no_pgn_moves,
         args.display, args.debug)
