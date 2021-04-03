@@ -60,7 +60,8 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
          byoyomi=None, btime=None, wtime=None, binc=None, winc=None,
          draw=256, opening=None, opening_moves=24, opening_seed=None,
          keep_process=False,
-         csa=None, multi_csa=False, pgn=None, no_pgn_moves=False, is_display=True, debug=True):
+         csa=None, multi_csa=False, pgn=None, no_pgn_moves=False, is_display=True, debug=True,
+         callback=None):
     engine1 = Engine(engine1, connect=False)
     engine2 = Engine(engine2, connect=False)
 
@@ -380,6 +381,18 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
             pgn_exporter.tag_pair([engine.name for engine in engines_order], result, round=n+1)
             if not no_pgn_moves:
                 pgn_exporter.movetext(moves)
+
+        if callback:
+            is_continue = callback({
+                'engine1_won': engine1_won_sum,
+                'engine2_won': engine2_won_sum,
+                'black_won': black_won,
+                'white_won': white_won,
+                'draw': draw_count,
+                'total': total_count,
+                })
+            if not is_continue:
+                break
 
     # CSA
     if csa:
