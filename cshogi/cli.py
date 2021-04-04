@@ -61,7 +61,7 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
          draw=256, opening=None, opening_moves=24, opening_seed=None,
          keep_process=False,
          csa=None, multi_csa=False, pgn=None, no_pgn_moves=False, is_display=True, debug=True,
-         callback=None):
+         print_summary=True, callback=None):
     engine1 = Engine(engine1, connect=False)
     engine2 = Engine(engine2, connect=False)
 
@@ -134,6 +134,8 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
         if names:
             if names[0]: engine1.name = names[0]
             if names[1]: engine2.name = names[1]
+
+        print('{} vs {} start.'.format(engines_order[0].name, engines_order[1].name))
 
         # 初期局設定
         board.reset()
@@ -334,37 +336,38 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
         total_count = engine1_won_sum + engine2_won_sum + draw_count
 
         # 勝敗状況表示
-        print('{} of {} games finished.'.format(n + 1, games))
-        print('{} vs {}: {}-{}-{} ({:.1f}%)'.format(
-            engine1.name, engine2.name, engine1_won_sum, engine2_won_sum, draw_count,
-            (engine1_won_sum + draw_count / 2) / total_count * 100))
-        print('Black vs White: {}-{}-{} ({:.1f}%)'.format(
-            black_won, white_won, draw_count,
-            (black_won + draw_count / 2) / total_count * 100))
-        print('{} playing Black: {}-{}-{} ({:.1f}%)'.format(
-            engine1.name,
-            engine1_won[0], engine1_won[2], engine1_won[4],
-            (engine1_won[0] + engine1_won[4] / 2) / (engine1_won[0] + engine1_won[2] + engine1_won[4]) * 100))
-        print('{} playing White: {}-{}-{} ({:.1f}%)'.format(
-            engine1.name,
-            engine1_won[1], engine1_won[3], engine1_won[5],
-            (engine1_won[1] + engine1_won[5] / 2) / (engine1_won[1] + engine1_won[3] + engine1_won[5]) * 100 if n > 0 else 0))
-        print('{} playing Black: {}-{}-{} ({:.1f}%)'.format(
-            engine2.name,
-            engine2_won[0], engine2_won[2], engine2_won[4],
-            (engine2_won[0] + engine2_won[4] / 2) / (engine2_won[0] + engine2_won[2] + engine2_won[4]) * 100 if n > 0 else 0))
-        print('{} playing White: {}-{}-{} ({:.1f}%)'.format(
-            engine2.name,
-            engine2_won[1], engine2_won[3], engine2_won[5],
-            (engine2_won[1] + engine2_won[5] / 2) / (engine2_won[1] + engine2_won[3] + engine2_won[5]) * 100))
-        elo = Elo(engine1_won_sum, engine2_won_sum, draw_count)
-        if engine1_won_sum > 0 and engine2_won_sum > 0:
-            try:
-                error_margin = elo.error_margin()
-            except ValueError:
-                error_margin = math.nan
-            print('Elo difference: {:.1f} +/- {:.1f}, LOS: {:.1f} %, DrawRatio: {:.1f} %'.format(
-                elo.diff(), error_margin, elo.los(), elo.draw_ratio()))
+        if print_summary:
+            print('{} of {} games finished.'.format(n + 1, games))
+            print('{} vs {}: {}-{}-{} ({:.1f}%)'.format(
+                engine1.name, engine2.name, engine1_won_sum, engine2_won_sum, draw_count,
+                (engine1_won_sum + draw_count / 2) / total_count * 100))
+            print('Black vs White: {}-{}-{} ({:.1f}%)'.format(
+                black_won, white_won, draw_count,
+                (black_won + draw_count / 2) / total_count * 100))
+            print('{} playing Black: {}-{}-{} ({:.1f}%)'.format(
+                engine1.name,
+                engine1_won[0], engine1_won[2], engine1_won[4],
+                (engine1_won[0] + engine1_won[4] / 2) / (engine1_won[0] + engine1_won[2] + engine1_won[4]) * 100))
+            print('{} playing White: {}-{}-{} ({:.1f}%)'.format(
+                engine1.name,
+                engine1_won[1], engine1_won[3], engine1_won[5],
+                (engine1_won[1] + engine1_won[5] / 2) / (engine1_won[1] + engine1_won[3] + engine1_won[5]) * 100 if n > 0 else 0))
+            print('{} playing Black: {}-{}-{} ({:.1f}%)'.format(
+                engine2.name,
+                engine2_won[0], engine2_won[2], engine2_won[4],
+                (engine2_won[0] + engine2_won[4] / 2) / (engine2_won[0] + engine2_won[2] + engine2_won[4]) * 100 if n > 0 else 0))
+            print('{} playing White: {}-{}-{} ({:.1f}%)'.format(
+                engine2.name,
+                engine2_won[1], engine2_won[3], engine2_won[5],
+                (engine2_won[1] + engine2_won[5] / 2) / (engine2_won[1] + engine2_won[3] + engine2_won[5]) * 100))
+            elo = Elo(engine1_won_sum, engine2_won_sum, draw_count)
+            if engine1_won_sum > 0 and engine2_won_sum > 0:
+                try:
+                    error_margin = elo.error_margin()
+                except ValueError:
+                    error_margin = math.nan
+                print('Elo difference: {:.1f} +/- {:.1f}, LOS: {:.1f} %, DrawRatio: {:.1f} %'.format(
+                    elo.diff(), error_margin, elo.los(), elo.draw_ratio()))
 
         # CSA
         if csa:
@@ -384,6 +387,8 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
 
         if callback:
             is_continue = callback({
+                'engine1_name': engine1.name,
+                'engine2_name': engine2.name,
                 'engine1_won': engine1_won_sum,
                 'engine2_won': engine2_won_sum,
                 'black_won': black_won,
@@ -408,6 +413,8 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
             engine.quit(listener=listener)
 
     return {
+        'engine1_name': engine1.name,
+        'engine2_name': engine2.name,
         'engine1_won': engine1_won_sum,
         'engine2_won': engine2_won_sum,
         'black_won': black_won,
@@ -421,10 +428,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('engine1')
     parser.add_argument('engine2')
+    parser.add_argument('engine3', nargs='?')
     parser.add_argument('--options1', type=str, default='')
     parser.add_argument('--options2', type=str, default='')
+    parser.add_argument('--options3', type=str, default='')
     parser.add_argument('--name1', type=str)
     parser.add_argument('--name2', type=str)
+    parser.add_argument('--name3', type=str)
     parser.add_argument('--games', type=int, default=1)
     parser.add_argument('--resign', type=int)
     parser.add_argument('--mate_win', action='store_true')
@@ -446,8 +456,11 @@ if __name__ == '__main__':
     parser.add_argument('--debug', action='store_true')
     args = parser.parse_args()
 
-    options_list = [{}, {}]
-    for i, kvs in enumerate([options.split(',') for options in (args.options1, args.options2)]):
+    if args.csa is not None and not args.multi_csa:
+        os.makedirs(args.csa, exist_ok=True)
+
+    options_list = [{}, {}, {}]
+    for i, kvs in enumerate([options.split(',') for options in (args.options1, args.options2, args.options3)]):
         if len(kvs) == 1 and kvs[0] == '':
             continue
         for kv_str in kvs:
@@ -456,13 +469,53 @@ if __name__ == '__main__':
                 raise ValueError('options{}'.format(i + 1))
             options_list[i][kv[0]] = kv[1]
 
-    main(args.engine1, args.engine2,
-        options_list[0], options_list[1],
-        [args.name1, args.name2],
-        args.games, args.resign, args.mate_win,
-        args.byoyomi, args.btime, args.wtime, args.binc, args.winc,
-        args.draw, args.opening, args.opening_moves, args.opening_seed,
-        args.keep_process,
-        args.csa, args.multi_csa,
-        args.pgn, args.no_pgn_moves,
-        args.display, args.debug)
+    if args.engine3 is None:
+        # 1 on 1 matches
+        main(args.engine1, args.engine2,
+            options_list[0], options_list[1],
+            [args.name1, args.name2],
+            args.games, args.resign, args.mate_win,
+            args.byoyomi, args.btime, args.wtime, args.binc, args.winc,
+            args.draw, args.opening, args.opening_moves, args.opening_seed,
+            args.keep_process,
+            args.csa, args.multi_csa,
+            args.pgn, args.no_pgn_moves,
+            args.display, args.debug)
+    else:
+        # league matches
+        engines = (args.engine1, args.engine2, args.engine3)
+        names = (args.name1, args.name2, args.name3)
+        combinations = ((0, 1), (0, 2), (1, 2))
+        results = [
+            { 'engine1_won': 0, 'engine2_won': 0, 'draw': 0, 'total': 0 },
+            { 'engine1_won': 0, 'engine2_won': 0, 'draw': 0, 'total': 0 },
+            { 'engine1_won': 0, 'engine2_won': 0, 'draw': 0, 'total': 0 }]
+
+        for n in range(0, args.games, 2):
+            for i, (a, b) in enumerate(combinations):
+                # 先後入れ替えて1回ずつ対局
+                result = main(engines[a], engines[b],
+                    options_list[a], options_list[b],
+                    [names[a], names[b]],
+                    2, args.resign, args.mate_win,
+                    args.byoyomi, args.btime, args.wtime, args.binc, args.winc,
+                    args.draw, args.opening, args.opening_moves, args.opening_seed,
+                    args.keep_process,
+                    args.csa, args.multi_csa,
+                    args.pgn, args.no_pgn_moves,
+                    args.display, args.debug,
+                    print_summary=False)
+                results[i]['engine1_name'] = result['engine1_name']
+                results[i]['engine2_name'] = result['engine2_name']
+                results[i]['engine1_won'] = result['engine1_won']
+                results[i]['engine2_won'] = result['engine2_won']
+                results[i]['draw'] = result['draw']
+                results[i]['total'] = result['total']
+
+            # 勝敗状況表示
+            print('{} of {} games finished.'.format(n + 2, args.games))
+            for i, (a, b) in enumerate(combinations):
+                print('{} vs {}: {}-{}-{} ({:.1f}%)'.format(
+                    results[i]['engine1_name'], results[i]['engine2_name'],
+                    results[i]['engine1_won'], results[i]['engine2_won'], results[i]['draw'],
+                    (results[i]['engine1_won'] + results[i]['draw'] / 2) / results[i]['total'] * 100))
