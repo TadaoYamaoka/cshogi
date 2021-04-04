@@ -36,7 +36,7 @@ def move_to_san(move):
 class Exporter:
     def __init__(self, path=None, append=False):
         if path:
-            self.open(path)
+            self.open(path, append)
         else:
             self.f = None
 
