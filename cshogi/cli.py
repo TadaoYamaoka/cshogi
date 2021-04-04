@@ -36,7 +36,7 @@ def usi_info_to_csa_comment(board, info):
         return None
 
     # score
-    score = to_socre(m) * (1 - board.turn * 2)
+    score = to_score(m) * (1 - board.turn * 2)
 
     # pv
     pv = []
