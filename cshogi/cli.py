@@ -505,12 +505,12 @@ if __name__ == '__main__':
                     args.pgn, args.no_pgn_moves,
                     args.display, args.debug,
                     print_summary=False)
-                results[i]['engine1_name'] = result['engine1_name']
-                results[i]['engine2_name'] = result['engine2_name']
-                results[i]['engine1_won'] = result['engine1_won']
-                results[i]['engine2_won'] = result['engine2_won']
-                results[i]['draw'] = result['draw']
-                results[i]['total'] = result['total']
+                results[i]['engine1_name'] += result['engine1_name']
+                results[i]['engine2_name'] += result['engine2_name']
+                results[i]['engine1_won'] += result['engine1_won']
+                results[i]['engine2_won'] += result['engine2_won']
+                results[i]['draw'] += result['draw']
+                results[i]['total'] += result['total']
 
             # 勝敗状況表示
             print('{} of {} games finished.'.format(n + 2, args.games))
