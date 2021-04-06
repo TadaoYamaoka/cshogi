@@ -1,6 +1,6 @@
 ﻿import random
 import math
-import time
+from time import perf_counter
 import re
 import os
 import datetime
@@ -57,13 +57,40 @@ def usi_info_to_score(info):
     return to_score(m)
 
 def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign=None, mate_win=False,
-         byoyomi=None, btime=None, wtime=None, binc=None, winc=None,
+         byoyomi=None, time=None, inc=None,
          draw=256, opening=None, opening_moves=24, opening_seed=None,
          keep_process=False,
          csa=None, multi_csa=False, pgn=None, no_pgn_moves=False, is_display=True, debug=True,
          print_summary=True, callback=None):
     engine1 = Engine(engine1, connect=False)
     engine2 = Engine(engine2, connect=False)
+
+    # byoyomi
+    if type(byoyomi) in (list, tuple):
+        if len(byoyomi) >= 2:
+            byoyomi1, byoyomi2 = byoyomi
+        else:
+            byoyomi1 = byoyomi2 = byoyomi[0]
+    else:
+        byoyomi1 = byoyomi2 = byoyomi
+
+    # time
+    if type(time) in (list, tuple):
+        if len(time) >= 2:
+            time1, time2 = time
+        else:
+            time1 = time2 = time[0]
+    else:
+        time1 = time2 = time
+
+    # inc
+    if type(inc) in (list, tuple):
+        if len(inc) >= 2:
+            inc1, inc2 = inc
+        else:
+            inc1 = inc2 = inc[0]
+    else:
+        inc1 = inc2 = inc
 
     # debug
     if debug:
@@ -118,10 +145,20 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
             engines_order = (engine1, engine2)
             options_order = (options1, options2)
             listeners_order = (listener1, listener2)
+            byoyomi_order = (byoyomi1, byoyomi2)
+            btime = time1
+            wtime = time2
+            binc = inc1
+            winc = inc2
         else:
             engines_order = (engine2, engine1)
             options_order = (options2, options1)
             listeners_order = (listener2, listener1)
+            byoyomi_order = (byoyomi2, byoyomi1)
+            btime = time2
+            wtime = time1
+            binc = inc2
+            winc = inc1
 
         # 接続とエンジン設定
         for engine, options, listener in zip(engines_order, options_order, listeners_order):
@@ -181,7 +218,7 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
         remain_time = [btime, wtime]
         inc_time = (binc, winc)
         while not is_game_over:
-            for engine, listener in zip(engines_order, listeners_order):
+            for engine, listener, byoyomi in zip(engines_order, listeners_order, byoyomi_order):
                 # 持将棋
                 if board.move_number > draw:
                     is_game_over = True
@@ -190,12 +227,12 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
                 # position
                 engine.position(usi_moves, listener=listener)
 
-                start_time = time.perf_counter()
+                start_time = perf_counter()
 
                 # go
                 bestmove, _ = engine.go(byoyomi=byoyomi, btime=remain_time[BLACK], wtime=remain_time[WHITE], binc=binc, winc=winc, listener=listener)
 
-                elapsed_time = time.perf_counter() - start_time
+                elapsed_time = perf_counter() - start_time
 
                 if remain_time[board.turn] is not None:
                     if inc_time[board.turn] is not None:
@@ -438,11 +475,9 @@ if __name__ == '__main__':
     parser.add_argument('--games', type=int, default=1)
     parser.add_argument('--resign', type=int)
     parser.add_argument('--mate_win', action='store_true')
-    parser.add_argument('--byoyomi', type=int)
-    parser.add_argument('--btime', type=int)
-    parser.add_argument('--wtime', type=int)
-    parser.add_argument('--binc', type=int)
-    parser.add_argument('--winc', type=int)
+    parser.add_argument('--byoyomi', type=int, nargs='+')
+    parser.add_argument('--time', type=int, nargs='+')
+    parser.add_argument('--inc', type=int, nargs='+')
     parser.add_argument('--draw', type=int, default=256)
     parser.add_argument('--opening', type=str)
     parser.add_argument('--opening-moves', type=int, default=24)
@@ -475,7 +510,7 @@ if __name__ == '__main__':
             options_list[0], options_list[1],
             [args.name1, args.name2],
             args.games, args.resign, args.mate_win,
-            args.byoyomi, args.btime, args.wtime, args.binc, args.winc,
+            args.byoyomi, args.time, args.inc,
             args.draw, args.opening, args.opening_moves, args.opening_seed,
             args.keep_process,
             args.csa, args.multi_csa,
@@ -485,6 +520,27 @@ if __name__ == '__main__':
         # league matches
         engines = (args.engine1, args.engine2, args.engine3)
         names = (args.name1, args.name2, args.name3)
+        if args.byoyomi:
+            if len(args.byoyomi) == 3:
+                byoyomis = (args.byoyomi[0], args.byoyomi[1], args.byoyomi[2])
+            else:
+                byoyomis = (args.byoyomi[0], args.byoyomi[0], args.byoyomi[0])
+        else:
+            byoyomis = (None, None, None)
+        if args.time:
+            if len(args.time) == 3:
+                times = (args.time[0], args.time[1], args.time[2])
+            else:
+                times = (args.time[0], args.time[0], args.time[0])
+        else:
+            times = (None, None, None)
+        if args.inc:
+            if len(args.inc) == 3:
+                incs = (args.inc[0], args.inc[1], args.inc[2])
+            else:
+                incs = (args.inc[0], args.inc[0], args.inc[0])
+        else:
+            incs = (None, None, None)
         combinations = ((0, 1), (0, 2), (1, 2))
         results = [
             { 'engine1_won': 0, 'engine2_won': 0, 'draw': 0, 'total': 0 },
@@ -498,7 +554,7 @@ if __name__ == '__main__':
                     options_list[a], options_list[b],
                     [names[a], names[b]],
                     2, args.resign, args.mate_win,
-                    args.byoyomi, args.btime, args.wtime, args.binc, args.winc,
+                    (byoyomis[a], byoyomis[b]), (times[a], times[b]), (incs[a], incs[b]),
                     args.draw, args.opening, args.opening_moves, args.opening_seed,
                     args.keep_process,
                     args.csa, args.multi_csa,
