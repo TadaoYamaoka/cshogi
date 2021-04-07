@@ -58,7 +58,7 @@ def usi_info_to_score(info):
 
 def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign=None, mate_win=False,
          byoyomi=None, time=None, inc=None,
-         draw=256, opening=None, opening_moves=24, opening_seed=None,
+         draw=256, opening=None, opening_moves=24, opening_seed=None, opening_index=None,
          keep_process=False,
          csa=None, multi_csa=False, pgn=None, no_pgn_moves=False, is_display=True, debug=True,
          print_summary=True, callback=None):
@@ -125,14 +125,18 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
         pgn_exporter = PGN.Exporter(pgn, append=True)
 
     # 初期局面読み込み
-    if opening_seed is not None:
-        random.seed(opening_seed)
     if opening:
         opening_list = []
         with open(opening) as f:
             opening_list = [line.strip()[15:].split(' ') for line in f]
-        # シャッフル
-        random.shuffle(opening_list)
+        # インデックス指定
+        if opening_index is not None:
+            opening_list = [opening_list[opening_index]]
+        else:
+            # シャッフル
+            if opening_seed is not None:
+                random.seed(opening_seed)
+            random.shuffle(opening_list)
 
     board = Board()
     engine1_won = [0, 0, 0, 0, 0, 0]
@@ -482,6 +486,7 @@ if __name__ == '__main__':
     parser.add_argument('--opening', type=str)
     parser.add_argument('--opening-moves', type=int, default=24)
     parser.add_argument('--opening-seed', type=int)
+    parser.add_argument('--opening-index', type=int)
     parser.add_argument('--keep_process', action='store_true')
     parser.add_argument('--csa', type=str)
     parser.add_argument('--multi_csa', action='store_true')
@@ -511,7 +516,7 @@ if __name__ == '__main__':
             [args.name1, args.name2],
             args.games, args.resign, args.mate_win,
             args.byoyomi, args.time, args.inc,
-            args.draw, args.opening, args.opening_moves, args.opening_seed,
+            args.draw, args.opening, args.opening_moves, args.opening_seed, args.opening_index,
             args.keep_process,
             args.csa, args.multi_csa,
             args.pgn, args.no_pgn_moves,
@@ -547,7 +552,24 @@ if __name__ == '__main__':
             { 'engine1_won': 0, 'engine2_won': 0, 'draw': 0, 'total': 0 },
             { 'engine1_won': 0, 'engine2_won': 0, 'draw': 0, 'total': 0 }]
 
+        # 初期局面
+        if args.opening:
+            # インデックス指定
+            if args.opening_index is not None:
+                opening_index_list = [args.opening_index]
+            else:
+                with open(args.opening) as f:
+                    opening_index_list = list(range(len(f.readlines())))
+                # シャッフル
+                if args.opening_seed is not None:
+                    random.seed(args.opening_seed)
+                random.shuffle(opening_index_list)
+
         for n in range(0, args.games, 2):
+            if args.opening:
+                opening_index = opening_index_list[n // 2 % len(opening_index_list)]
+            else:
+                opening_index = None
             for i, (a, b) in enumerate(combinations):
                 # 先後入れ替えて1回ずつ対局
                 result = main(engines[a], engines[b],
@@ -555,7 +577,7 @@ if __name__ == '__main__':
                     [names[a], names[b]],
                     2, args.resign, args.mate_win,
                     (byoyomis[a], byoyomis[b]), (times[a], times[b]), (incs[a], incs[b]),
-                    args.draw, args.opening, args.opening_moves, args.opening_seed,
+                    args.draw, args.opening, args.opening_moves, None, opening_index,
                     args.keep_process,
                     args.csa, args.multi_csa,
                     args.pgn, args.no_pgn_moves,
