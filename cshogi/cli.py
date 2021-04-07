@@ -169,7 +169,7 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
             if engine.proc is None:
                 engine.connect(listener=listener)
             for name, value in options.items():
-                engine.setoption(name, value)
+                engine.setoption(name, value, listener=listener)
             engine.isready(listener=listener)
 
         if names:
