@@ -243,11 +243,15 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
                         remain_time[board.turn] += inc_time[board.turn]
                     remain_time[board.turn] -= math.ceil(elapsed_time * 1000)
 
-                    if remain_time[board.turn] <= 0:
-                        # 時間切れ負け
-                        is_timeup = True
-                        is_game_over = True
-                        break
+                    if remain_time[board.turn] < 0:
+                        # 1秒未満は切れ負けにしない
+                        if remain_time[board.turn] > -1000:
+                            remain_time[board.turn] = 0
+                        else:
+                            # 時間切れ負け
+                            is_timeup = True
+                            is_game_over = True
+                            break
 
                 score = usi_info_to_score(listener.info)
                 # 投了閾値
@@ -351,7 +355,7 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
             csa_endgame = 'ILLEGAL_MOVE'
         elif is_timeup:
             win = opponent(board.turn)
-            print('まで{}手で{}の勝ち'.format(board.move_number - 1, '先手' if win == BLACK else '後手'))
+            print('まで{}手で{}の切れ負け'.format(board.move_number - 1, '先手' if win == WHITE else '後手'))
             csa_endgame = '%TIME_UP'
         else:
             win = opponent(board.turn)
