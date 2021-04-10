@@ -69,6 +69,7 @@ namespace parser {
 		std::vector<int> moves;
 		std::vector<int> scores;
 		std::vector<std::string> comments;
+		std::string comment;
 		int win;
 
 		__Parser() : names(2), ratings(2) {}
@@ -135,7 +136,26 @@ namespace parser {
 						comments.resize(moves.size());
 						comments[moves.size() - 1] = line.substr(4);
 					}
-
+					else {
+						comment += line + "\n";
+						// for floodgate
+						if (line.substr(0, 9) == "'summary:") {
+							const auto found_pos = line.find_first_of(':', 9);
+							if (found_pos != std::string::npos) {
+								const auto reason = line.substr(9, found_pos - 9);
+								if (reason == "illegal move") {
+									endgame = "%ILLEGAL_MOVE";
+									lose_color = pos.turn();
+								}
+								else if (reason == "max_moves") {
+									endgame = "%JISHOGI";
+								}
+								else if (reason == "abnormal") {
+									endgame = "%ERROR";
+								}
+							}
+						}
+					}
 				}
 				else if (line[0] == 'V') {
 					// Currently just ignoring version

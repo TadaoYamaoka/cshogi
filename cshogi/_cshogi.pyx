@@ -635,6 +635,7 @@ cdef extern from "parser.h" namespace "parser":
 		vector[int] moves
 		vector[int] scores
 		vector[string] comments
+		string comment
 		int win
 		void parse_csa_file(const string& path) except +
 		void parse_csa_str(const string& csa_str) except +
@@ -703,3 +704,7 @@ cdef class Parser:
 	@property
 	def win(self):
 		return self.__parser.win
+
+	@property
+	def comment(self):
+		return self.__parser.comment.decode('ascii')
