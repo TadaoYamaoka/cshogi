@@ -128,12 +128,10 @@ namespace parser {
 						auto last = line.find_first_of(" ", 4);
 						if (last == std::string::npos)
 							last = line.size();
-						scores.resize(moves.size());
 						try {
 							scores[moves.size() - 1] = std::stoi(line.substr(4, last - 4));
 						}
 						catch (std::invalid_argument&) {}
-						comments.resize(moves.size());
 						comments[moves.size() - 1] = line.substr(4);
 					}
 					else {
@@ -183,6 +181,7 @@ namespace parser {
 						moves.push_back(move.value());
 						states->push_back(StateInfo());
 						pos.doMove(move, states->back());
+						scores.resize(moves.size());
 						// Comment
 						comments.resize(moves.size());
 						if (line.substr(7, 2) == ",\'") {
