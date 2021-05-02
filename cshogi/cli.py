@@ -43,7 +43,7 @@ def usi_info_to_csa_comment(board, info):
     board2 = board.copy()
     for usi_move in m[3].split(' '):
         move = board2.move_from_usi(usi_move)
-        assert board2.is_pseudo_legal(move), move
+        assert board2.is_legal(move), move
         pv.append(CSA.COLOR_SYMBOLS[board2.turn] + move_to_csa(move))
         board2.push(move)
 
