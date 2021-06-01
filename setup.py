@@ -36,7 +36,6 @@ setup(
     packages=['cshogi', 'cshogi.usi', 'cshogi.gym_shogi', 'cshogi.gym_shogi.envs'],
     ext_modules=ext_modules,
     cmdclass={'build_ext': my_build_ext},
-    install_requires=['numpy', 'Cython'],
     author='Tadao Yamaoka',
     url='https://github.com/TadaoYamaoka/cshogi',
     description = 'A fast Python shogi library',
