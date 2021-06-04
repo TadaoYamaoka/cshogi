@@ -1,7 +1,7 @@
 cshogi: 高速なPythonの将棋ライブラリ
 ====================================
-.. image:: https://img.shields.io/pypi/v/dlshogi.svg
-    :target: https://pypi.python.org/pypi/dlshogi
+.. image:: https://img.shields.io/pypi/v/cshogi.svg
+    :target: https://pypi.python.org/pypi/cshogi
     :alt: PyPI package
 
 概要
