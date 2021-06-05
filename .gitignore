@@ -248,3 +248,4 @@ __pycache__
 /dist
 /cshogi/gym_shogi/envs/shogi_vec_env.cpp
 /cshogi/gym_shogi/envs/shogi_env.cpp
+.vscode
