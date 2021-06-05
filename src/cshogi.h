@@ -108,7 +108,7 @@ public:
 	}
 
 	int turn() const { return pos.turn(); }
-	int ply() const { return pos.gamePly() + (int)states.size(); }
+	int ply() const { return pos.gamePly(); }
 	std::string toSFEN() const { return pos.toSFEN(); }
 	std::string toCSAPos() const { return pos.toCSAPos(); }
 	void toHuffmanCodedPos(char* data) const { pos.toHuffmanCodedPos((u8*)data); }
