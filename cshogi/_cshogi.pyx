@@ -13,36 +13,36 @@ dtypeMove16 = np.dtype(np.int16)
 dtypeGameResult = np.dtype(np.int8)
 
 HuffmanCodedPos = np.dtype([
-    ('hcp', dtypeHcp),
-    ])
+	('hcp', dtypeHcp),
+	])
 
 HuffmanCodedPosAndEval = np.dtype([
-    ('hcp', dtypeHcp),
-    ('eval', dtypeEval),
-    ('bestMove16', dtypeMove16),
-    ('gameResult', dtypeGameResult),
-    ('dummy', np.uint8),
-    ])
+	('hcp', dtypeHcp),
+	('eval', dtypeEval),
+	('bestMove16', dtypeMove16),
+	('gameResult', dtypeGameResult),
+	('dummy', np.uint8),
+	])
 
 PackedSfen = np.dtype([
-    ('sfen', np.uint8, 32),
-    ])
+	('sfen', np.uint8, 32),
+	])
 
 PackedSfenValue = np.dtype([
-    ('sfen', np.uint8, 32),
-    ('score', np.int16),
-    ('move', np.uint16),
-    ('gamePly', np.uint16),
-    ('game_result', np.int8),
-    ('padding', np.uint8),
-    ])
+	('sfen', np.uint8, 32),
+	('score', np.int16),
+	('move', np.uint16),
+	('gamePly', np.uint16),
+	('game_result', np.int8),
+	('padding', np.uint8),
+	])
 
 dtypeKey = np.dtype(np.uint64)
 BookEntry = np.dtype([
-    ('key', dtypeKey),
-    ('fromToPro', dtypeMove16),
-    ('count', np.uint16),
-    ('score', np.int32),
+	('key', dtypeKey),
+	('fromToPro', dtypeMove16),
+	('count', np.uint16),
+	('score', np.int32),
 	])
 
 
@@ -75,57 +75,57 @@ SQUARE_NAMES = [
 COLORS = [BLACK, WHITE] = range(2)
 
 GAME_RESULTS = [
-    DRAW, BLACK_WIN, WHITE_WIN,
+	DRAW, BLACK_WIN, WHITE_WIN,
 ] = range(3)
 
 PIECE_TYPES_WITH_NONE = [NONE,
-           PAWN,      LANCE,      KNIGHT,      SILVER,
-         BISHOP,       ROOK,
-           GOLD,
-           KING,
-      PROM_PAWN, PROM_LANCE, PROM_KNIGHT, PROM_SILVER,
-    PROM_BISHOP,  PROM_ROOK,
+		   PAWN,      LANCE,      KNIGHT,      SILVER,
+		 BISHOP,       ROOK,
+		   GOLD,
+		   KING,
+	  PROM_PAWN, PROM_LANCE, PROM_KNIGHT, PROM_SILVER,
+	PROM_BISHOP,  PROM_ROOK,
 ] = range(15)
 
 PIECE_TYPES = [
-           PAWN,      LANCE,      KNIGHT,      SILVER,
-         BISHOP,       ROOK,
-           GOLD,
-           KING,
-      PROM_PAWN, PROM_LANCE, PROM_KNIGHT, PROM_SILVER,
-    PROM_BISHOP,  PROM_ROOK,
+		   PAWN,      LANCE,      KNIGHT,      SILVER,
+		 BISHOP,       ROOK,
+		   GOLD,
+		   KING,
+	  PROM_PAWN, PROM_LANCE, PROM_KNIGHT, PROM_SILVER,
+	PROM_BISHOP,  PROM_ROOK,
 ]
 
 PIECES = [NONE,
-          BPAWN,      BLANCE,      BKNIGHT,      BSILVER,
-        BBISHOP,       BROOK,
-          BGOLD,
-          BKING,
-     BPROM_PAWN, BPROM_LANCE, BPROM_KNIGHT, BPROM_SILVER,
+		  BPAWN,      BLANCE,      BKNIGHT,      BSILVER,
+		BBISHOP,       BROOK,
+		  BGOLD,
+		  BKING,
+	 BPROM_PAWN, BPROM_LANCE, BPROM_KNIGHT, BPROM_SILVER,
    BPROM_BISHOP,  BPROM_ROOK,       NOTUSE,       NOTUSE,
-          WPAWN,      WLANCE,      WKNIGHT,      WSILVER,
-        WBISHOP,       WROOK,
-          WGOLD,
-          WKING,
-     WPROM_PAWN, WPROM_LANCE, WPROM_KNIGHT, WPROM_SILVER,
+		  WPAWN,      WLANCE,      WKNIGHT,      WSILVER,
+		WBISHOP,       WROOK,
+		  WGOLD,
+		  WKING,
+	 WPROM_PAWN, WPROM_LANCE, WPROM_KNIGHT, WPROM_SILVER,
    WPROM_BISHOP, WPROM_ROOK,
 ] = range(31)
 
 HAND_PIECES = [
-          HPAWN,     HLANCE,     HKNIGHT,     HSILVER,
-          HGOLD,
-        HBISHOP,      HROOK,
+		  HPAWN,     HLANCE,     HKNIGHT,     HSILVER,
+		  HGOLD,
+		HBISHOP,      HROOK,
 ] = range(7)
 
 MAX_PIECES_IN_HAND = [
-    18, 4, 4, 4,
-    4,
-    2, 2,
+	18, 4, 4, 4,
+	4,
+	2, 2,
 ]
 
 REPETITION_TYPES = [
-    NOT_REPETITION, REPETITION_DRAW, REPETITION_WIN, REPETITION_LOSE,
-    REPETITION_SUPERIOR, REPETITION_INFERIOR
+	NOT_REPETITION, REPETITION_DRAW, REPETITION_WIN, REPETITION_LOSE,
+	REPETITION_SUPERIOR, REPETITION_INFERIOR
 ] = range(6)
 
 SVG_PIECE_DEFS = [
@@ -181,7 +181,7 @@ PIECE_SYMBOLS = [
 	'p', 'l', 'n', 's', 'b', 'r', 'g', 'k', '+p', '+l', '+n', '+s', '+b', '+r'
 ]
 PIECE_JAPANESE_SYMBOLS = [
-    '',
+	'',
 	'歩', '香', '桂', '銀', '角', '飛', '金', '玉', 'と', '杏', '圭', '全', '馬', '龍'
 ]
 HAND_PIECE_JAPANESE_SYMBOLS = [
