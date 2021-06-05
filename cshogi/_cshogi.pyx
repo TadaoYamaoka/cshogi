@@ -123,6 +123,8 @@ MAX_PIECES_IN_HAND = [
 	2, 2,
 ]
 
+MOVE_NONE = 0
+
 REPETITION_TYPES = [
 	NOT_REPETITION, REPETITION_DRAW, REPETITION_WIN, REPETITION_LOSE,
 	REPETITION_SUPERIOR, REPETITION_INFERIOR
@@ -236,7 +238,8 @@ cdef extern from "cshogi.h":
 		void reset()
 		string dump()
 		void push(const int move)
-		void pop(const int move)
+		void pop()
+		int peek()
 		bool is_game_over()
 		int isDraw(const int checkMaxPly)
 		int move(const int from_square, const int to_square, const bool promotion)
@@ -309,14 +312,16 @@ cdef class Board:
 
 	def push_usi(self, str usi):
 		cdef string usi_b = usi.encode('ascii')
-		move = self.__board.move_from_usi(usi_b)
-		self.__board.push(move)
+		cdef int move = self.__board.move_from_usi(usi_b)
+		if move != 0:
+			self.__board.push(move)
 		return move
 
 	def push_csa(self, str csa):
 		cdef string csa_b = csa.encode('ascii')
 		cdef int move = self.__board.move_from_csa(csa_b)
-		self.__board.push(move)
+		if move != 0:
+			self.__board.push(move)
 		return move
 
 	def push_move16(self, unsigned short move16):
@@ -329,8 +334,11 @@ cdef class Board:
 		self.__board.push(move)
 		return move
 
-	def pop(self, int move):
-		self.__board.pop(move)
+	def pop(self):
+		self.__board.pop()
+
+	def peek(self):
+		return self.__board.peek()
 
 	def is_game_over(self):
 		return self.__board.is_game_over()
@@ -542,7 +550,11 @@ cdef class Board:
 		return SvgWrapper(ET.tostring(svg).decode("utf-8"))
 	
 	def _repr_svg_(self):
-		return self.to_svg()
+		cdef int move = self.__board.peek()
+		if move == 0:
+			return self.to_svg()
+		else:
+			return self.to_svg(move)
 
 def piece_to_piece_type(int p):
 	return __piece_to_piece_type(p)

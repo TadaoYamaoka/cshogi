@@ -40,20 +40,20 @@ public:
 	~__Board() {}
 
 	void set(const std::string& sfen) {
-		states.clear();
+		history.clear();
 		pos.set(sfen);
 	}
 	bool set_hcp(char* hcp) {
-		states.clear();
+		history.clear();
 		return pos.set_hcp(hcp);
 	}
 	bool set_psfen(char* psfen) {
-		states.clear();
+		history.clear();
 		return pos.set_psfen(psfen);
 	}
 
 	void reset() {
-		states.clear();
+		history.clear();
 		pos.set(DefaultStartPositionSFEN);
 	}
 
@@ -64,13 +64,20 @@ public:
 	}
 
 	void push(const int move) {
-		states.push_back(StateInfo());
-		pos.doMove(Move(move), states.back());
+		history.emplace_back(move, StateInfo());
+		pos.doMove(Move(move), history.back().second);
 	}
 
-	void pop(const int move) {
-		pos.undoMove(Move(move));
-		states.pop_back();
+	void pop() {
+		pos.undoMove(history.back().first);
+		history.pop_back();
+	}
+
+	int peek() {
+		if (history.size() > 0)
+			return history.back().first.value();
+		else
+			return Move::moveNone().value();
 	}
 
 	bool is_game_over() const {
@@ -218,7 +225,7 @@ public:
 	Position pos;
 
 private:
-	std::deque<StateInfo> states;
+	std::deque<std::pair<Move, StateInfo>> history;
 
 	void bbToVector(PieceType pt, Color c, Piece piece, std::vector<int>& board) const {
 		Bitboard bb = pos.bbOf(pt, c);

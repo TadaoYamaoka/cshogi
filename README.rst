@@ -53,7 +53,7 @@ cshogiは、盤面管理、合法手生成、指し手の検証、USIプロト�
 
       >>> move = board.push_usi('7g7f') # 指す
 
-      >>> board.pop(move) # 手を戻す
+      >>> board.pop() # 手を戻す
 
 * テキスト形式で盤面を表示
 
