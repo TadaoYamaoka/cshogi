@@ -410,8 +410,6 @@ cdef class Board:
 	def mate_move(self, int ply):
 		assert ply % 2 == 1
 		assert ply >= 3
-		if self.__board.inCheck():
-			return 0
 		return self.__board.mateMove(ply)
 
 	def is_mate(self, int ply):

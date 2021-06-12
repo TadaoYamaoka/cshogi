@@ -2,12 +2,11 @@
 #define MATE_H
 
 // 奇数手詰めチェック
-// 手番側が王手でないこと
-// // 詰ます手を返すバージョン
+// 詰ます手を返すバージョン
+template <bool INCHECK = false>
 Move mateMoveInOddPlyReturnMove(Position& pos, const int depth);
 
 // 奇数手詰めチェック
-// 手番側が王手でないこと
 template <bool INCHECK = false>
 bool mateMoveInOddPly(Position& pos, const int depth);
 

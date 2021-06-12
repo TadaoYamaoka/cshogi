@@ -124,7 +124,10 @@ public:
 	bool inCheck() const { return pos.inCheck(); }
 	int mateMoveIn1Ply() { return pos.mateMoveIn1Ply().value(); }
 	int mateMove(int ply) {
-		return mateMoveInOddPlyReturnMove(pos, ply).value();
+		if (pos.inCheck())
+			return mateMoveInOddPlyReturnMove<true>(pos, ply).value();
+		else
+			return mateMoveInOddPlyReturnMove<false>(pos, ply).value();
 	}
 	bool is_mate(int ply) {
 		return mateMoveInEvenPly(pos, ply);
