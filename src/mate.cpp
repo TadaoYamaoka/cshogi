@@ -107,7 +107,7 @@ FORCE_INLINE bool mateMoveIn3Ply(Position& pos)
 
 // 奇数手詰めチェック
 // 詰ます手を返すバージョン
-template <bool INCHECK = false>
+template <bool INCHECK>
 Move mateMoveInOddPlyReturnMove(Position& pos, const int depth) {
 	// OR節点
 
@@ -154,7 +154,7 @@ template Move mateMoveInOddPlyReturnMove<true>(Position& pos, const int depth);
 template Move mateMoveInOddPlyReturnMove<false>(Position& pos, const int depth);
 
 // 奇数手詰めチェック
-template <bool INCHECK = false>
+template <bool INCHECK>
 bool mateMoveInOddPly(Position& pos, const int depth)
 {
 	// OR節点
