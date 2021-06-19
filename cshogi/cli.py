@@ -223,106 +223,110 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
         remain_time = [btime, wtime]
         inc_time = (binc, winc)
         while not is_game_over:
-            for engine, listener, byoyomi in zip(engines_order, listeners_order, byoyomi_order):
-                # 持将棋
-                if board.move_number > draw:
-                    is_game_over = True
-                    break
+            engine_index = (board.move_number - 1) % 2
+            engine = engines_order[engine_index]
+            listener = listeners_order[engine_index]
+            byoyomi = byoyomi_order[engine_index]
 
-                # position
-                engine.position(usi_moves, listener=listener)
+            # 持将棋
+            if board.move_number > draw:
+                is_game_over = True
+                break
 
-                start_time = perf_counter()
+            # position
+            engine.position(usi_moves, listener=listener)
 
-                # go
-                bestmove, _ = engine.go(byoyomi=byoyomi, btime=remain_time[BLACK], wtime=remain_time[WHITE], binc=binc, winc=winc, listener=listener)
+            start_time = perf_counter()
 
-                elapsed_time = perf_counter() - start_time
+            # go
+            bestmove, _ = engine.go(byoyomi=byoyomi, btime=remain_time[BLACK], wtime=remain_time[WHITE], binc=binc, winc=winc, listener=listener)
 
-                if remain_time[board.turn] is not None:
-                    if inc_time[board.turn] is not None:
-                        remain_time[board.turn] += inc_time[board.turn]
-                    remain_time[board.turn] -= math.ceil(elapsed_time * 1000)
+            elapsed_time = perf_counter() - start_time
 
-                    if remain_time[board.turn] < 0:
-                        # 1秒未満は切れ負けにしない
-                        if remain_time[board.turn] > -1000:
-                            remain_time[board.turn] = 0
-                        else:
-                            # 時間切れ負け
-                            is_timeup = True
-                            is_game_over = True
-                            break
+            if remain_time[board.turn] is not None:
+                if inc_time[board.turn] is not None:
+                    remain_time[board.turn] += inc_time[board.turn]
+                remain_time[board.turn] -= math.ceil(elapsed_time * 1000)
 
-                score = usi_info_to_score(listener.info)
-                # 投了閾値
-                if resign is not None:
-                    if score is not None and score <= -resign:
-                        # 投了
+                if remain_time[board.turn] < 0:
+                    # 1秒未満は切れ負けにしない
+                    if remain_time[board.turn] > -1000:
+                        remain_time[board.turn] = 0
+                    else:
+                        # 時間切れ負け
+                        is_timeup = True
                         is_game_over = True
                         break
 
-                # 詰みを見つけたら終了
-                if mate_win:
-                    if score is not None and score == 100000:
-                        move = board.move_from_usi(bestmove)
-                        if csa:
-                            csa_exporter.move(move, time=int(elapsed_time), comment=usi_info_to_csa_comment(board, listener.info))
-                        board.push(move)
-                        is_game_over = True
-                        break
-
-                if bestmove == 'resign':
+            score = usi_info_to_score(listener.info)
+            # 投了閾値
+            if resign is not None:
+                if score is not None and score <= -resign:
                     # 投了
                     is_game_over = True
                     break
-                elif bestmove == 'win':
-                    # 入玉勝ち宣言
-                    is_nyugyoku = True
+
+            # 詰みを見つけたら終了
+            if mate_win:
+                if score is not None and score == 100000:
+                    move = board.move_from_usi(bestmove)
+                    if csa:
+                        csa_exporter.move(move, time=int(elapsed_time), comment=usi_info_to_csa_comment(board, listener.info))
+                    board.push(move)
                     is_game_over = True
                     break
-                else:
-                    move = board.move_from_usi(bestmove)
-                    if board.is_legal(move):
-                        if csa:
-                            csa_exporter.move(move, time=int(elapsed_time), comment=usi_info_to_csa_comment(board, listener.info))
-                        board.push(move)
-                        moves.append(move)
-                        usi_moves.append(bestmove)
-                        key = board.zobrist_hash()
-                        repetition_hash[key] += 1
-                        # 千日手
-                        if repetition_hash[key] == 4:
-                            # 連続王手
-                            is_draw = board.is_draw()
-                            if is_draw == REPETITION_WIN:
-                                is_repetition_win = True
-                                is_game_over = True
-                                break
-                            elif is_draw == REPETITION_LOSE:
-                                is_repetition_lose = True
-                                is_game_over = True
-                                break
-                            is_fourfold_repetition = True
+
+            if bestmove == 'resign':
+                # 投了
+                is_game_over = True
+                break
+            elif bestmove == 'win':
+                # 入玉勝ち宣言
+                is_nyugyoku = True
+                is_game_over = True
+                break
+            else:
+                move = board.move_from_usi(bestmove)
+                if board.is_legal(move):
+                    if csa:
+                        csa_exporter.move(move, time=int(elapsed_time), comment=usi_info_to_csa_comment(board, listener.info))
+                    board.push(move)
+                    moves.append(move)
+                    usi_moves.append(bestmove)
+                    key = board.zobrist_hash()
+                    repetition_hash[key] += 1
+                    # 千日手
+                    if repetition_hash[key] == 4:
+                        # 連続王手
+                        is_draw = board.is_draw()
+                        if is_draw == REPETITION_WIN:
+                            is_repetition_win = True
                             is_game_over = True
                             break
-                    else:
-                        is_illegal = True
+                        elif is_draw == REPETITION_LOSE:
+                            is_repetition_lose = True
+                            is_game_over = True
+                            break
+                        is_fourfold_repetition = True
                         is_game_over = True
                         break
-
-                # 盤面表示
-                if is_display:
-                    print('{}手目'.format(len(usi_moves)))
-                    if is_jupyter:
-                        display(SVG(board.to_svg(move)))
-                    else:
-                        print(board)
-
-                # 終局判定
-                if board.is_game_over():
+                else:
+                    is_illegal = True
                     is_game_over = True
                     break
+
+            # 盤面表示
+            if is_display:
+                print('{}手目'.format(len(usi_moves)))
+                if is_jupyter:
+                    display(SVG(board.to_svg(move)))
+                else:
+                    print(board)
+
+            # 終局判定
+            if board.is_game_over():
+                is_game_over = True
+                break
 
         # エンジン終了
         if not keep_process:
