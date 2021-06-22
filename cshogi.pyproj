@@ -27,6 +27,7 @@
     <Folder Include="cshogi\" />
     <Folder Include="cshogi\gym_shogi\" />
     <Folder Include="cshogi\gym_shogi\envs\" />
+    <Folder Include="cshogi\dlshogi\" />
     <Folder Include="cshogi\usi\" />
   </ItemGroup>
   <ItemGroup>
@@ -36,6 +37,9 @@
   <ItemGroup>
     <Compile Include="cshogi\cli.py" />
     <Compile Include="cshogi\CSA.py" />
+    <Compile Include="cshogi\dlshogi\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="cshogi\gym_shogi\envs\shogi_env.pyx" />
     <Compile Include="cshogi\gym_shogi\envs\__init__.py" />
     <Compile Include="cshogi\gym_shogi\__init__.py" />

@@ -8,6 +8,46 @@
 #include "book.hpp"
 #include "mate.h"
 
+// 入力特徴量のための定数(dlshogi互換)
+constexpr int PIECETYPE_NUM = 14; // 駒の種類
+constexpr int MAX_ATTACK_NUM = 3; // 利き数の最大値
+constexpr u32 MAX_FEATURES1_NUM = PIECETYPE_NUM/*駒の配置*/ + PIECETYPE_NUM/*駒の利き*/ + MAX_ATTACK_NUM/*利き数*/;
+
+constexpr int MAX_HPAWN_NUM = 8; // 歩の持ち駒の上限
+constexpr int MAX_HLANCE_NUM = 4;
+constexpr int MAX_HKNIGHT_NUM = 4;
+constexpr int MAX_HSILVER_NUM = 4;
+constexpr int MAX_HGOLD_NUM = 4;
+constexpr int MAX_HBISHOP_NUM = 2;
+constexpr int MAX_HROOK_NUM = 2;
+constexpr u32 MAX_PIECES_IN_HAND[] = {
+	MAX_HPAWN_NUM, // PAWN
+	MAX_HLANCE_NUM, // LANCE
+	MAX_HKNIGHT_NUM, // KNIGHT
+	MAX_HSILVER_NUM, // SILVER
+	MAX_HGOLD_NUM, // GOLD
+	MAX_HBISHOP_NUM, // BISHOP
+	MAX_HROOK_NUM, // ROOK
+};
+constexpr u32 MAX_PIECES_IN_HAND_SUM = MAX_HPAWN_NUM + MAX_HLANCE_NUM + MAX_HKNIGHT_NUM + MAX_HSILVER_NUM + MAX_HGOLD_NUM + MAX_HBISHOP_NUM + MAX_HROOK_NUM;
+constexpr u32 MAX_FEATURES2_HAND_NUM = (int)ColorNum * MAX_PIECES_IN_HAND_SUM;
+constexpr u32 MAX_FEATURES2_NUM = MAX_FEATURES2_HAND_NUM + 1/*王手*/;
+
+// 移動の定数
+enum MOVE_DIRECTION {
+	UP, UP_LEFT, UP_RIGHT, LEFT, RIGHT, DOWN, DOWN_LEFT, DOWN_RIGHT, UP2_LEFT, UP2_RIGHT,
+	UP_PROMOTE, UP_LEFT_PROMOTE, UP_RIGHT_PROMOTE, LEFT_PROMOTE, RIGHT_PROMOTE, DOWN_PROMOTE, DOWN_LEFT_PROMOTE, DOWN_RIGHT_PROMOTE, UP2_LEFT_PROMOTE, UP2_RIGHT_PROMOTE,
+	MOVE_DIRECTION_NUM
+};
+
+int __dlshogi_get_features1_num() {
+	return 2 * MAX_FEATURES1_NUM;
+}
+int __dlshogi_get_features2_num() {
+	return MAX_FEATURES2_NUM;
+}
+
+
 bool nyugyoku(const Position& pos);
 
 void HuffmanCodedPos_init() {
@@ -221,6 +261,85 @@ public:
 		}
 	}
 
+	// 駒の利き、王手情報を含む特徴量(dlshogi互換)
+	void _dlshogi_make_input_features(char* mem1, char* mem2) const {
+		typedef float features1_t[ColorNum][MAX_FEATURES1_NUM][SquareNum];
+		typedef float features2_t[MAX_FEATURES2_NUM][SquareNum];
+		features1_t* const features1 = reinterpret_cast<features1_t* const>(mem1);
+		features2_t* const features2 = reinterpret_cast<features2_t* const>(mem2);
+		float(* const features2_hand)[ColorNum][MAX_PIECES_IN_HAND_SUM][SquareNum] = reinterpret_cast<float(* const)[ColorNum][MAX_PIECES_IN_HAND_SUM][SquareNum]>(mem2);
+
+		std::fill_n((float*)features1, sizeof(features1_t) / sizeof(float), 0);
+		std::fill_n((float*)features2, sizeof(features2_t) / sizeof(float), 0);
+
+		const Bitboard occupied_bb = pos.occupiedBB();
+
+		// 駒の利き(駒種でマージ)
+		Bitboard attacks[ColorNum][PieceTypeNum] = {
+			{ { 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 } },
+			{ { 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 } },
+		};
+		for (Square sq = SQ11; sq < SquareNum; sq++) {
+			const Piece p = pos.piece(sq);
+			if (p != Empty) {
+				const Color pc = pieceToColor(p);
+				const PieceType pt = pieceToPieceType(p);
+				const Bitboard bb = pos.attacksFrom(pt, pc, sq, occupied_bb);
+				attacks[pc][pt] |= bb;
+			}
+		}
+
+		for (Color c = Black; c < ColorNum; ++c) {
+			// 白の場合、色を反転
+			const Color c2 = pos.turn() == Black ? c : oppositeColor(c);
+
+			// 駒の配置
+			Bitboard bb[PieceTypeNum];
+			for (PieceType pt = Pawn; pt < PieceTypeNum; ++pt) {
+				bb[pt] = pos.bbOf(pt, c);
+			}
+
+			for (Square sq = SQ11; sq < SquareNum; ++sq) {
+				// 白の場合、盤面を180度回転
+				const Square sq2 = pos.turn() == Black ? sq : SQ99 - sq;
+
+				for (PieceType pt = Pawn; pt < PieceTypeNum; ++pt) {
+					// 駒の配置
+					if (bb[pt].isSet(sq)) {
+						(*features1)[c2][pt - 1][sq2] = 1;
+					}
+
+					// 駒の利き
+					if (attacks[c][pt].isSet(sq)) {
+						(*features1)[c2][PIECETYPE_NUM + pt - 1][sq2] = 1;
+					}
+				}
+
+				// 利き数
+				const int num = std::min(MAX_ATTACK_NUM, pos.attackersTo(c, sq, occupied_bb).popCount());
+				for (int k = 0; k < num; k++) {
+					(*features1)[c2][PIECETYPE_NUM + PIECETYPE_NUM + k][sq2] = 1;
+				}
+			}
+			// hand
+			const Hand hand = pos.hand(c);
+			int p = 0;
+			for (HandPiece hp = HPawn; hp < HandPieceNum; ++hp) {
+				u32 num = hand.numOf(hp);
+				if (num >= MAX_PIECES_IN_HAND[hp]) {
+					num = MAX_PIECES_IN_HAND[hp];
+				}
+				std::fill_n((*features2_hand)[c2][p], (int)SquareNum * num, 1);
+				p += MAX_PIECES_IN_HAND[hp];
+			}
+		}
+
+		// is check
+		if (pos.inCheck()) {
+			std::fill_n((*features2)[MAX_FEATURES2_HAND_NUM], SquareNum, 1);
+		}
+	}
+
 	unsigned long long bookKey() {
 		return Book::bookKey(pos);
 	}
@@ -313,5 +432,85 @@ int __move_rotate(const int move) {
 
 std::string __move_to_usi(const int move) { return Move(move).toUSI(); }
 std::string __move_to_csa(const int move) { return Move(move).toCSA(); }
+
+
+inline MOVE_DIRECTION get_move_direction(const int dir_x, const int dir_y) {
+	if (dir_y < 0 && dir_x == 0) {
+		return UP;
+	}
+	else if (dir_y == -2 && dir_x == -1) {
+		return UP2_LEFT;
+	}
+	else if (dir_y == -2 && dir_x == 1) {
+		return UP2_RIGHT;
+	}
+	else if (dir_y < 0 && dir_x < 0) {
+		return UP_LEFT;
+	}
+	else if (dir_y < 0 && dir_x > 0) {
+		return UP_RIGHT;
+	}
+	else if (dir_y == 0 && dir_x < 0) {
+		return LEFT;
+	}
+	else if (dir_y == 0 && dir_x > 0) {
+		return RIGHT;
+	}
+	else if (dir_y > 0 && dir_x == 0) {
+		return DOWN;
+	}
+	else if (dir_y > 0 && dir_x < 0) {
+		return DOWN_LEFT;
+	}
+	else /* if (dir_y > 0 && dir_x > 0) */ {
+		return DOWN_RIGHT;
+	}
+}
+
+// 駒の移動を表すラベル(dlshogi互換)
+int __dlshogi_make_move_label(const int move, const int color) {
+	// see: move.hpp : 30
+	// xxxxxxxx x1111111  移動先
+	// xx111111 1xxxxxxx  移動元。駒打ちの際には、PieceType + SquareNum - 1
+	// x1xxxxxx xxxxxxxx  1 なら成り
+	const u16 move16 = (u16)move;
+	u16 to_sq = move16 & 0b1111111;
+	u16 from_sq = (move16 >> 7) & 0b1111111;
+
+	if (from_sq < SquareNum) {
+		// 白の場合、盤面を180度回転
+		if ((Color)color == White) {
+			to_sq = (u16)SQ99 - to_sq;
+			from_sq = (u16)SQ99 - from_sq;
+		}
+
+		const div_t to_d = div(to_sq, 9);
+		const int to_x = to_d.quot;
+		const int to_y = to_d.rem;
+		const div_t from_d = div(from_sq, 9);
+		const int from_x = from_d.quot;
+		const int from_y = from_d.rem;
+		const int dir_x = from_x - to_x;
+		const int dir_y = to_y - from_y;
+
+		MOVE_DIRECTION move_direction = get_move_direction(dir_x, dir_y);
+
+		// promote
+		if ((move16 & 0b100000000000000) > 0) {
+			move_direction = (MOVE_DIRECTION)(move_direction + 10);
+		}
+		return 9 * 9 * move_direction + to_sq;
+	}
+	// 持ち駒の場合
+	else {
+		// 白の場合、盤面を180度回転
+		if ((Color)color == White) {
+			to_sq = (u16)SQ99 - to_sq;
+		}
+		const int hand_piece = from_sq - (int)SquareNum;
+		const int move_direction_label = MOVE_DIRECTION_NUM + hand_piece;
+		return 9 * 9 * move_direction_label + to_sq;
+	}
+}
 
 #endif

@@ -267,6 +267,7 @@ cdef extern from "cshogi.h":
 		bool is_nyugyoku()
 		void piece_planes(char* mem)
 		void piece_planes_rotate(char* mem)
+		void _dlshogi_make_input_features(char* mem1, char* mem2)
 		bool isOK()
 		unsigned long long bookKey()
 
@@ -442,6 +443,9 @@ cdef class Board:
 	def piece_planes_rotate(self, np.ndarray features):
 		return self.__board.piece_planes_rotate(features.data)
 
+	def _dlshogi_make_input_features(self, np.ndarray features1, np.ndarray features2):
+		self.__board._dlshogi_make_input_features(features1.data, features2.data)
+
 	def is_ok(self):
 		return self.__board.isOK()
 
@@ -579,6 +583,9 @@ cdef extern from "cshogi.h":
 	int __move_rotate(const int move)
 	string __move_to_usi(const int move)
 	string __move_to_csa(const int move)
+	int __dlshogi_get_features1_num()
+	int __dlshogi_get_features2_num()
+	int __dlshogi_make_move_label(const int move, const int color)
 
 cdef class LegalMoveList:
 	cdef __LegalMoveList __ml
@@ -638,8 +645,13 @@ def move_to_usi(int move):
 def move_to_csa(int move):
 	return __move_to_csa(move).decode('ascii')
 
-def opponent(color):
+def opponent(int color):
 	return BLACK if color == WHITE else WHITE
+
+_dlshogi_FEATURES1_NUM = __dlshogi_get_features1_num()
+_dlshogi_FEATURES2_NUM = __dlshogi_get_features2_num()
+def _dlshogi_make_move_label(int move, int color):
+	return __dlshogi_make_move_label(move, color)
 
 cdef extern from "parser.h" namespace "parser":
 	cdef cppclass __Parser:
