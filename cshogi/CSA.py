@@ -2,6 +2,15 @@ import cshogi
 from cshogi import Parser
 
 COLOR_SYMBOLS = ['+', '-']
+JAPANESE_END_GAMES = {
+    '%TORYO': '投了',
+    '%CHUDAN': '中断',
+    '%SENNICHITE': '千日手',
+    '%TIME_UP': '切れ負け',
+    '%ILLEGAL_MOVE': '反則負け',
+    '%JISHOGI': '持将棋',
+    '%KACHI': '入力宣言',
+}
 
 class Exporter:
     def __init__(self, path=None, append=False):

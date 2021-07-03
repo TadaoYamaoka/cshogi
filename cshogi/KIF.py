@@ -220,6 +220,34 @@ def sec_to_time(sec):
     m, s = divmod(m_, 60)
     return h, m, s
 
+def move_to_kif(move, prev_move=None):
+    to_sq = cshogi.move_to(move)
+    move_to = KIFU_TO_SQUARE_NAMES[to_sq]
+    if prev_move:
+        if cshogi.move_to(prev_move) == to_sq:
+            move_to = "同　"
+    if not cshogi.move_is_drop(move):
+        from_sq = cshogi.move_from(move)
+        move_piece = cshogi.PIECE_JAPANESE_SYMBOLS[cshogi.move_from_piece_type(move)]
+        if cshogi.move_is_promotion(move):
+            return '{}{}成({})'.format(
+                move_to,
+                move_piece,
+                KIFU_FROM_SQUARE_NAMES[from_sq],
+                )
+        else:
+            return '{}{}({})'.format(
+                move_to,
+                move_piece,
+                KIFU_FROM_SQUARE_NAMES[from_sq],
+                )
+    else:
+        move_piece = cshogi.HAND_PIECE_JAPANESE_SYMBOLS[cshogi.move_drop_hand_piece(move)]
+        return '{}{}打'.format(
+            move_to,
+            move_piece
+            )
+
 class Exporter:
     def __init__(self, path=None):
         if path:
@@ -244,34 +272,6 @@ class Exporter:
         self.kifu.write('後手：' + names[1] + '\n')
         self.kifu.write('手数----指手---------消費時間--\n')
 
-    def _move_str(self, move):
-        to_sq = cshogi.move_to(move)
-        move_to = KIFU_TO_SQUARE_NAMES[to_sq]
-        if self.prev_move:
-            if cshogi.move_to(self.prev_move) == to_sq:
-                move_to = "同　"
-        if not cshogi.move_is_drop(move):
-            from_sq = cshogi.move_from(move)
-            move_piece = cshogi.PIECE_JAPANESE_SYMBOLS[cshogi.move_from_piece_type(move)]
-            if cshogi.move_is_promotion(move):
-                return '{}{}成({})'.format(
-                    move_to,
-                    move_piece,
-                    KIFU_FROM_SQUARE_NAMES[from_sq],
-                    )
-            else:
-                return '{}{}({})'.format(
-                    move_to,
-                    move_piece,
-                    KIFU_FROM_SQUARE_NAMES[from_sq],
-                    )
-        else:
-            move_piece = cshogi.HAND_PIECE_JAPANESE_SYMBOLS[cshogi.move_drop_hand_piece(move)]
-            return '{}{}打'.format(
-                move_to,
-                move_piece
-                )
-
     def move(self, move, sec=0, sec_sum=0):
         m, s = divmod(math.ceil(sec), 60)
         h_sum, m_sum, s_sum = sec_to_time(sec_sum)
@@ -282,7 +282,7 @@ class Exporter:
             padding = ''
         else:
             padding = '  '
-        move_str = self._move_str(move) + padding
+        move_str = move_to_kif(move, self.prev_move) + padding
 
         self.kifu.write('{:>4} {}      ({:>2}:{:02}/{:02}:{:02}:{:02})\n'.format(
             self.move_number,

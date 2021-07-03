@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>c58161f3-5e7c-4d35-b844-824bb8c01998</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>cshogi\cli.py</StartupFile>
+    <StartupFile>cshogi\web\app.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -12,7 +12,7 @@
     <Name>cshogi</Name>
     <RootNamespace>cshogi</RootNamespace>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>E:\game\shogi\Shogidokoro\Engine\Lesserkai.exe E:\game\shogi\Shogidokoro\Engine\Lesserkai.exe --games 1 --opening R:\opening.txt</CommandLineArguments>
+    <CommandLineArguments>--csa F:\floodgate\2017\wdoor+floodgate-300-10F+3Aeval-_Ryzen5-1600+gpsfish_normal_1c+20171204213002.csa</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -28,10 +28,15 @@
     <Folder Include="cshogi\gym_shogi\" />
     <Folder Include="cshogi\gym_shogi\envs\" />
     <Folder Include="cshogi\dlshogi\" />
+    <Folder Include="cshogi\web\" />
     <Folder Include="cshogi\usi\" />
+    <Folder Include="cshogi\web\static\" />
+    <Folder Include="cshogi\web\templates\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="cshogi\gym_shogi\envs\shogi_vec_env.pyx" />
+    <Content Include="cshogi\web\static\board.js" />
+    <Content Include="cshogi\web\templates\board.html" />
     <Content Include="cshogi\_cshogi.pyx" />
   </ItemGroup>
   <ItemGroup>
@@ -49,6 +54,9 @@
     </Compile>
     <Compile Include="cshogi\usi\Engine.py" />
     <Compile Include="cshogi\usi\__init__.py" />
+    <Compile Include="cshogi\web\app.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="cshogi\__init__.py" />
     <Compile Include="cshogi\elo.py">
       <SubType>Code</SubType>

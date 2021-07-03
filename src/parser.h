@@ -67,6 +67,7 @@ namespace parser {
 		std::vector<std::string> names;
 		std::vector<float> ratings;
 		std::vector<int> moves;
+		std::vector<int> times;
 		std::vector<int> scores;
 		std::vector<std::string> comments;
 		std::string comment;
@@ -96,6 +97,10 @@ namespace parser {
 			names[0] = names[1] = "";
 			ratings[0] = ratings[1] = 0;
 			moves.clear();
+			times.clear();
+			scores.clear();
+			comments.clear();
+			comment = "";
 			win = Draw;
 			StateListPtr states = StateListPtr(new std::deque<StateInfo>(1));
 			Position pos;
@@ -181,6 +186,7 @@ namespace parser {
 						moves.push_back(move.value());
 						states->push_back(StateInfo());
 						pos.doMove(move, states->back());
+						times.resize(moves.size());
 						scores.resize(moves.size());
 						// Comment
 						comments.resize(moves.size());
@@ -190,7 +196,7 @@ namespace parser {
 					}
 				}
 				else if (line[0] == 'T') {
-					// Currently just ignoring consumed time
+					times[moves.size() - 1] = std::stoi(line.substr(1));
 				}
 				else if (line[0] == '%') {
 					// End of the game

@@ -433,6 +433,10 @@ int __move_rotate(const int move) {
 std::string __move_to_usi(const int move) { return Move(move).toUSI(); }
 std::string __move_to_csa(const int move) { return Move(move).toCSA(); }
 
+Move csaToMove(const std::string& moveStr);
+int __move_from_csa(const std::string& csa) {
+	return csaToMove(csa).value();
+}
 
 inline MOVE_DIRECTION get_move_direction(const int dir_x, const int dir_y) {
 	if (dir_y < 0 && dir_x == 0) {

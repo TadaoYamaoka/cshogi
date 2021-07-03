@@ -171,3 +171,30 @@ Move csaToMove(const Position& pos, const std::string& moveStr) {
     assert(move == csaToMoveDebug(pos, moveStr));
     return move;
 }
+Move csaToMove(const std::string& moveStr) {
+    if (moveStr.size() != 6)
+        return Move::moveNone();
+    const File toFile = charCSAToFile(moveStr[2]);
+    const Rank toRank = charCSAToRank(moveStr[3]);
+    if (!isInSquare(toFile, toRank))
+        return Move::moveNone();
+    const Square to = makeSquare(toFile, toRank);
+    const std::string ptToString(moveStr.begin() + 4, moveStr.end());
+    if (!g_stringToPieceTypeCSA.isLegalString(ptToString))
+        return Move::moveNone();
+    const PieceType ptTo = g_stringToPieceTypeCSA.value(ptToString);
+    Move move;
+    if (moveStr[0] == '0' && moveStr[1] == '0')
+        // drop
+        move = makeDropMove(ptTo, to);
+    else {
+        const File fromFile = charCSAToFile(moveStr[0]);
+        const Rank fromRank = charCSAToRank(moveStr[1]);
+        if (!isInSquare(fromFile, fromRank))
+            return Move::moveNone();
+        const Square from = makeSquare(fromFile, fromRank);
+        move = makeMove(ptTo, from, to);
+    }
+
+    return move;
+}
