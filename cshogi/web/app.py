@@ -61,7 +61,7 @@ def colab(csa):
     port = portpicker.pick_unused_port()
     proc = Process(target=run, args=(csa, port))
     proc.start()
-    output.serve_kernel_port_as_iframe(port)
+    output.serve_kernel_port_as_iframe(port, height='680')
 
 if __name__ == '__main__':
     import argparse
