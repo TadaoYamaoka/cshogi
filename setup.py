@@ -33,7 +33,7 @@ ext_modules = [
 setup(
     name='cshogi',
     version='0.3.0',
-    packages=['cshogi', 'cshogi.usi', 'cshogi.gym_shogi', 'cshogi.gym_shogi.envs', 'cshogi.dlshogi', 'cshogi.web'],
+    packages=['cshogi', 'cshogi.usi', 'cshogi.gym_shogi', 'cshogi.gym_shogi.envs', 'cshogi.dlshogi', 'cshogi.web', 'cshogi.web.templates', 'cshogi.web.static'],
     package_data={'templates':['*'], 'static':['*'],},
     ext_modules=ext_modules,
     cmdclass={'build_ext': my_build_ext},
