@@ -61,9 +61,9 @@
 
         function drawEvalGraph() {
             let canvas = $("#eval-graph");
-            let width = 25 * 256 * 2;
+            let width = 25 + 256 * 2;
             if (moves.length > 256) {
-                width = 25 * moves.length * 2;
+                width = 25 + moves.length * 2;
                 canvas.attr("width", width);
             }
             let ctx = canvas[0].getContext("2d");
