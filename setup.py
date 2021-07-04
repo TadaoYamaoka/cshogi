@@ -34,6 +34,7 @@ setup(
     name='cshogi',
     version='0.3.0',
     packages=['cshogi', 'cshogi.usi', 'cshogi.gym_shogi', 'cshogi.gym_shogi.envs', 'cshogi.dlshogi', 'cshogi.web'],
+    package_data={'templates':['*'], 'static':['*'],},
     ext_modules=ext_modules,
     cmdclass={'build_ext': my_build_ext},
     author='Tadao Yamaoka',
