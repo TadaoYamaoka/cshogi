@@ -58,7 +58,7 @@ def colab(csa):
         proc.join()
 
     port = portpicker.pick_unused_port()
-    proc = Process(target=cshogi.web.app.run, args=(csa, port))
+    proc = Process(target=run, args=(csa, port))
     proc.start()
     output.serve_kernel_port_as_iframe(port)
 
