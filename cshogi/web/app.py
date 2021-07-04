@@ -1,22 +1,16 @@
-import argparse
 import sys
 from cshogi import Board, CSA, KIF, move_from_csa
 from flask import Flask, render_template, Markup, request
 from wsgiref.simple_server import make_server
 
-def run(*argv):
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--port', type=int, default=8000)
-    parser.add_argument('--csa')
-    args = parser.parse_args(argv)
-
+def run(csa=None, port=8000):
     scale = 1.5
     turn = ('▲', '△')
     names = ['', '']
     moves = []
 
-    if args.csa:
-        kif = CSA.Parser.parse_file(args.csa)[0]
+    if csa:
+        kif = CSA.Parser.parse_file(csa)[0]
         names = kif.names
         csa_turn = {'+': '▲', '-': '△'}
         for i, (move, prev_move, time, comment) in enumerate(zip(kif.moves, [None] + kif.moves[:-1], kif.times, kif.comments)):
@@ -51,8 +45,28 @@ def run(*argv):
     def init_board():
         return render_template('board.html', names=names, moves=moves)
 
-    server = make_server('localhost', args.port, app)
+    server = make_server('localhost', port, app)
     server.serve_forever()
 
+def colab(csa):
+    from multiprocessing import Process
+    import portpicker
+
+    global proc
+    if 'proc' in globals():
+        proc.terminate()
+        proc.join()
+
+    port = portpicker.pick_unused_port()
+    proc = Process(target=cshogi.web.app.run, args=(csa, port))
+    proc.start()
+    output.serve_kernel_port_as_iframe(port)
+
 if __name__ == '__main__':
-    run(*sys.argv[1:])
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--port', type=int, default=8000)
+    parser.add_argument('--csa')
+    args = parser.parse_args()
+
+    run(args.csa, args.port)
