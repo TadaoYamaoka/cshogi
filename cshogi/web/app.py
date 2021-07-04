@@ -51,6 +51,7 @@ def run(csa=None, port=8000):
 def colab(csa):
     from multiprocessing import Process
     import portpicker
+    from google.colab import output
 
     global proc
     if 'proc' in globals():
