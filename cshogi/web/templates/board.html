@@ -7,7 +7,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script src="{{url_for('static', filename='board.js')}}"></script>
     <script>
-        let moves = [{% for move in moves %}{move:{{move['move']}},eval:{{move['eval']}},ahead:"{{move['ahead']}}"},{% endfor %}];
+        let moves = [{% for move in moves %}{move:{{move['move']}},eval:{{move['eval']}},pv:"{{move['pv']}}"},{% endfor %}];
         let board = new Board();
 
         let current = 0;
@@ -41,22 +41,26 @@
             comments = len % 2 == 0 ? [$("#white-comment"), $("#black-comment")] : [$("#black-comment"), $("#white-comment")];
 
             let eval = '';
-            let ahead = '';
+            let pv = '';
             if (len > 0) {
                 eval = moves[len - 1]['eval'];
                 if (eval == null) eval = '';
-                ahead = moves[len - 1]['ahead'];
+                pv = moves[len - 1]['pv'];
             }
-            comments[0].html("<td>" + eval + "</td><td>" + ahead + "</td>");
+            comments[0].removeClass('text-black-50')
+            comments[0].addClass('text-body')
+            comments[0].html("<td>" + eval + "</td><td>" + pv + "</td>");
 
             eval = '';
-            ahead = '';
+            pv = '';
             if (len - 1 > 0) {
                 eval = moves[len - 2]['eval'];
                 if (eval == null) eval = '';
-                ahead = moves[len - 2]['ahead'];
+                pv = moves[len - 2]['pv'];
             }
-            comments[1].html("<td>" + eval + "</td><td>" + ahead + "</td>");
+            comments[1].removeClass('text-body')
+            comments[1].addClass('text-black-50')
+            comments[1].html("<td>" + eval + "</td><td>" + pv + "</td>");
         }
 
         function drawEvalGraph() {
@@ -128,7 +132,7 @@
                 for (let i = c; i < moves.length; i += 2) {
                     let eval = moves[i - 1]['eval'];
                     if (eval != null) {
-                        const y = Math.min(160, Math.max(0, 80 - eval * 80 / 30000));
+                        const y = Math.min(160, Math.max(0, 80 - eval * 80 / 3000));
                         if (needMove) {
                             ctx.moveTo(25 + i * 2, y);
                             needMove = false;
@@ -203,7 +207,7 @@
             <div class="col">
                 <button type="button" id="btn-first" class="btn btn-light">最初へ</button>
                 <button type="button" id="btn-back" class="btn btn-light">&lt;</button>
-                <input type="text" id="move-number" style="width: 2em;" value="0">手目
+                <input type="text" id="move-number" style="width: 3em;" value="0">手目
                 <button type="button" id="btn-next" class="btn btn-light">&gt;</button>
                 <button type="button" id="btn-last" class="btn btn-light">最後へ</button>
             </div>
