@@ -7,12 +7,15 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script src="{{url_for('static', filename='board.js')}}"></script>
     <script>
-        let moves = [{% for move in moves %}{move:{{move['move']}},eval:{{move['eval']}},pv:"{{move['pv']}}"},{% endfor %}];
+        let names = ["{{names[0]}}", "{{names[1]}}"];
+        let moves = [{% for move in moves %}{number:{{move['number']}},kif_move:"{{move['kif_move']}}",time:{{move['time']}},move:{{move['move']}},eval:{{move['eval']}},pv:"{{move['pv']}}"},{% endfor %}];
+        let isMatch = {{is_match}};
+        let autoupdate = {{autoupdate}};
         let board = new Board();
 
         let current = 0;
         function selectMoveNumber(number) {
-            rows = $("#moves tr");
+            rows = $("#table-moves tr");
             if (rows.length > 0) {
                 if (number < 0 || number > rows.length) return;
                 if (current > 0)
@@ -33,7 +36,7 @@
         function updateBoard(number) {
             board.reset();
             let len = number;
-            if (len == moves.length && moves[len - 1] == 0)
+            if (moves.length > 0 && len == moves.length && moves[len - 1]['move'] == 0)
                 len--;
             for (let i = 0; i < len; i++)
                 board.move(moves[i]['move']);
@@ -74,6 +77,7 @@
 
             ctx.fillStyle = "#D0D0FF";
             ctx.fillRect(0, 0, width, 160);
+            ctx.lineWidth = 1;
 
             ctx.beginPath();
             ctx.strokeStyle = "#080808";
@@ -146,13 +150,48 @@
             }
         }
 
-        $(function() {
-            updateBoard(0);
-            drawEvalGraph();
+        function updateNames() {
+            if (names[0] != null && names[0] != "None")
+                $("#names").html("▲" + names[0] + " △" + names[1]);
+        }
 
-            $("#moves tr").click(function() {
+        function updateTableMoves() {
+            let html = "";
+            for (let i = 0; i < moves.length; i++) {
+                html += '<tr><td style="width:3em; text-align: right;">' + moves[i]["number"] + '</td><td nowrap>' + moves[i]["kif_move"] + '</td><td nowrap style="text-align: right;">' + moves[i]["time"] + '秒</td></tr>';
+            }
+            $("#table-moves").html(html);
+            $("#table-moves tr").click(function() {
                 selectMoveNumber($(this).index() + 1);
             });
+        }
+
+        function update() {
+            $.ajax({
+                url: "/update",
+                type: "GET",
+                dataType: "json",
+            }).done(function(data) {
+                names = data["names"];
+                updateNames();
+                moves = data["moves"];
+                updateBoard(moves.length);
+                updateTableMoves();
+                selectMoveNumber(moves.length);
+                drawEvalGraph();
+                if (moves.length > 0 && moves[moves.length - 1]["move"] == 0) {
+                    $("#autoupdate").prop('checked', false).change();
+                }
+            });
+        }
+
+        $(function() {
+            let number = 0;
+            updateNames();
+            updateBoard(number);
+            updateTableMoves();
+            drawEvalGraph();
+
             $("#btn-first").click(function() {
                 selectMoveNumber(0);
             });
@@ -168,6 +207,28 @@
             $("#move-number").change(function() {
                 selectMoveNumber(Number($(this).val()));
             });
+            $("#btn-update").click(function() {
+                update();
+            });
+            let timer = null;
+            $("#autoupdate").change(function() {
+                autoupdate = $(this).prop('checked');
+                if (autoupdate) {
+                    timer = setInterval(function() {
+                        update();
+                    }, 1000);
+                } else if (timer != null) {
+                    clearInterval(timer);
+                }
+            });
+
+            if (isMatch) {
+                $("#update").removeClass("d-none");
+                number = moves.length;
+                selectMoveNumber(number);
+                if (autoupdate)
+                    $("#autoupdate").prop('checked', true).change();
+            }
         });
     </script>
     <style type="text/css">
@@ -181,8 +242,8 @@
 <body>
     <div class="container">
         <div class="row m-1">
-            <div class="col">
-                ▲{{names[0]}} △{{names[1]}}
+            <div id="names" class="col">
+                &nbsp;
             </div>
         </div>
         <div class="row">
@@ -192,13 +253,7 @@
             <div class="col">
                 <div id="moves" style="height: 300px; width: 14.5em; overflow-y: scroll;">
                     <table class="table table-borderless table-sm table-hover" style="width: 13em;">
-                        {% for move in moves %}
-                        <tr>
-                            <td style="width:3em; text-align: right;">{{move['number']}}</td>
-                            <td nowrap>{{move['kif_move']}}</td>
-                            <td nowrap style="text-align: right;">{{move['time']}}秒</td>
-                        </tr>
-                        {% endfor %}
+                        <tbody id="table-moves"></tbody>
                     </table>
                 </div>
             </div>
@@ -210,6 +265,10 @@
                 <input type="text" id="move-number" style="width: 3em;" value="0">手目
                 <button type="button" id="btn-next" class="btn btn-light">&gt;</button>
                 <button type="button" id="btn-last" class="btn btn-light">最後へ</button>
+            </div>
+            <div id="update" class="col d-none">
+                <button type="button" id="btn-update" class="btn btn-light">更新</button>
+                <input type="checkbox" id="autoupdate" name="autoupdate"><label for="autoupdate">自動更新</label>
             </div>
         </div>
         <div class="row mt-1">

@@ -173,13 +173,15 @@ def match(moves, engine1=None, engine2=None, options1={}, options2={}, names=Non
         'number': board.move_number,
         'kif_move': result,
         'time': 0,
-        'move': 'null',
-        'eval': 'null',
+        'move': 0,
+        'eval': 0,
         'pv': '',
     })
 
 def run(engine1=None, engine2=None, options1={}, options2={}, names=None, byoyomi=None, time=None, inc=None, draw=256, csa=None, port=8000):
     scale = 1.5
+    is_match = 'false'
+    auto_update = 'false'
 
     if engine1 and engine2:
         from multiprocessing import Process, Manager
@@ -191,6 +193,8 @@ def run(engine1=None, engine2=None, options1={}, options2={}, names=None, byoyom
             names = manager.list(names)
         match_proc = Process(target=match, args=[moves, engine1, engine2, options1, options2, names, byoyomi, time, inc, draw])
         match_proc.start()
+        is_match = 'true'
+        auto_update = 'true'
     elif csa:
         moves = []
         kif = CSA.Parser.parse_file(csa)[0]
@@ -216,8 +220,8 @@ def run(engine1=None, engine2=None, options1={}, options2={}, names=None, byoyom
             'number': i + 2,
             'kif_move': TURN_SYMBOLS[(i + 1) % 2] + CSA.JAPANESE_END_GAMES[kif.endgame],
             'time': 0,
-            'move': 'null',
-            'eval': 'null',
+            'move': 0,
+            'eval': 0,
             'pv': '',
         })
 
@@ -225,7 +229,15 @@ def run(engine1=None, engine2=None, options1={}, options2={}, names=None, byoyom
 
     @app.route("/")
     def init_board():
-        return render_template('board.html', names=names, moves=moves)
+        autoupdate = 'false'
+        if is_match == 'true':
+            if match_proc.is_alive():
+                autoupdate = request.args.get('autoupdate', default=auto_update)
+        return render_template('board.html', names=names, moves=moves, is_match=is_match, autoupdate=autoupdate)
+
+    @app.route("/update")
+    def update():
+        return { 'names': list(names), 'moves': list(moves) }
 
     server = make_server('localhost', port, app)
     server.serve_forever()
