@@ -214,8 +214,33 @@
 
                 let to_sq = to.getAttribute("id");
 
-                if (event.shiftKey)
+                if (event.shiftKey) {
                     to_sq += "+";
+                } else if (selected.tagName == "use") {
+                    let piece = selected.getAttribute("xlink:href").substring(7);
+                    let promote = false;
+                    let confirm = false;
+                    if (["pawn", "lance", "knight", "silver", "bishop", "rook", "gold"].includes(piece)) {
+                        let promotion_zone = human == "black" ? ["a", "b", "c"] : ["i", "h", "g"];
+                        if (promotion_zone.includes(to_sq[1])) {
+                            if (to_sq[1] == promotion_zone[0] && ["pawn", "lance", "knight"].includes(piece))
+                                promote = true;
+                            else if (to_sq[1] == promotion_zone[1] && piece == "knight")
+                                promote = true;
+                            else
+                                confirm = true;
+                        }
+                        else if (promotion_zone.includes(from_sq[1])) {
+                            confirm = true;
+                        }
+                    }
+                    if (confirm) {
+                        if (window.confirm("成りますか？"))
+                            promote = true;
+                    }
+                    if (promote)
+                        to_sq += "+";
+                }
 
                 $.ajax({
                     url: "/move",
