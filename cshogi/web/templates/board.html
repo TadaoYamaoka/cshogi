@@ -11,6 +11,7 @@
         let moves = [{% for move in moves %}{number:{{move['number']}},kif_move:"{{move['kif_move']}}",time:{{move['time']}},move:{{move['move']}},eval:{{move['eval']}},pv:"{{move['pv']}}"},{% endfor %}];
         let isMatch = {{is_match}};
         let autoupdate = {{autoupdate}};
+        let human = "{{human}}";
         let board = new Board();
 
         let current = 0;
@@ -40,14 +41,14 @@
                 len--;
             for (let i = 0; i < len; i++)
                 board.move(moves[i]['move']);
-            $("#board").html(board.to_svg(1.5));
+            $("#board").html(board.to_svg(1.5, names[1] == 'Human'));
             comments = len % 2 == 0 ? [$("#white-comment"), $("#black-comment")] : [$("#black-comment"), $("#white-comment")];
 
             let eval = '';
             let pv = '';
             if (len > 0) {
                 eval = moves[len - 1]['eval'];
-                if (eval == null) eval = '';
+                if (eval == null || eval == 'null') eval = '';
                 pv = moves[len - 1]['pv'];
             }
             comments[0].removeClass('text-black-50')
@@ -58,7 +59,7 @@
             pv = '';
             if (len - 1 > 0) {
                 eval = moves[len - 2]['eval'];
-                if (eval == null) eval = '';
+                if (eval == null || eval == 'null') eval = '';
                 pv = moves[len - 2]['pv'];
             }
             comments[1].removeClass('text-body')
@@ -135,7 +136,7 @@
                 let needMove = true;
                 for (let i = c; i < moves.length; i += 2) {
                     let eval = moves[i - 1]['eval'];
-                    if (eval != null) {
+                    if (eval != null && eval != 'null') {
                         const y = Math.min(160, Math.max(0, 80 - eval * 80 / 3000));
                         if (needMove) {
                             ctx.moveTo(25 + i * 2, y);
@@ -167,22 +168,81 @@
         }
 
         function update() {
-            $.ajax({
-                url: "/update",
-                type: "GET",
-                dataType: "json",
-            }).done(function(data) {
-                names = data["names"];
-                updateNames();
-                moves = data["moves"];
-                updateBoard(moves.length);
-                updateTableMoves();
-                selectMoveNumber(moves.length);
-                drawEvalGraph();
-                if (moves.length > 0 && moves[moves.length - 1]["move"] == 0) {
-                    $("#autoupdate").prop('checked', false).change();
+            if (human == '') {
+                $.ajax({
+                    url: "/update",
+                    type: "GET",
+                    dataType: "json",
+                }).done(function(data) {
+                    names = data["names"];
+                    updateNames();
+                    moves = data["moves"];
+                    human = data["human"];
+                    updateBoard(moves.length);
+                    updateTableMoves();
+                    selectMoveNumber(moves.length);
+                    drawEvalGraph();
+                });
+            }
+            if (moves.length > 0 && moves[moves.length - 1]["move"] == 0) {
+                $("#autoupdate").prop('checked', false).change();
+            }
+        }
+
+        let selected = null;
+        function onMouseDown1(event) {
+            if (event.button == 0) {
+                if (Number($("#move-number").val()) != moves.length)
+                    return;
+                selected = document.elementFromPoint(event.clientX, event.clientY);
+                if ((selected.tagName == "use" && selected.getAttribute("xlink:href").substring(1, 6) == human) ||
+                    (selected.tagName == "text" && selected.getAttribute("id") != null && selected.getAttribute("id").substring(0, 5) == human)) {
+                    selected.style.fillOpacity = "0.5";
+                    $("#board")[0].removeEventListener('mousedown', onMouseDown1);
+                    $("#board")[0].addEventListener("mousedown", onMouseDown2);
                 }
-            });
+            }
+        }
+
+        function onMouseDown2(event) {
+            let to = document.elementFromPoint(event.clientX, event.clientY);
+            if (to.getAttribute("id") != null && (to.tagName == "use" || to.tagName == "rect")) {
+                let from_sq = selected.getAttribute("id");
+                if (selected.tagName == "text") {
+                    from_sq = from_sq.slice(-1) + "*";
+                }
+
+                let to_sq = to.getAttribute("id");
+
+                if (event.shiftKey)
+                    to_sq += "+";
+
+                $.ajax({
+                    url: "/move",
+                    type: "GET",
+                    data: { "number": moves.length + 1, "move": from_sq + to_sq },
+                    dataType: "json",
+                }).done(function(data) {
+                    names = data["names"];
+                    updateNames();
+                    moves = data["moves"];
+                    human = data["human"];
+                    updateBoard(moves.length);
+                    updateTableMoves();
+                    selectMoveNumber(moves.length);
+                    drawEvalGraph();
+                    if (moves.length > 0 && moves[moves.length - 1]["move"] == 0) {
+                        $("#autoupdate").prop('checked', false).change();
+                    }
+                    if (human == '')
+                        $("#autoupdate").change();
+                });
+            }
+
+            selected.style.fillOpacity = "";
+            selected = null;
+            $("#board")[0].removeEventListener('mousedown', onMouseDown2);
+            $("#board")[0].addEventListener("mousedown", onMouseDown1);
         }
 
         $(function() {
@@ -213,12 +273,13 @@
             let timer = null;
             $("#autoupdate").change(function() {
                 autoupdate = $(this).prop('checked');
-                if (autoupdate) {
+                if (autoupdate && timer == null) {
                     timer = setInterval(function() {
                         update();
                     }, 1000);
-                } else if (timer != null) {
+                } else if (!autoupdate && timer != null) {
                     clearInterval(timer);
+                    timer = null;
                 }
             });
 
@@ -226,9 +287,14 @@
                 $("#update").removeClass("d-none");
                 number = moves.length;
                 selectMoveNumber(number);
-                if (autoupdate)
-                    $("#autoupdate").prop('checked', true).change();
+                if (autoupdate) {
+                    $("#autoupdate").prop('checked', true);
+                    if (human == '')
+                        $("#autoupdate").change();
+                }
             }
+
+            $("#board")[0].addEventListener("mousedown", onMouseDown1);
         });
     </script>
     <style type="text/css">

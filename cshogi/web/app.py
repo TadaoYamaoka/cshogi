@@ -9,6 +9,40 @@ from wsgiref.simple_server import make_server
 TURN_SYMBOLS = ('▲', '△')
 CSA_TURN_SYMBOLS = {'+': '▲', '-': '△'}
 
+class Human:
+    def __init__(self, human_input):
+        self.board = Board()
+        self.name = 'Human'
+        self.human_input = human_input
+
+    def usi(self, listener=None):
+        return []
+
+    def isready(self, listener=None):
+        pass
+
+    def usinewgame(self, listener=None):
+        pass
+
+    def position(self, moves=None, sfen="startpos", listener=None):
+        self.board.reset()
+        for move in moves:
+            self.board.push_usi(move)
+
+    def go(self, ponder=False, btime=None, wtime=None, byoyomi=None, binc=None, winc=None, nodes=None, listener=None):
+        import time
+        while True:
+            human_input = dict(self.human_input)
+            if human_input['number'] == self.board.move_number:
+                usi_move = human_input['move']
+                move = self.board.move_from_usi(usi_move)
+                if self.board.is_legal(move):
+                    return usi_move, None
+            time.sleep(0.1)
+
+    def quit(self, listener=None):
+        pass
+
 def usi_info_to_pv(board, info):
     m = re_usi_info.match(info)
     if m is None:
@@ -26,7 +60,7 @@ def usi_info_to_pv(board, info):
 
     return ' '.join(pv)
 
-def match(moves, engine1=None, engine2=None, options1={}, options2={}, names=None, byoyomi=None, time=None, inc=None, draw=256):
+def match(moves, engine1=None, engine2=None, options1={}, options2={}, names=None, byoyomi=None, time=None, inc=None, draw=256, human_input=None):
     from collections import defaultdict
     from time import perf_counter
 
@@ -39,7 +73,12 @@ def match(moves, engine1=None, engine2=None, options1={}, options2={}, names=Non
             self.bestmove = line
     listener = Listener()
 
-    engines = [Engine(engine, connect=True) for engine in (engine1, engine2)]
+    engines = []
+    for engine in (engine1, engine2):
+        if engine == 'human':
+            engines.append(Human(human_input))
+        else:
+            engines.append(Engine(engine, connect=True))
     for engine, options in zip(engines, (options1, options2)):
         for name, value in options.items():
             engine.setoption(name, value, listener=listener)
@@ -83,6 +122,8 @@ def match(moves, engine1=None, engine2=None, options1={}, options2={}, names=Non
         start_time = perf_counter()
 
         # go
+        listener.info = ''
+        listener.bestmove = ''
         bestmove, _ = engine.go(byoyomi=byoyomi, btime=remain_time[BLACK], wtime=remain_time[WHITE], binc=inc, winc=inc, listener=listener)
 
         elapsed_time = perf_counter() - start_time
@@ -91,8 +132,6 @@ def match(moves, engine1=None, engine2=None, options1={}, options2={}, names=Non
             if inc_time[board.turn] is not None:
                 remain_time[board.turn] += inc_time[board.turn]
             remain_time[board.turn] -= math.ceil(elapsed_time * 1000)
-
-        score = usi_info_to_score(listener.info)
 
         if bestmove == 'resign':
             # 投了
@@ -106,13 +145,15 @@ def match(moves, engine1=None, engine2=None, options1={}, options2={}, names=Non
         else:
             move = board.move_from_usi(bestmove)
             if board.is_legal(move):
+                score = usi_info_to_score(listener.info)
+                pv = usi_info_to_pv(board, listener.info)
                 moves.append({
                     'number': board.move_number,
                     'kif_move': TURN_SYMBOLS[(board.move_number + 1) % 2] + KIF.move_to_kif(move, board.peek()),
                     'time': math.ceil(elapsed_time),
                     'move': move,
-                    'eval': score * (1 if board.turn == BLACK else -1),
-                    'pv': usi_info_to_pv(board, listener.info),
+                    'eval': (score * (1 if board.turn == BLACK else -1)) if score is not None else 'null',
+                    'pv': pv if pv is not None else '',
                 })
                 board.push(move)
                 usi_moves.append(bestmove)
@@ -174,12 +215,11 @@ def match(moves, engine1=None, engine2=None, options1={}, options2={}, names=Non
         'kif_move': result,
         'time': 0,
         'move': 0,
-        'eval': 0,
+        'eval': 'null',
         'pv': '',
     })
 
 def run(engine1=None, engine2=None, options1={}, options2={}, names=None, byoyomi=None, time=None, inc=None, draw=256, csa=None, port=8000):
-    scale = 1.5
     is_match = 'false'
     auto_update = 'false'
 
@@ -187,11 +227,12 @@ def run(engine1=None, engine2=None, options1={}, options2={}, names=None, byoyom
         from multiprocessing import Process, Manager
         manager = Manager()
         moves = manager.list()
+        human_input = manager.dict({ 'number': 0, 'move': None })
         if names is None:
             names = manager.list([None, None])
         else:
             names = manager.list(names)
-        match_proc = Process(target=match, args=[moves, engine1, engine2, options1, options2, names, byoyomi, time, inc, draw])
+        match_proc = Process(target=match, args=[moves, engine1, engine2, options1, options2, names, byoyomi, time, inc, draw, human_input])
         match_proc.start()
         is_match = 'true'
         auto_update = 'true'
@@ -221,7 +262,7 @@ def run(engine1=None, engine2=None, options1={}, options2={}, names=None, byoyom
             'kif_move': TURN_SYMBOLS[(i + 1) % 2] + CSA.JAPANESE_END_GAMES[kif.endgame],
             'time': 0,
             'move': 0,
-            'eval': 0,
+            'eval': 'null',
             'pv': '',
         })
 
@@ -230,14 +271,31 @@ def run(engine1=None, engine2=None, options1={}, options2={}, names=None, byoyom
     @app.route("/")
     def init_board():
         autoupdate = 'false'
+        human = ''
         if is_match == 'true':
             if match_proc.is_alive():
                 autoupdate = request.args.get('autoupdate', default=auto_update)
-        return render_template('board.html', names=names, moves=moves, is_match=is_match, autoupdate=autoupdate)
+                if names[len(moves) % 2] == 'Human':
+                    human = 'black' if len(moves) % 2 == 0 else 'white'
+        return render_template('board.html', names=names, moves=moves, is_match=is_match, autoupdate=autoupdate, human=human)
 
     @app.route("/update")
     def update():
-        return { 'names': list(names), 'moves': list(moves) }
+        human = ''
+        if names[len(moves) % 2] == 'Human':
+            human = 'black' if len(moves) % 2 == 0 else 'white'
+        return { 'names': list(names), 'moves': list(moves), 'human':human }
+
+    @app.route("/move")
+    def human_move():
+        import time
+        human_input['move'] = request.args.get('move')
+        human_input['number'] = int(request.args.get('number', default=0))
+        time.sleep(0.2)
+        human = ''
+        if names[len(moves) % 2] == 'Human':
+            human = 'black' if len(moves) % 2 == 0 else 'white'
+        return { 'names': list(names), 'moves': list(moves), 'human':human }
 
     server = make_server('localhost', port, app)
     server.serve_forever()

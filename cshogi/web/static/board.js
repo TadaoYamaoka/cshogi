@@ -18,6 +18,7 @@ const HAND_PIECE_JAPANESE_SYMBOLS = [
 	"金",
 	"角", "飛"
 ];
+const USI_HAND_PIECES = { "歩":"P", "香":"L", "桂":"N", "銀":"S", "金":"G", "角":"B", "飛":"R" };
 
 const BLACK = 0;
 const WHITE = 1;
@@ -62,6 +63,11 @@ const HBishop = 5;
 const HRook = 7;
 
 const PieceTypeToHandPieceTable = [null, HPawn, HLance, HKnight, HSilver, HBishop, HRook, HGold, null, HPawn, HLance, HKnight, HSilver, HBishop, HRook];
+const UsiRankChar = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'];
+
+function to_usi(file, rank) {
+	return String(file + 1) + UsiRankChar[rank];
+}
 
 class Board {
 	constructor() {
@@ -146,11 +152,11 @@ class Board {
 		this.lastmove = m;
 	}
 
-	to_svg(scale) {
+	to_svg(scale, mirror=false) {
 		const width = 230;
 		const height = 192;
 
-		let svg = `<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width * scale}" height="${height * scale}" viewBox="0 0 ${width} ${height}"><defs><g id="black-pawn"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">&#27497;</text></g><g id="black-lance"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">&#39321;</text></g><g id="black-knight"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">&#26690;</text></g><g id="black-silver"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">&#37504;</text></g><g id="black-gold"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">&#37329;</text></g><g id="black-bishop"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">&#35282;</text></g><g id="black-rook"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">&#39131;</text></g><g id="black-king"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">&#29579;</text></g><g id="black-pro-pawn"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">&#12392;</text></g><g id="black-pro-lance" transform="scale(1.0, 0.5)"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="18">&#25104;</text><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="34">&#39321;</text></g><g id="black-pro-knight" transform="scale(1.0, 0.5)"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="18">&#25104;</text><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="34">&#26690;</text></g><g id="black-pro-silver" transform="scale(1.0, 0.5)"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="18">&#25104;</text><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="34">&#37504;</text></g><g id="black-horse"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">&#39340;</text></g><g id="black-dragon"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">&#40845;</text></g><g id="white-pawn" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">&#27497;</text></g><g id="white-lance" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">&#39321;</text></g><g id="white-knight" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">&#26690;</text></g><g id="white-silver" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">&#37504;</text></g><g id="white-gold" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">&#37329;</text></g><g id="white-bishop" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">&#35282;</text></g><g id="white-rook" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">&#39131;</text></g><g id="white-king" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">&#29579;</text></g><g id="white-pro-pawn" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">&#12392;</text></g><g id="white-pro-lance" transform="scale(1.0, 0.5) rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-22">&#25104;</text><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-6">&#39321;</text></g><g id="white-pro-knight" transform="scale(1.0, 0.5) rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-22">&#25104;</text><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-6">&#26690;</text></g><g id="white-pro-silver" transform="scale(1.0, 0.5) rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-22">&#25104;</text><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-6">&#37504;</text></g><g id="white-horse" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">&#39340;</text></g><g id="white-dragon" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">&#40845;</text></g></defs>`;
+		let svg = `<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width * scale}" height="${height * scale}" viewBox="0 0 ${width} ${height}"${mirror ? ' transform="rotate(180)"' : ''}><defs><g id="black-pawn"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">&#27497;</text></g><g id="black-lance"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">&#39321;</text></g><g id="black-knight"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">&#26690;</text></g><g id="black-silver"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">&#37504;</text></g><g id="black-gold"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">&#37329;</text></g><g id="black-bishop"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">&#35282;</text></g><g id="black-rook"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">&#39131;</text></g><g id="black-king"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">&#29579;</text></g><g id="black-pro-pawn"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">&#12392;</text></g><g id="black-pro-lance" transform="scale(1.0, 0.5)"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="18">&#25104;</text><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="34">&#39321;</text></g><g id="black-pro-knight" transform="scale(1.0, 0.5)"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="18">&#25104;</text><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="34">&#26690;</text></g><g id="black-pro-silver" transform="scale(1.0, 0.5)"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="18">&#25104;</text><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="34">&#37504;</text></g><g id="black-horse"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">&#39340;</text></g><g id="black-dragon"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">&#40845;</text></g><g id="white-pawn" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">&#27497;</text></g><g id="white-lance" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">&#39321;</text></g><g id="white-knight" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">&#26690;</text></g><g id="white-silver" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">&#37504;</text></g><g id="white-gold" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">&#37329;</text></g><g id="white-bishop" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">&#35282;</text></g><g id="white-rook" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">&#39131;</text></g><g id="white-king" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">&#29579;</text></g><g id="white-pro-pawn" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">&#12392;</text></g><g id="white-pro-lance" transform="scale(1.0, 0.5) rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-22">&#25104;</text><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-6">&#39321;</text></g><g id="white-pro-knight" transform="scale(1.0, 0.5) rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-22">&#25104;</text><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-6">&#26690;</text></g><g id="white-pro-silver" transform="scale(1.0, 0.5) rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-22">&#25104;</text><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-6">&#37504;</text></g><g id="white-horse" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">&#39340;</text></g><g id="white-dragon" transform="rotate(180)"><text font-family="serif" font-size="17" text-anchor="middle" x="-10.5" y="-3.5">&#40845;</text></g></defs>`;
 
 		if (this.lastmove != null) {
 			const to_sq = this.lastmove & 0b1111111;
@@ -170,12 +176,14 @@ class Board {
 
 		for (let sq = 0; sq < 81; sq++) {
 			const pc = this.board[sq];
+			const i = Math.floor(sq / 9);
+			const j = sq % 9;
+			const x = 20.5 + (8 - i) * 20;
+			const y = 10.5 + j * 20;
 			if (pc != Empty) {
-				const i = Math.floor(sq / 9);
-				const j = sq % 9;
-				const x = 20.5 + (8 - i) * 20;
-				const y = 10.5 + j * 20;
-				svg += `<use xlink:href="#${SVG_PIECE_DEF_IDS[pc]}" x="${x}" y="${y}" />`;
+				svg += `<use id="${to_usi(i, j)}" xlink:href="#${SVG_PIECE_DEF_IDS[pc]}" x="${x}" y="${y}" />`;
+			} else {
+				svg += `<rect id="${to_usi(i, j)}" x="${x}" y="${y}" width="20" height="20" style="fill-opacity: 0;" />`;
 			}
 		}
 
@@ -209,13 +217,17 @@ class Board {
 		for (let c = 0; c < 2; c++) {
 			const x = c == BLACK ? 214 : -16;
 			const y = c == BLACK ? 190 : -10;
+			const color_text = c == BLACK ? "black" : "white";
 			let scale = 1;
 			if (hand_pieces[c].length + 1 > 13)
 				scale = 13.0 / (hand_pieces[c].length + 1);
 			for (let k = 0; k < hand_pieces[c].length; k++) {
 				const i = hand_pieces[c][k][0];
 				const text = hand_pieces[c][k][1];
-				svg += `<text font-family="serif" font-size="${14 * scale}" x="${x}" y="${y - 14 * scale * i}"${c == WHITE ? ' transform="rotate(180)"' : ''}>${text}</text>`;
+				let id = "";
+				if (text in USI_HAND_PIECES)
+					id = ' id="' + color_text + '-' + USI_HAND_PIECES[text] + '"';
+				svg += `<text${id} font-family="serif" font-size="${14 * scale}" x="${x}" y="${y - 14 * scale * i}"${c == WHITE ? ' transform="rotate(180)"' : ''}>${text}</text>`;
 			}
 		}
 
