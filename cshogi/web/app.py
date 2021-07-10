@@ -300,7 +300,7 @@ def run(engine1=None, engine2=None, options1={}, options2={}, names=None, byoyom
     server = make_server('localhost', port, app)
     server.serve_forever()
 
-def colab(csa):
+def colab(engine1=None, engine2=None, options1={}, options2={}, names=None, byoyomi=None, time=None, inc=None, draw=256, csa=None):
     from multiprocessing import Process
     import portpicker
     from google.colab import output
@@ -311,7 +311,7 @@ def colab(csa):
         proc.join()
 
     port = portpicker.pick_unused_port()
-    proc = Process(target=run, args=(csa, port))
+    proc = Process(target=run, args=(engine1, engine2, options1, options2, names, byoyomi, time, inc, draw, csa, port))
     proc.start()
     output.serve_kernel_port_as_iframe(port, height='680')
 
