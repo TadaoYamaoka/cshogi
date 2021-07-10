@@ -60,9 +60,9 @@ const HKnight = 2;
 const HSilver = 3;
 const HGold = 4;
 const HBishop = 5;
-const HRook = 7;
+const HRook = 6;
 
-const PieceTypeToHandPieceTable = [null, HPawn, HLance, HKnight, HSilver, HBishop, HRook, HGold, null, HPawn, HLance, HKnight, HSilver, HBishop, HRook];
+const PieceTypeToHandPieceTable = [null, HPawn, HLance, HKnight, HSilver, HBishop, HRook, HGold, null, HPawn, HLance, HKnight, HSilver, HBishop, HRook, HGold];
 const UsiRankChar = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'];
 
 function to_usi(file, rank) {
