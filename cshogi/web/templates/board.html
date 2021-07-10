@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.2/jquery-confirm.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.2/jquery-confirm.min.js"></script>
     <script src="{{url_for('static', filename='board.js')}}"></script>
     <script>
         let names = ["{{names[0]}}", "{{names[1]}}"];
@@ -204,6 +206,29 @@
             }
         }
 
+        function human_move(from_sq, to_sq) {
+            $.ajax({
+                url: "/move",
+                type: "GET",
+                data: { "number": moves.length + 1, "move": from_sq + to_sq },
+                dataType: "json",
+            }).done(function(data) {
+                names = data["names"];
+                updateNames();
+                moves = data["moves"];
+                human = data["human"];
+                updateBoard(moves.length);
+                updateTableMoves();
+                selectMoveNumber(moves.length);
+                drawEvalGraph();
+                if (moves.length > 0 && moves[moves.length - 1]["move"] == 0) {
+                    $("#autoupdate").prop('checked', false).change();
+                }
+                if (human == '')
+                    $("#autoupdate").change();
+            });
+        }
+
         function onMouseDown2(event) {
             let to = document.elementFromPoint(event.clientX, event.clientY);
             if (to.getAttribute("id") != null && (to.tagName == "use" || to.tagName == "rect")) {
@@ -214,12 +239,12 @@
 
                 let to_sq = to.getAttribute("id");
 
+                let confirm = false;
                 if (event.shiftKey) {
                     to_sq += "+";
                 } else if (selected.tagName == "use") {
                     let piece = selected.getAttribute("xlink:href").substring(7);
                     let promote = false;
-                    let confirm = false;
                     if (["pawn", "lance", "knight", "silver", "bishop", "rook", "gold"].includes(piece)) {
                         let promotion_zone = human == "black" ? ["a", "b", "c"] : ["i", "h", "g"];
                         if (promotion_zone.includes(to_sq[1])) {
@@ -235,33 +260,31 @@
                         }
                     }
                     if (confirm) {
-                        if (window.confirm("成りますか？"))
-                            promote = true;
-                    }
-                    if (promote)
+                        $.confirm({
+                            title: '',
+                            content: "成りますか？",
+                            buttons: {
+                                confirm: {
+	                            text:'はい',
+	                            btnClass: 'btn-blue',
+	                            action: function () {
+	                                to_sq += "+";
+                                    human_move(from_sq, to_sq);
+                                    },
+	                            },
+                                cancel: {
+	                            text:'いいえ',
+	                            action:function () {
+	                                human_move(from_sq, to_sq);
+	                                },
+	                            },
+                            }
+                        });
+                    } else if (promote)
                         to_sq += "+";
                 }
-
-                $.ajax({
-                    url: "/move",
-                    type: "GET",
-                    data: { "number": moves.length + 1, "move": from_sq + to_sq },
-                    dataType: "json",
-                }).done(function(data) {
-                    names = data["names"];
-                    updateNames();
-                    moves = data["moves"];
-                    human = data["human"];
-                    updateBoard(moves.length);
-                    updateTableMoves();
-                    selectMoveNumber(moves.length);
-                    drawEvalGraph();
-                    if (moves.length > 0 && moves[moves.length - 1]["move"] == 0) {
-                        $("#autoupdate").prop('checked', false).change();
-                    }
-                    if (human == '')
-                        $("#autoupdate").change();
-                });
+                if (!confirm)
+                    human_move(from_sq, to_sq);
             }
 
             selected.style.fillOpacity = "";
