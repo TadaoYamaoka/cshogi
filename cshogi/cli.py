@@ -61,7 +61,7 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
          byoyomi=None, time=None, inc=None,
          draw=256, opening=None, opening_moves=24, opening_seed=None, opening_index=None,
          keep_process=False,
-         csa=None, multi_csa=False, pgn=None, no_pgn_moves=False, is_display=True, debug=True,
+         csa=None, multi_csa=False, pgn=None, no_pgn_moves=False, is_display=False, debug=False,
          print_summary=True, callback=None):
     engine1 = Engine(engine1, connect=False)
     engine2 = Engine(engine2, connect=False)
