@@ -245,7 +245,7 @@
                 } else if (selected.tagName == "use") {
                     let piece = selected.getAttribute("xlink:href").substring(7);
                     let promote = false;
-                    if (["pawn", "lance", "knight", "silver", "bishop", "rook", "gold"].includes(piece)) {
+                    if (["pawn", "lance", "knight", "silver", "bishop", "rook"].includes(piece)) {
                         let promotion_zone = human == "black" ? ["a", "b", "c"] : ["i", "h", "g"];
                         if (promotion_zone.includes(to_sq[1])) {
                             if (to_sq[1] == promotion_zone[0] && ["pawn", "lance", "knight"].includes(piece))
