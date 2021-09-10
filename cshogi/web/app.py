@@ -2,7 +2,7 @@ import sys
 import math
 from cshogi import Board, CSA, KIF, move_from_csa, BLACK, WHITE, opponent
 from cshogi.usi import Engine
-from cshogi.cli import usi_info_to_score, re_usi_info
+from cshogi.cli import usi_info_to_score, usi_info_to_csa_comment, re_usi_info
 from flask import Flask, render_template, Markup, request
 from wsgiref.simple_server import make_server
 
@@ -60,7 +60,7 @@ def usi_info_to_pv(board, info):
 
     return ' '.join(pv)
 
-def match(moves, engine1=None, engine2=None, options1={}, options2={}, names=None, byoyomi=None, time=None, inc=None, draw=256, human_input=None):
+def match(moves, engine1=None, engine2=None, options1={}, options2={}, names=None, byoyomi=None, time=None, inc=None, draw=256, human_input=None, csa=None):
     from collections import defaultdict
     from time import perf_counter
 
@@ -72,6 +72,10 @@ def match(moves, engine1=None, engine2=None, options1={}, options2={}, names=Non
             self.info = self.bestmove
             self.bestmove = line
     listener = Listener()
+
+    # CSA
+    if csa:
+        csa_exporter = CSA.Exporter(csa, append=False)
 
     engines = []
     for engine in (engine1, engine2):
@@ -97,6 +101,9 @@ def match(moves, engine1=None, engine2=None, options1={}, options2={}, names=Non
     # 新規ゲーム
     for engine in engines:
         engine.usinewgame()
+
+    if csa:
+        csa_exporter.info(board, names, version='V2')
 
     # 対局
     is_game_over = False
@@ -145,6 +152,8 @@ def match(moves, engine1=None, engine2=None, options1={}, options2={}, names=Non
         else:
             move = board.move_from_usi(bestmove)
             if board.is_legal(move):
+                if csa:
+                    csa_exporter.move(move, time=int(elapsed_time), comment=usi_info_to_csa_comment(board, listener.info))
                 score = usi_info_to_score(listener.info)
                 pv = usi_info_to_pv(board, listener.info)
                 moves.append({
@@ -191,24 +200,36 @@ def match(moves, engine1=None, engine2=None, options1={}, options2={}, names=Non
     # 結果出力
     if not board.is_game_over() and board.move_number > draw:
         result = '持将棋'
+        csa_endgame = '%JISHOGI'
     elif is_fourfold_repetition:
         result = '千日手'
+        csa_endgame = '%SENNICHITE'
     elif is_nyugyoku:
         result = TURN_SYMBOLS[board.turn] + '入玉宣言'
+        csa_endgame = '%KACHI'
     elif is_illegal:
         win = opponent(board.turn)
         result = '{}の反則負け'.format('先手' if win == WHITE else '後手')
+        csa_endgame = '%ILLEGAL_MOVE'
     elif is_repetition_win:
         win = board.turn
         result = '{}の反則勝ち'.format('先手' if win == BLACK else '後手')
+        csa_endgame = '%+ILLEGAL_ACTION' if board.turn == WHITE else '%-ILLEGAL_ACTION'
     elif is_repetition_lose:
         win = opponent(board.turn)
         result = '{}の反則負け'.format('先手' if win == WHITE else '後手')
+        csa_endgame = 'ILLEGAL_MOVE'
     elif is_timeup:
         win = opponent(board.turn)
         result = '{}の切れ負け'.format('先手' if win == WHITE else '後手')
+        csa_endgame = '%TIME_UP'
     else:
         result = TURN_SYMBOLS[board.turn] + '投了'
+        csa_endgame = '%TORYO'
+
+    # CSA
+    if csa:
+        csa_exporter.endgame(csa_endgame)
 
     moves.append({
         'number': board.move_number,
@@ -232,7 +253,7 @@ def run(engine1=None, engine2=None, options1={}, options2={}, names=None, byoyom
             names = manager.list([None, None])
         else:
             names = manager.list(names)
-        match_proc = Process(target=match, args=[moves, engine1, engine2, options1, options2, names, byoyomi, time, inc, draw, human_input])
+        match_proc = Process(target=match, args=[moves, engine1, engine2, options1, options2, names, byoyomi, time, inc, draw, human_input, csa])
         match_proc.start()
         is_match = 'true'
         auto_update = 'true'
