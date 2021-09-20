@@ -196,7 +196,8 @@ namespace parser {
 					}
 				}
 				else if (line[0] == 'T') {
-					times[moves.size() - 1] = std::stoi(line.substr(1));
+					if (endgame == "" && times.size() > 0)
+						times[moves.size() - 1] = std::stoi(line.substr(1));
 				}
 				else if (line[0] == '%') {
 					// End of the game
