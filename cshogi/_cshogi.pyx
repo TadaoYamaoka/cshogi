@@ -232,7 +232,8 @@ cdef extern from "cshogi.h":
 		__Board() except +
 		__Board(const string& sfen) except +
 		__Board(const __Board& board) except +
-		bool set(const string& sfen)
+		void set(const string& sfen)
+		bool set_position(const string& position)
 		bool set_hcp(char* hcp)
 		bool set_psfen(char* psfen)
 		void reset()
@@ -295,6 +296,10 @@ cdef class Board:
 	def set_sfen(self, str sfen):
 		cdef string sfen_b = sfen.encode('ascii')
 		self.__board.set(sfen_b)
+
+	def set_position(self, str position):
+		cdef string position_b = position.encode('ascii')
+		return self.__board.set_position(position_b)
 
 	def set_hcp(self, np.ndarray hcp):
 		return self.__board.set_hcp(hcp.data)

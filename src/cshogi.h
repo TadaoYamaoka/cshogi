@@ -83,6 +83,35 @@ public:
 		history.clear();
 		pos.set(sfen);
 	}
+	bool set_position(std::string& position) {
+		history.clear();
+		std::istringstream ssPosCmd(position);
+		std::string token;
+		std::string sfen;
+
+		ssPosCmd >> token;
+
+		if (token == "startpos") {
+			sfen = DefaultStartPositionSFEN;
+			ssPosCmd >> token; // "moves" が入力されるはず。
+		}
+		else if (token == "sfen") {
+			while (ssPosCmd >> token && token != "moves")
+				sfen += token + " ";
+		}
+		else
+			return false;
+
+		pos.set(sfen);
+
+		while (ssPosCmd >> token) {
+			const Move move = usiToMove(pos, token);
+			if (!move) return false;
+			push(move.value());
+		}
+
+		return true;
+	}
 	bool set_hcp(char* hcp) {
 		history.clear();
 		return pos.set_hcp(hcp);
