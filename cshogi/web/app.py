@@ -1,6 +1,6 @@
 import sys
 import math
-from cshogi import Board, CSA, KIF, move_from_csa, BLACK, WHITE, opponent
+from cshogi import Board, CSA, KIF, move_from_csa, BLACK, WHITE, opponent, REPETITION_WIN, REPETITION_LOSE
 from cshogi.usi import Engine
 from cshogi.cli import usi_info_to_score, usi_info_to_csa_comment, re_usi_info
 from flask import Flask, render_template, Markup, request
