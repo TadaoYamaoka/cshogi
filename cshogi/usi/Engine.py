@@ -14,7 +14,8 @@ class Engine:
 
     def connect(self, listener=None):
         if self.debug: listener = print
-        self.proc = subprocess.Popen([self.cmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(self.cmd))
+        cwd = os.path.dirname(self.cmd)
+        self.proc = subprocess.Popen([self.cmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd if cwd != '' else None)
 
         cmd = 'usi'
         if listener:
