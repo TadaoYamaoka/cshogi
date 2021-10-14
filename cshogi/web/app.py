@@ -319,7 +319,7 @@ def run(engine1=None, engine2=None, options1={}, options2={}, name1=None, name2=
     server = make_server('localhost', port, app)
     server.serve_forever()
 
-def colab(engine1=None, engine2=None, options1={}, options2={}, names1=None, names2=None, byoyomi=None, time=None, inc=None, draw=256, csa=None):
+def colab(engine1=None, engine2=None, options1={}, options2={}, name1=None, name2=None, byoyomi=None, time=None, inc=None, draw=256, csa=None):
     from multiprocessing import Process
     import portpicker
     from google.colab import output
