@@ -339,8 +339,8 @@ def colab(engine1=None, engine2=None, options1={}, options2={}, names=None, byoy
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--engine1')
-    parser.add_argument('--engine2')
+    parser.add_argument('engine1')
+    parser.add_argument('engine2')
     parser.add_argument('--options1', default='')
     parser.add_argument('--options2', default='')
     parser.add_argument('--name1')
