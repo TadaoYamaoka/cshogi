@@ -90,7 +90,7 @@ def match(moves, engine1=None, engine2=None, options1={}, options2={}, names=Non
 
     for i in range(2):
         if names[i]:
-            engine[i].name = names[i]
+            engines[i].name = names[i]
         else:
             names[i] = engines[i].name
 
@@ -240,7 +240,7 @@ def match(moves, engine1=None, engine2=None, options1={}, options2={}, names=Non
         'pv': '',
     })
 
-def run(engine1=None, engine2=None, options1={}, options2={}, names=None, byoyomi=None, time=None, inc=None, draw=256, csa=None, port=8000):
+def run(engine1=None, engine2=None, options1={}, options2={}, name1=None, name2=None, byoyomi=None, time=None, inc=None, draw=256, csa=None, port=8000):
     is_match = 'false'
     auto_update = 'false'
 
@@ -249,10 +249,7 @@ def run(engine1=None, engine2=None, options1={}, options2={}, names=None, byoyom
         manager = Manager()
         moves = manager.list()
         human_input = manager.dict({ 'number': 0, 'move': None })
-        if names is None:
-            names = manager.list([None, None])
-        else:
-            names = manager.list(names)
+        names = manager.list([name1, name2])
         match_proc = Process(target=match, args=[moves, engine1, engine2, options1, options2, names, byoyomi, time, inc, draw, human_input, csa])
         match_proc.start()
         is_match = 'true'
@@ -321,7 +318,7 @@ def run(engine1=None, engine2=None, options1={}, options2={}, names=None, byoyom
     server = make_server('localhost', port, app)
     server.serve_forever()
 
-def colab(engine1=None, engine2=None, options1={}, options2={}, names=None, byoyomi=None, time=None, inc=None, draw=256, csa=None):
+def colab(engine1=None, engine2=None, options1={}, options2={}, names1=None, names2=None, byoyomi=None, time=None, inc=None, draw=256, csa=None):
     from multiprocessing import Process
     import portpicker
     from google.colab import output
@@ -332,7 +329,7 @@ def colab(engine1=None, engine2=None, options1={}, options2={}, names=None, byoy
         proc.join()
 
     port = portpicker.pick_unused_port()
-    proc = Process(target=run, args=(engine1, engine2, options1, options2, names, byoyomi, time, inc, draw, csa, port))
+    proc = Process(target=run, args=(engine1, engine2, options1, options2, name1, name2, byoyomi, time, inc, draw, csa, port))
     proc.start()
     output.serve_kernel_port_as_iframe(port, height='680')
 
@@ -365,6 +362,6 @@ if __name__ == '__main__':
 
     run(engine1=args.engine1, engine2=args.engine2,
         options1=options_list[0], options2=options_list[1],
-        names=[args.name1, args.name2],
+        name1=args.name1, name2=args.name2,
         byoyomi=args.byoyomi, time=args.time, inc=args.inc, draw=args.draw,
         csa=args.csa, port=args.port)
