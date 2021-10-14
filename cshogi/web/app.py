@@ -250,6 +250,7 @@ def run(engine1=None, engine2=None, options1={}, options2={}, name1=None, name2=
         moves = manager.list()
         human_input = manager.dict({ 'number': 0, 'move': None })
         names = manager.list([name1, name2])
+        humans = [engine1 == 'human', engine2 == 'human']
         match_proc = Process(target=match, args=[moves, engine1, engine2, options1, options2, names, byoyomi, time, inc, draw, human_input, csa])
         match_proc.start()
         is_match = 'true'
@@ -293,14 +294,14 @@ def run(engine1=None, engine2=None, options1={}, options2={}, name1=None, name2=
         if is_match == 'true':
             if match_proc.is_alive():
                 autoupdate = request.args.get('autoupdate', default=auto_update)
-                if names[len(moves) % 2] == 'Human':
+                if humans[len(moves) % 2]:
                     human = 'black' if len(moves) % 2 == 0 else 'white'
         return render_template('board.html', names=names, moves=moves, is_match=is_match, autoupdate=autoupdate, human=human)
 
     @app.route("/update")
     def update():
         human = ''
-        if names[len(moves) % 2] == 'Human':
+        if humans[len(moves) % 2]:
             human = 'black' if len(moves) % 2 == 0 else 'white'
         return { 'names': list(names), 'moves': list(moves), 'human':human }
 
