@@ -159,7 +159,15 @@ class Parser:
                 (key, value) = line.split('：', 1)
                 value = value.rstrip('　')
                 if key == '開始日時':
-                    starttime = datetime.strptime(value, '%Y/%m/%d %H:%M:%S')
+                    try:
+                        starttime = datetime.strptime(value, '%Y/%m/%d %H:%M:%S')
+                    except ValueError:
+                        try:
+                            # if KIF file has not second information, try another parse
+                            starttime = datetime.strptime(value, '%Y/%m/%d %H:%M') 
+                        except ValueError:
+                            pass
+
                 if key == '先手' or key == '下手': # sente or shitate
                     # Blacks's name
                     names[cshogi.BLACK] = value
