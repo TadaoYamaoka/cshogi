@@ -240,7 +240,7 @@ def match(moves, engine1=None, engine2=None, options1={}, options2={}, names=Non
         'pv': '',
     })
 
-def run(engine1=None, engine2=None, options1={}, options2={}, name1=None, name2=None, byoyomi=None, time=None, inc=None, draw=256, csa=None, port=8000):
+def run(engine1=None, engine2=None, options1={}, options2={}, name1=None, name2=None, byoyomi=None, time=None, inc=None, draw=256, csa=None, host='localhost', port=8000):
     is_match = 'false'
     auto_update = 'false'
 
@@ -316,7 +316,7 @@ def run(engine1=None, engine2=None, options1={}, options2={}, name1=None, name2=
             human = 'black' if len(moves) % 2 == 0 else 'white'
         return { 'names': list(names), 'moves': list(moves), 'human':human }
 
-    server = make_server('localhost', port, app)
+    server = make_server(host, port, app)
     server.serve_forever()
 
 def colab(engine1=None, engine2=None, options1={}, options2={}, name1=None, name2=None, byoyomi=None, time=None, inc=None, draw=256, csa=None):
@@ -348,6 +348,7 @@ if __name__ == '__main__':
     parser.add_argument('--inc', type=int)
     parser.add_argument('--draw', type=int, default=256)
     parser.add_argument('--csa')
+    parser.add_argument('--host', type=str, default='localhost')
     parser.add_argument('--port', type=int, default=8000)
     args = parser.parse_args()
 
@@ -365,4 +366,4 @@ if __name__ == '__main__':
         options1=options_list[0], options2=options_list[1],
         name1=args.name1, name2=args.name2,
         byoyomi=args.byoyomi, time=args.time, inc=args.inc, draw=args.draw,
-        csa=args.csa, port=args.port)
+        csa=args.csa, host=args.host, port=args.port)
