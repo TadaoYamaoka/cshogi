@@ -142,6 +142,48 @@ class Engine:
                 else:
                     return items[0], None
 
+    def go_score(self, ponder=False, btime=None, wtime=None, byoyomi=None, binc=None, winc=None, nodes=None, listener=None):
+        if self.debug: listener = print
+        cmd = 'go'
+        if ponder:
+            cmd += ' ponder'
+        else:
+            if btime is not None:
+                cmd += ' btime ' + str(btime)
+            if wtime is not None:
+                cmd += ' wtime ' + str(wtime)
+            if byoyomi is not None:
+                cmd += ' byoyomi ' + str(byoyomi)
+            else:
+                if binc is not None:
+                    cmd += ' binc ' + str(binc)
+                if winc is not None:
+                    cmd += ' winc ' + str(winc)
+            if nodes is not None:
+                cmd += ' nodes ' + str(nodes)
+        if listener:
+            listener(cmd)
+        self.proc.stdin.write(cmd.encode('ascii') + b'\n')
+        self.proc.stdin.flush()
+        score = {} # 読み筋毎に評価値を残す
+        while True:
+            self.proc.stdout.flush()
+            line = self.proc.stdout.readline()
+            if line == '':
+                raise EOFError()
+            line = line.strip().decode('ascii')
+            if listener:
+                listener(line)
+            l = line.split()
+            if 'cp' in l and 'pv' in l: # 読み筋毎に評価値を残す。詰みの場合は無視
+                score[l[l.index('pv')+1]] = l[l.index('cp')+1]
+            if line[:8] == 'bestmove':
+                items = line[9:].split(' ')
+                if len(items) == 3 and items[1] == 'ponder':
+                    return items[0], items[2], score[items[0]]
+                else:
+                    return items[0], None, score[items[0]] 
+                
     def quit(self, listener=None):
         if self.debug: listener = print
         cmd = 'quit'
