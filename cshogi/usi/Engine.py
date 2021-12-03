@@ -142,6 +142,29 @@ class Engine:
                 else:
                     return items[0], None
 
+    def go_mate(self, byoyomi=None, listener=None):
+        if self.debug: listener = print
+        cmd = 'go mate'
+        if byoyomi is not None:
+            cmd += ' ' + str(byoyomi)
+        else:
+            cmd += ' infinite'
+        if listener:
+            listener(cmd)
+        self.proc.stdin.write(cmd.encode('ascii') + b'\n')
+        self.proc.stdin.flush()
+        while True:
+            self.proc.stdout.flush()
+            line = self.proc.stdout.readline()
+            if line == '':
+                raise EOFError()
+            line = line.strip().decode('ascii')
+            if listener:
+                listener(line)
+            if line[:9] == 'checkmate':
+                items = line[10:]
+                return items
+
     def quit(self, listener=None):
         if self.debug: listener = print
         cmd = 'quit'
