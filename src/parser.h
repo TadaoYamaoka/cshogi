@@ -15,6 +15,30 @@ namespace parser {
 		return str.substr(0, str.find_last_not_of(chars) + 1);
 	}
 
+	class StringToPieceTypeCSA : public std::map<std::string, PieceType> {
+	public:
+		StringToPieceTypeCSA() {
+			(*this)["FU"] = Pawn;
+			(*this)["KY"] = Lance;
+			(*this)["KE"] = Knight;
+			(*this)["GI"] = Silver;
+			(*this)["KA"] = Bishop;
+			(*this)["HI"] = Rook;
+			(*this)["KI"] = Gold;
+			(*this)["OU"] = King;
+			(*this)["TO"] = ProPawn;
+			(*this)["NY"] = ProLance;
+			(*this)["NK"] = ProKnight;
+			(*this)["NG"] = ProSilver;
+			(*this)["UM"] = Horse;
+			(*this)["RY"] = Dragon;
+		}
+		PieceType value(const std::string& str) const {
+			return this->find(str)->second;
+		}
+	};
+	const StringToPieceTypeCSA stringToPieceTypeCSA;
+
 	class StringToPieceCSA : public std::map<std::string, Piece> {
 	public:
 		StringToPieceCSA() {
@@ -323,18 +347,20 @@ namespace parser {
 
 						int index = 2;
 						while (index < line.size()) {
-							file_index = line[index] - '1';
+							char file_char = line[index];
+							file_index = '9' - line[index];
 							index += 1;
-							rank_index = line[index] - '1';
+							char rank_char = line[index];
+							rank_index = rank_char - '1';
 							index += 1;
-							piece = stringToPieceCSA.value(line.substr(index, 2));
+							PieceType piecetype = stringToPieceTypeCSA.value(line.substr(index, 2));
 							index += 2;
-							if (rank_index == 0 && file_index == 0) {
+							if (rank_char == '0' && file_char == '0') {
 								// piece in hand
 								throw std::domain_error("TODO: Not implemented komaochi in komadai");
 							}
 							if (rank_index < 0 || rank_index >= 9 || file_index < 0 || file_index >= 9 ||
-								pieces_in_board[rank_index][file_index] == Empty || pieces_in_board[rank_index][file_index] != piece)
+								pieces_in_board[rank_index][file_index] == Empty || pieceToPieceType(pieces_in_board[rank_index][file_index]) != piecetype)
 								throw std::domain_error("Invalid piece removing on intializing a board");
 							pieces_in_board[rank_index][file_index] = Empty;
 						}
