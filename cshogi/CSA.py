@@ -69,7 +69,10 @@ class Exporter:
         self.f.write('\n')
         self.turn = cshogi.opponent(self.turn)
 
-    def endgame(self, endgame):
+    def endgame(self, endgame, time=None):
         self.f.write(endgame)
         self.f.write('\n')
+        if time is not None:
+            self.f.write('T' + str(time))
+            self.f.write('\n')
         self.f.flush()
