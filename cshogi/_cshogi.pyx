@@ -681,9 +681,9 @@ cdef extern from "parser.h" namespace "parser":
 
 cdef class Parser:
 	@staticmethod
-	def parse_file(file):
+	def parse_file(file, encoding=None):
 		if type(file) is str:
-			with open(file, 'r') as f:
+			with open(file, 'r', encoding=encoding) as f:
 				return Parser.parse_str(f.read())
 		else:
 			return Parser.parse_str(file.read())
@@ -722,7 +722,7 @@ cdef class Parser:
 
 	@property
 	def names(self):
-		return [name.decode('ascii') for name in self.__parser.names]
+		return [name.decode('utf-8') for name in self.__parser.names]
 
 	@property
 	def ratings(self):
