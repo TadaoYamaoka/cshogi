@@ -86,6 +86,8 @@ namespace parser {
 	class __Parser
 	{
 	public:
+		std::string version;
+		std::vector<std::string> informations;
 		std::string sfen;
 		std::string endgame;
 		std::vector<std::string> names;
@@ -116,6 +118,8 @@ namespace parser {
 		void parse_csa(std::istream& is) {
 			int line_no = 1;
 
+			version = "";
+			informations.clear();
 			sfen = "";
 			endgame = "";
 			names[0] = names[1] = "";
@@ -185,7 +189,7 @@ namespace parser {
 					}
 				}
 				else if (line[0] == 'V') {
-					// Currently just ignoring version
+					version = line;
 				}
 				else if (line[0] == 'N') {
 					auto i = std::find(COLOR_SYMBOLS.begin(), COLOR_SYMBOLS.end(), line[1]);
@@ -193,7 +197,7 @@ namespace parser {
 						names[i - COLOR_SYMBOLS.begin()] = line.substr(2);
 				}
 				else if (line[0] == '$') {
-					// Currently just ignoring information
+					informations.emplace_back(line);
 				}
 				else if (line[0] == 'P') {
 					position_lines.push_back(line);

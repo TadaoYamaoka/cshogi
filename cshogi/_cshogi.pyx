@@ -666,6 +666,8 @@ def _dlshogi_make_move_label(int move, int color):
 cdef extern from "parser.h" namespace "parser":
 	cdef cppclass __Parser:
 		__Parser() except +
+		string version
+		vector[string] informations
 		string sfen
 		string endgame
 		vector[string] names
@@ -711,6 +713,15 @@ cdef class Parser:
 	def parse_csa_str(self, str csa_str):
 		cdef string csa_str_b = csa_str.encode('utf-8')
 		self.__parser.parse_csa_str(csa_str_b)
+
+	@property
+	def version(self):
+		v = self.__parser.version.decode('ascii')
+		return v if v != '' else None
+
+	@property
+	def informations(self):
+		return [information.decode('utf-8') for information in self.__parser.informations]
 
 	@property
 	def sfen(self):
