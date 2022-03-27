@@ -716,12 +716,15 @@ cdef class Parser:
 
 	@property
 	def version(self):
-		v = self.__parser.version.decode('ascii')
-		return v if v != '' else None
+		return self.__parser.version.decode('ascii')
 
 	@property
-	def informations(self):
-		return [information.decode('utf-8') for information in self.__parser.informations]
+	def var_info(self):
+		d = {}
+		for information in self.__parser.informations:
+			k, v = information.decode('utf-8').split(':', 1)
+			d[k[1:]] = v
+		return d
 
 	@property
 	def sfen(self):
@@ -761,4 +764,4 @@ cdef class Parser:
 
 	@property
 	def comment(self):
-		return self.__parser.comment.decode('ascii')
+		return self.__parser.comment.decode('utf-8')
