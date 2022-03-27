@@ -25,11 +25,15 @@ class Exporter:
     def close(self):
         self.f.close()
 
-    def info(self, init_board, names=None, var_info=None, comments=None, version=None):
+    def info(self, init_board, names=None, var_info=None, comments=None, version=None, informations=None):
         if self.f.tell() != 0:
             self.f.write('/\n')
         if version:
                 self.f.write(version)
+                self.f.write('\n')
+        if informations:
+            for information in informations:
+                self.f.write(information)
                 self.f.write('\n')
         if names:
             for name, turn in zip(names, ['+', '-']):
