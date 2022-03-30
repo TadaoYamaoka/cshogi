@@ -132,7 +132,7 @@ class Engine:
             line = self.proc.stdout.readline()
             if line == '':
                 raise EOFError()
-            line = line.strip().decode('ascii')
+            line = line.strip().decode(locale.getpreferredencoding())
             if listener:
                 listener(line)
             if line[:8] == 'bestmove':
@@ -158,7 +158,7 @@ class Engine:
             line = self.proc.stdout.readline()
             if line == '':
                 raise EOFError()
-            line = line.strip().decode('ascii')
+            line = line.strip().decode(locale.getpreferredencoding())
             if listener:
                 listener(line)
             if line[:9] == 'checkmate':
