@@ -13,19 +13,19 @@ JAPANESE_END_GAMES = {
 }
 
 class Exporter:
-    def __init__(self, path=None, append=False):
+    def __init__(self, path=None, append=False, encoding=None):
         if path:
-            self.open(path, append)
+            self.open(path, append, encoding=encoding)
         else:
             self.f = None
 
-    def open(self, path, append=False):
-        self.f = open(path, 'a' if append else 'w', newline='\n')
+    def open(self, path, append=False, encoding=None):
+        self.f = open(path, 'a' if append else 'w', newline='\n', encoding=encoding)
 
     def close(self):
         self.f.close()
 
-    def info(self, init_board, names=None, var_info=None, comments=None, version=None):
+    def info(self, init_board=None, names=None, var_info=None, comment=None, version=None):
         if self.f.tell() != 0:
             self.f.write('/\n')
         if version:
@@ -35,8 +35,10 @@ class Exporter:
             for name, turn in zip(names, ['+', '-']):
                 self.f.write('N' + turn + name)
                 self.f.write('\n')
-        if comments:
-            for comment in comments:
+        if comment:
+            if comment[0] == "'":
+                self.f.write(comment)
+            else:
                 self.f.write("'")
                 self.f.write(comment)
                 self.f.write('\n')
@@ -44,12 +46,16 @@ class Exporter:
             for k, v in var_info.items():
                 self.f.write('$' + k + ':' + v)
                 self.f.write('\n')
-        csa_pos = init_board.csa_pos()
-        if csa_pos == 'P1-KY-KE-GI-KI-OU-KI-GI-KE-KY\nP2 * -HI *  *  *  *  * -KA * \nP3-FU-FU-FU-FU-FU-FU-FU-FU-FU\nP4 *  *  *  *  *  *  *  *  * \nP5 *  *  *  *  *  *  *  *  * \nP6 *  *  *  *  *  *  *  *  * \nP7+FU+FU+FU+FU+FU+FU+FU+FU+FU\nP8 * +KA *  *  *  *  * +HI * \nP9+KY+KE+GI+KI+OU+KI+GI+KE+KY\n+\n':
-            self.f.write('PI\n+\n')
+        if init_board:
+            csa_pos = init_board.csa_pos()
+            if csa_pos == 'P1-KY-KE-GI-KI-OU-KI-GI-KE-KY\nP2 * -HI *  *  *  *  * -KA * \nP3-FU-FU-FU-FU-FU-FU-FU-FU-FU\nP4 *  *  *  *  *  *  *  *  * \nP5 *  *  *  *  *  *  *  *  * \nP6 *  *  *  *  *  *  *  *  * \nP7+FU+FU+FU+FU+FU+FU+FU+FU+FU\nP8 * +KA *  *  *  *  * +HI * \nP9+KY+KE+GI+KI+OU+KI+GI+KE+KY\n+\n':
+                self.f.write('PI\n+\n')
+            else:
+                self.f.write(csa_pos)
+            self.turn = init_board.turn
         else:
-            self.f.write(csa_pos)
-        self.turn = init_board.turn
+            self.f.write('PI\n+\n')
+            self.turn = cshogi.BLACK
 
     def move(self, move, time=None, comment=None, sep='\n'):
         self.f.write(COLOR_SYMBOLS[self.turn])
@@ -63,7 +69,10 @@ class Exporter:
         self.f.write('\n')
         self.turn = cshogi.opponent(self.turn)
 
-    def endgame(self, endgame):
+    def endgame(self, endgame, time=None):
         self.f.write(endgame)
         self.f.write('\n')
+        if time is not None:
+            self.f.write('T' + str(time))
+            self.f.write('\n')
         self.f.flush()

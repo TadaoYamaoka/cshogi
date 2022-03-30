@@ -398,6 +398,7 @@ public:
     void doMove(const Move move, StateInfo& newSt);
     void doMove(const Move move, StateInfo& newSt, const CheckInfo& ci, const bool moveIsCheck);
     void undoMove(const Move move);
+    template <bool DO> void doNullMove(StateInfo& backUpSt);
 
     template <Color US, bool Additional> Move mateMoveIn1Ply();
     template <bool Additional = true> Move mateMoveIn1Ply();
@@ -407,6 +408,8 @@ public:
     Key getBoardKey() const     { return st_->boardKey; }
     Key getHandKey() const      { return st_->handKey; }
     Key getKey() const          { return st_->key(); }
+	Key getKeyAfter(const Move m) const;
+	Key getBoardKeyAfter(const Move m) const;
     Key getKeyExcludeTurn() const {
         static_assert(zobTurn_ == 1, "");
         return getKey() >> 1;

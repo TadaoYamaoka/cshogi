@@ -269,6 +269,8 @@ cdef extern from "cshogi.h":
 		void piece_planes(char* mem)
 		void piece_planes_rotate(char* mem)
 		void _dlshogi_make_input_features(char* mem1, char* mem2)
+		void push_pass()
+		void pop_pass()
 		bool isOK()
 		unsigned long long bookKey()
 
@@ -339,6 +341,13 @@ cdef class Board:
 		cdef int move = self.__board.move_from_psv(move16)
 		self.__board.push(move)
 		return move
+
+	def push_pass(self):
+		assert not self.is_check()
+		return self.__board.push_pass()
+
+	def pop_pass(self):
+		return self.__board.pop_pass()
 
 	def pop(self):
 		self.__board.pop()
@@ -666,6 +675,8 @@ def _dlshogi_make_move_label(int move, int color):
 cdef extern from "parser.h" namespace "parser":
 	cdef cppclass __Parser:
 		__Parser() except +
+		string version
+		vector[string] informations
 		string sfen
 		string endgame
 		vector[string] names
@@ -681,9 +692,9 @@ cdef extern from "parser.h" namespace "parser":
 
 cdef class Parser:
 	@staticmethod
-	def parse_file(file):
+	def parse_file(file, encoding=None):
 		if type(file) is str:
-			with open(file, 'r') as f:
+			with open(file, 'r', encoding=encoding) as f:
 				return Parser.parse_str(f.read())
 		else:
 			return Parser.parse_str(file.read())
@@ -713,6 +724,18 @@ cdef class Parser:
 		self.__parser.parse_csa_str(csa_str_b)
 
 	@property
+	def version(self):
+		return self.__parser.version.decode('ascii')
+
+	@property
+	def var_info(self):
+		d = {}
+		for information in self.__parser.informations:
+			k, v = information.decode('utf-8').split(':', 1)
+			d[k[1:]] = v
+		return d
+
+	@property
 	def sfen(self):
 		return self.__parser.sfen.decode('ascii')
 
@@ -722,7 +745,7 @@ cdef class Parser:
 
 	@property
 	def names(self):
-		return [name.decode('ascii') for name in self.__parser.names]
+		return [name.decode('utf-8') for name in self.__parser.names]
 
 	@property
 	def ratings(self):
@@ -750,4 +773,54 @@ cdef class Parser:
 
 	@property
 	def comment(self):
-		return self.__parser.comment.decode('ascii')
+		return self.__parser.comment.decode('utf-8')
+
+cdef extern from "dfpn.h":
+	cdef cppclass __DfPn:
+		__DfPn() except +
+		__DfPn(const int max_depth, const unsigned int max_search_node, const int draw_ply) except +
+		bool search(__Board& board)
+		bool search_andnode(__Board& board)
+		void stop(const bool stop)
+		int get_move(__Board& board)
+		void get_pv(__Board& board)
+		vector[unsigned int] pv
+		void set_draw_ply(const int draw_ply)
+		void set_maxdepth(const int depth)
+		void set_max_search_node(int max_search_node)
+		unsigned int get_searched_node()
+
+cdef class DfPn:
+	cdef __DfPn __dfpn
+
+	def __cinit__(self, depth=31, nodes=1048576, draw_ply=32767):
+		self.__dfpn = __DfPn(depth, nodes, draw_ply)
+
+	def search(self, Board board):
+		return self.__dfpn.search(board.__board)
+
+	def search_andnode(self, Board board):
+		return self.__dfpn.search_andnode(board.__board)
+
+	def stop(self, bool stop):
+		self.__dfpn.stop(stop)
+
+	def get_move(self, Board board):
+		return self.__dfpn.get_move(board.__board)
+
+	def get_pv(self, Board board):
+		self.__dfpn.get_pv(board.__board)
+		return self.__dfpn.pv
+
+	def set_draw_ply(self, int draw_ply):
+		self.__dfpn.set_draw_ply(draw_ply)
+
+	def set_max_depth(self, int max_depth):
+		self.__dfpn.set_maxdepth(max_depth)
+
+	def set_max_search_node(self, int max_search_node):
+		self.__dfpn.set_max_search_node(max_search_node)
+
+	@property
+	def searched_node(self):
+		return self.__dfpn.get_searched_node()

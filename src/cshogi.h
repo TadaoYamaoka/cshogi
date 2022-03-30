@@ -7,6 +7,7 @@
 #include "usi.hpp"
 #include "book.hpp"
 #include "mate.h"
+#include "dfpn.h"
 
 // 入力特徴量のための定数(dlshogi互換)
 constexpr int PIECETYPE_NUM = 14; // 駒の種類
@@ -147,6 +148,15 @@ public:
 			return history.back().first.value();
 		else
 			return Move::moveNone().value();
+	}
+
+	void push_pass() {
+		history.emplace_back(Move::moveNull(), StateInfo());
+		pos.doNullMove<true>(history.back().second);
+	}
+	void pop_pass() {
+		pos.doNullMove<false>(history.back().second);
+		history.pop_back();
 	}
 
 	bool is_game_over() const {
@@ -545,5 +555,47 @@ int __dlshogi_make_move_label(const int move, const int color) {
 		return 9 * 9 * move_direction_label + to_sq;
 	}
 }
+
+class __DfPn
+{
+public:
+	__DfPn() {}
+	__DfPn(const int max_depth, const uint32_t max_search_node, const int draw_ply) : dfpn(max_depth, max_search_node, draw_ply) {}
+	bool search(__Board& board) {
+		pv.clear();
+		return dfpn.dfpn(board.pos);
+	}
+	bool search_andnode(__Board& board) {
+		return dfpn.dfpn_andnode(board.pos);
+	}
+	void stop(bool is_stop) {
+		dfpn.dfpn_stop(is_stop);
+	}
+	int get_move(__Board& board) {
+		return dfpn.dfpn_move(board.pos).value();
+	}
+	void get_pv(__Board& board) {
+		pv.clear();
+		dfpn.get_pv(board.pos, pv);
+	}
+
+	void set_draw_ply(const int draw_ply) {
+		dfpn.set_draw_ply(draw_ply);
+	}
+	void set_maxdepth(const int depth) {
+		dfpn.set_maxdepth(depth);
+	}
+	void set_max_search_node(const uint32_t max_search_node) {
+		dfpn.set_max_search_node(max_search_node);
+	}
+
+	uint32_t get_searched_node() {
+		return dfpn.searchedNode;
+	}
+
+	std::vector<u32> pv;
+private:
+	DfPn dfpn;
+};
 
 #endif

@@ -148,6 +148,7 @@
     <ClInclude Include="src\color.hpp" />
     <ClInclude Include="src\common.hpp" />
     <ClInclude Include="src\cshogi.h" />
+    <ClInclude Include="src\dfpn.h" />
     <ClInclude Include="src\generateMoves.hpp" />
     <ClInclude Include="src\hand.hpp" />
     <ClInclude Include="src\ifdef.hpp" />
@@ -166,6 +167,7 @@
     <ClCompile Include="src\bitboard.cpp" />
     <ClCompile Include="src\book.cpp" />
     <ClCompile Include="src\common.cpp" />
+    <ClCompile Include="src\dfpn.cpp" />
     <ClCompile Include="src\generateMoves.cpp" />
     <ClCompile Include="src\hand.cpp" />
     <ClCompile Include="src\init.cpp" />

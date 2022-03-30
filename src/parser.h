@@ -15,6 +15,30 @@ namespace parser {
 		return str.substr(0, str.find_last_not_of(chars) + 1);
 	}
 
+	class StringToPieceTypeCSA : public std::map<std::string, PieceType> {
+	public:
+		StringToPieceTypeCSA() {
+			(*this)["FU"] = Pawn;
+			(*this)["KY"] = Lance;
+			(*this)["KE"] = Knight;
+			(*this)["GI"] = Silver;
+			(*this)["KA"] = Bishop;
+			(*this)["HI"] = Rook;
+			(*this)["KI"] = Gold;
+			(*this)["OU"] = King;
+			(*this)["TO"] = ProPawn;
+			(*this)["NY"] = ProLance;
+			(*this)["NK"] = ProKnight;
+			(*this)["NG"] = ProSilver;
+			(*this)["UM"] = Horse;
+			(*this)["RY"] = Dragon;
+		}
+		PieceType value(const std::string& str) const {
+			return this->find(str)->second;
+		}
+	};
+	const StringToPieceTypeCSA stringToPieceTypeCSA;
+
 	class StringToPieceCSA : public std::map<std::string, Piece> {
 	public:
 		StringToPieceCSA() {
@@ -62,6 +86,8 @@ namespace parser {
 	class __Parser
 	{
 	public:
+		std::string version;
+		std::vector<std::string> informations;
 		std::string sfen;
 		std::string endgame;
 		std::vector<std::string> names;
@@ -92,6 +118,8 @@ namespace parser {
 		void parse_csa(std::istream& is) {
 			int line_no = 1;
 
+			version = "";
+			informations.clear();
 			sfen = "";
 			endgame = "";
 			names[0] = names[1] = "";
@@ -161,7 +189,7 @@ namespace parser {
 					}
 				}
 				else if (line[0] == 'V') {
-					// Currently just ignoring version
+					version = line;
 				}
 				else if (line[0] == 'N') {
 					auto i = std::find(COLOR_SYMBOLS.begin(), COLOR_SYMBOLS.end(), line[1]);
@@ -169,7 +197,7 @@ namespace parser {
 						names[i - COLOR_SYMBOLS.begin()] = line.substr(2);
 				}
 				else if (line[0] == '$') {
-					// Currently just ignoring information
+					informations.emplace_back(line);
 				}
 				else if (line[0] == 'P') {
 					position_lines.push_back(line);
@@ -196,8 +224,10 @@ namespace parser {
 					}
 				}
 				else if (line[0] == 'T') {
-					if (endgame == "" && times.size() > 0)
+					if (endgame == "")
 						times[moves.size() - 1] = std::stoi(line.substr(1));
+					else
+						times.emplace_back(std::stoi(line.substr(1)));
 				}
 				else if (line[0] == '%') {
 					// End of the game
@@ -323,18 +353,20 @@ namespace parser {
 
 						int index = 2;
 						while (index < line.size()) {
-							file_index = line[index] - '1';
+							char file_char = line[index];
+							file_index = '9' - line[index];
 							index += 1;
-							rank_index = line[index] - '1';
+							char rank_char = line[index];
+							rank_index = rank_char - '1';
 							index += 1;
-							piece = stringToPieceCSA.value(line.substr(index, 2));
+							PieceType piecetype = stringToPieceTypeCSA.value(line.substr(index, 2));
 							index += 2;
-							if (rank_index == 0 && file_index == 0) {
+							if (rank_char == '0' && file_char == '0') {
 								// piece in hand
 								throw std::domain_error("TODO: Not implemented komaochi in komadai");
 							}
 							if (rank_index < 0 || rank_index >= 9 || file_index < 0 || file_index >= 9 ||
-								pieces_in_board[rank_index][file_index] == Empty || pieces_in_board[rank_index][file_index] != piece)
+								pieces_in_board[rank_index][file_index] == Empty || pieceToPieceType(pieces_in_board[rank_index][file_index]) != piecetype)
 								throw std::domain_error("Invalid piece removing on intializing a board");
 							pieces_in_board[rank_index][file_index] = Empty;
 						}
