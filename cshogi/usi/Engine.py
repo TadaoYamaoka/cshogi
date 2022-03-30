@@ -142,6 +142,14 @@ class Engine:
                 else:
                     return items[0], None
 
+    def stop(self, listener=None):
+        if self.debug: listener = print
+        cmd = 'stop'
+        if listener:
+            listener(cmd)
+        self.proc.stdin.write(cmd.encode('ascii') + b'\n')
+        self.proc.stdin.flush()
+
     def quit(self, listener=None):
         if self.debug: listener = print
         cmd = 'quit'
