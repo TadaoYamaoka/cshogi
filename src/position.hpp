@@ -398,6 +398,7 @@ public:
     void doMove(const Move move, StateInfo& newSt);
     void doMove(const Move move, StateInfo& newSt, const CheckInfo& ci, const bool moveIsCheck);
     void undoMove(const Move move);
+    template <bool DO> void doNullMove(StateInfo& backUpSt);
 
     template <Color US, bool Additional> Move mateMoveIn1Ply();
     template <bool Additional = true> Move mateMoveIn1Ply();

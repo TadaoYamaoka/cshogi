@@ -269,6 +269,8 @@ cdef extern from "cshogi.h":
 		void piece_planes(char* mem)
 		void piece_planes_rotate(char* mem)
 		void _dlshogi_make_input_features(char* mem1, char* mem2)
+		void push_pass()
+		void pop_pass()
 		bool isOK()
 		unsigned long long bookKey()
 
@@ -339,6 +341,13 @@ cdef class Board:
 		cdef int move = self.__board.move_from_psv(move16)
 		self.__board.push(move)
 		return move
+
+	def push_pass(self):
+		assert not self.is_check()
+		return self.__board.push_pass()
+
+	def pop_pass(self):
+		return self.__board.pop_pass()
 
 	def pop(self):
 		self.__board.pop()

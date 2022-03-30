@@ -150,6 +150,15 @@ public:
 			return Move::moveNone().value();
 	}
 
+	void push_pass() {
+		history.emplace_back(Move::moveNull(), StateInfo());
+		pos.doNullMove<true>(history.back().second);
+	}
+	void pop_pass() {
+		pos.doNullMove<false>(history.back().second);
+		history.pop_back();
+	}
+
 	bool is_game_over() const {
 		MoveList<Legal> ml(pos);
 		return ml.size() == 0;

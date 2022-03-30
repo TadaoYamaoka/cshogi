@@ -585,6 +585,30 @@ void Position::undoMove(const Move move) {
     assert(isOK());
 }
 
+template <bool DO> void Position::doNullMove(StateInfo& backUpSt) {
+    assert(!inCheck());
+
+    StateInfo* src = (DO ? st_ : &backUpSt);
+    StateInfo* dst = (DO ? &backUpSt : st_);
+
+    dst->boardKey = src->boardKey;
+    dst->handKey = src->handKey;
+    dst->pliesFromNull = src->pliesFromNull;
+    dst->hand = hand(turn());
+    turn_ = oppositeColor(turn());
+
+    if (DO) {
+        st_->boardKey ^= zobTurn();
+        st_->pliesFromNull = 0;
+        st_->continuousCheck[turn()] = 0;
+    }
+    st_->hand = hand(turn());
+
+    assert(isOK());
+}
+template void Position::doNullMove<true>(StateInfo& backUpSt);
+template void Position::doNullMove<false>(StateInfo& backUpSt);
+
 namespace {
     // SEE の順番
     template <PieceType PT> struct SEENextPieceType {}; // これはインスタンス化しない。
