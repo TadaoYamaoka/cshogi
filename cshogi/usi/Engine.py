@@ -108,20 +108,19 @@ class Engine:
         cmd = 'go'
         if ponder:
             cmd += ' ponder'
+        if btime is not None:
+            cmd += ' btime ' + str(btime)
+        if wtime is not None:
+            cmd += ' wtime ' + str(wtime)
+        if byoyomi is not None:
+            cmd += ' byoyomi ' + str(byoyomi)
         else:
-            if btime is not None:
-                cmd += ' btime ' + str(btime)
-            if wtime is not None:
-                cmd += ' wtime ' + str(wtime)
-            if byoyomi is not None:
-                cmd += ' byoyomi ' + str(byoyomi)
-            else:
-                if binc is not None:
-                    cmd += ' binc ' + str(binc)
-                if winc is not None:
-                    cmd += ' winc ' + str(winc)
-            if nodes is not None:
-                cmd += ' nodes ' + str(nodes)
+            if binc is not None:
+                cmd += ' binc ' + str(binc)
+            if winc is not None:
+                cmd += ' winc ' + str(winc)
+        if nodes is not None:
+            cmd += ' nodes ' + str(nodes)
         if listener:
             listener(cmd)
         self.proc.stdin.write(cmd.encode('ascii') + b'\n')
@@ -165,9 +164,27 @@ class Engine:
                 items = line[10:]
                 return items
 
+    def ponderhit(self, listener=None):
+        if self.debug: listener = print
+        cmd = 'ponderhit'
+        if listener:
+            listener(cmd)
+        self.proc.stdin.write(cmd.encode('ascii') + b'\n')
+        self.proc.stdin.flush()
+
     def stop(self, listener=None):
         if self.debug: listener = print
         cmd = 'stop'
+        if listener:
+            listener(cmd)
+        self.proc.stdin.write(cmd.encode('ascii') + b'\n')
+        self.proc.stdin.flush()
+
+    def gameover(self, result=None, listener=None):
+        if self.debug: listener = print
+        cmd = 'gameover'
+        if result:
+            cmd += ' ' + result
         if listener:
             listener(cmd)
         self.proc.stdin.write(cmd.encode('ascii') + b'\n')

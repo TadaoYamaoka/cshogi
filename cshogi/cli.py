@@ -5,6 +5,7 @@ import re
 import os
 import datetime
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 
 from cshogi import *
 from cshogi.usi import Engine
@@ -59,7 +60,7 @@ def usi_info_to_score(info):
 
 def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign=None, mate_win=False,
          byoyomi=None, time=None, inc=None,
-         draw=256, opening=None, opening_moves=24, opening_seed=None, opening_index=None,
+         draw=256, ponder=False, opening=None, opening_moves=24, opening_seed=None, opening_index=None,
          keep_process=False,
          csa=None, multi_csa=False, pgn=None, no_pgn_moves=False, is_display=False, debug=False,
          print_summary=True, callback=None):
@@ -92,6 +93,10 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
             inc1 = inc2 = inc[0]
     else:
         inc1 = inc2 = inc
+
+    # ponder
+    if ponder:
+        executor = ThreadPoolExecutor(max_workers=2)
 
     # debug
     if debug:
@@ -169,6 +174,8 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
         for engine, options, listener in zip(engines_order, options_order, listeners_order):
             if engine.proc is None:
                 engine.connect(listener=listener)
+            if ponder:
+                engine.setoption('USI_Ponder', 'true', listener=listener)
             for name, value in options.items():
                 engine.setoption(name, value, listener=listener)
             engine.isready(listener=listener)
@@ -222,6 +229,11 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
         is_timeup = False
         remain_time = [btime, wtime]
         inc_time = (binc, winc)
+        bestmove = None
+        pondermove = None
+        pre_pondermove = None
+        feature = None
+        pre_feature = None
         while not is_game_over:
             engine_index = (board.move_number - 1) % 2
             engine = engines_order[engine_index]
@@ -233,15 +245,38 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
                 is_game_over = True
                 break
 
-            # position
-            engine.position(usi_moves, listener=listener)
+            # ponder
+            ponderhit = False
+            if ponder:
+                if pre_pondermove:
+                    if bestmove == pre_pondermove:
+                        ponderhit = True
+                        pre_pondermove = pondermove
 
-            start_time = perf_counter()
+                        start_time = perf_counter()
 
-            # go
-            bestmove, _ = engine.go(byoyomi=byoyomi, btime=remain_time[BLACK], wtime=remain_time[WHITE], binc=binc, winc=winc, listener=listener)
+                        engine.ponderhit(listener=listener)
+                        bestmove, pondermove = pre_feature.result()
+    
+                        elapsed_time = perf_counter() - start_time
+                    else:
+                        pre_pondermove = pondermove
+                        engine.stop(listener=listener)
+                        pre_feature.result()
+                else:
+                    pre_pondermove = pondermove
+                pre_feature = feature
 
-            elapsed_time = perf_counter() - start_time
+            if not ponderhit:
+                # position
+                engine.position(usi_moves, listener=listener)
+
+                start_time = perf_counter()
+
+                # go
+                bestmove, pondermove = engine.go(byoyomi=byoyomi, btime=remain_time[BLACK], wtime=remain_time[WHITE], binc=binc, winc=winc, listener=listener)
+
+                elapsed_time = perf_counter() - start_time
 
             if remain_time[board.turn] is not None:
                 if inc_time[board.turn] is not None:
@@ -257,6 +292,11 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
                         is_timeup = True
                         is_game_over = True
                         break
+
+            # ponder
+            if ponder and pondermove:
+                engine.position(usi_moves + [bestmove, pondermove], listener=listener)
+                feature = executor.submit(engine.go, ponder=True, byoyomi=byoyomi, btime=remain_time[BLACK], wtime=remain_time[WHITE], binc=binc, winc=winc, listener=listener)
 
             score = usi_info_to_score(listener.info)
             # 投了閾値
@@ -327,6 +367,10 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
             if board.is_game_over():
                 is_game_over = True
                 break
+
+        # ゲーム終了
+        for engine, listener in zip(engines_order, listeners_order):
+            engine.gameover(listener=listener)
 
         # エンジン終了
         if not keep_process:
@@ -492,6 +536,7 @@ if __name__ == '__main__':
     parser.add_argument('--time', type=int, nargs='+')
     parser.add_argument('--inc', type=int, nargs='+')
     parser.add_argument('--draw', type=int, default=256)
+    parser.add_argument('--ponder', action='store_true')
     parser.add_argument('--opening', type=str)
     parser.add_argument('--opening-moves', type=int, default=24)
     parser.add_argument('--opening-seed', type=int)
@@ -525,7 +570,7 @@ if __name__ == '__main__':
             [args.name1, args.name2],
             args.games, args.resign, args.mate_win,
             args.byoyomi, args.time, args.inc,
-            args.draw, args.opening, args.opening_moves, args.opening_seed, args.opening_index,
+            args.draw, args.ponder, args.opening, args.opening_moves, args.opening_seed, args.opening_index,
             args.keep_process,
             args.csa, args.multi_csa,
             args.pgn, args.no_pgn_moves,
@@ -586,7 +631,7 @@ if __name__ == '__main__':
                     [names[a], names[b]],
                     2, args.resign, args.mate_win,
                     (byoyomis[a], byoyomis[b]), (times[a], times[b]), (incs[a], incs[b]),
-                    args.draw, args.opening, args.opening_moves, None, opening_index,
+                    args.draw, args.ponder, args.opening, args.opening_moves, None, opening_index,
                     args.keep_process,
                     args.csa, args.multi_csa,
                     args.pgn, args.no_pgn_moves,
