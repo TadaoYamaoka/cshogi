@@ -196,6 +196,9 @@ class Engine:
         if listener:
             listener(cmd)
         self.proc.stdin.write(cmd.encode('ascii') + b'\n')
-        self.proc.stdin.flush()
+        try:
+            self.proc.stdin.flush()
+        except BrokenPipeError:
+            pass
         self.proc.wait()
         self.proc = None
