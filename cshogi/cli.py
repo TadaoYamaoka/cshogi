@@ -60,7 +60,7 @@ def usi_info_to_score(info):
 
 def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign=None, mate_win=False,
          byoyomi=None, time=None, inc=None,
-         draw=256, ponder=False, opening=None, opening_moves=24, opening_seed=None, opening_index=None,
+         draw=256, ponder=False, no_swap=False, opening=None, opening_moves=24, opening_seed=None, opening_index=None,
          keep_process=False,
          csa=None, multi_csa=False, pgn=None, no_pgn_moves=False, is_display=False, debug=False,
          print_summary=True, callback=None):
@@ -151,7 +151,7 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
     WIN_DRAW = 2
     for n in range(games):
         # 先後入れ替え
-        if n % 2 == 0:
+        if no_swap or n % 2 == 0:
             engines_order = (engine1, engine2)
             options_order = (options1, options2)
             listeners_order = (listener1, listener2)
@@ -412,16 +412,22 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
             csa_endgame = '%TORYO'
 
         # 勝敗カウント
+        if engines_order[0] is engine1:
+            engine1_turn = 0
+            engine2_turn = 1
+        else:
+            engine1_turn = 1
+            engine2_turn = 0
         if win == WIN_DRAW:
             draw_count += 1
-            engine1_won[4 + n % 2] += 1
-            engine2_won[4 + (n + 1) % 2] += 1
-        elif n % 2 == 0 and win == BLACK or n % 2 == 1 and win == WHITE:
-            engine1_won[n % 2] += 1
-            engine2_won[2 + (n + 1) % 2] += 1
+            engine1_won[4 + engine1_turn] += 1
+            engine2_won[4 + engine2_turn] += 1
+        elif engine1_turn == 0 and win == BLACK or engine1_turn == 1 and win == WHITE:
+            engine1_won[engine1_turn] += 1
+            engine2_won[2 + engine2_turn] += 1
         else:
-            engine2_won[(n + 1) % 2] += 1
-            engine1_won[2 + n % 2] += 1
+            engine2_won[engine2_turn] += 1
+            engine1_won[2 + engine1_turn] += 1
 
         black_won = engine1_won[0] + engine2_won[0]
         white_won = engine1_won[1] + engine2_won[1]
@@ -445,11 +451,11 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
             print('{} playing White: {}-{}-{} ({:.1f}%)'.format(
                 engine1.name,
                 engine1_won[1], engine1_won[3], engine1_won[5],
-                (engine1_won[1] + engine1_won[5] / 2) / (engine1_won[1] + engine1_won[3] + engine1_won[5]) * 100 if n > 0 else 0))
+                (engine1_won[1] + engine1_won[5] / 2) / (engine1_won[1] + engine1_won[3] + engine1_won[5]) * 100 if not no_swap and n > 0 else 0))
             print('{} playing Black: {}-{}-{} ({:.1f}%)'.format(
                 engine2.name,
                 engine2_won[0], engine2_won[2], engine2_won[4],
-                (engine2_won[0] + engine2_won[4] / 2) / (engine2_won[0] + engine2_won[2] + engine2_won[4]) * 100 if n > 0 else 0))
+                (engine2_won[0] + engine2_won[4] / 2) / (engine2_won[0] + engine2_won[2] + engine2_won[4]) * 100 if not no_swap and n > 0 else 0))
             print('{} playing White: {}-{}-{} ({:.1f}%)'.format(
                 engine2.name,
                 engine2_won[1], engine2_won[3], engine2_won[5],
@@ -537,6 +543,7 @@ if __name__ == '__main__':
     parser.add_argument('--inc', type=int, nargs='+')
     parser.add_argument('--draw', type=int, default=256)
     parser.add_argument('--ponder', action='store_true')
+    parser.add_argument('--no-swap', action='store_true')
     parser.add_argument('--opening', type=str)
     parser.add_argument('--opening-moves', type=int, default=24)
     parser.add_argument('--opening-seed', type=int)
@@ -570,7 +577,7 @@ if __name__ == '__main__':
             [args.name1, args.name2],
             args.games, args.resign, args.mate_win,
             args.byoyomi, args.time, args.inc,
-            args.draw, args.ponder, args.opening, args.opening_moves, args.opening_seed, args.opening_index,
+            args.draw, args.ponder, args.no_swap, args.opening, args.opening_moves, args.opening_seed, args.opening_index,
             args.keep_process,
             args.csa, args.multi_csa,
             args.pgn, args.no_pgn_moves,
@@ -631,7 +638,7 @@ if __name__ == '__main__':
                     [names[a], names[b]],
                     2, args.resign, args.mate_win,
                     (byoyomis[a], byoyomis[b]), (times[a], times[b]), (incs[a], incs[b]),
-                    args.draw, args.ponder, args.opening, args.opening_moves, None, opening_index,
+                    args.draw, args.ponder, False, args.opening, args.opening_moves, None, opening_index,
                     args.keep_process,
                     args.csa, args.multi_csa,
                     args.pgn, args.no_pgn_moves,
