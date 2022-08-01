@@ -160,7 +160,7 @@ public:
 	}
 
 	bool is_game_over() const {
-		MoveList<Legal> ml(pos);
+		MoveList<LegalAll> ml(pos);
 		return ml.size() == 0;
 	}
 
@@ -402,7 +402,7 @@ class __LegalMoveList
 public:
 	__LegalMoveList() {}
 	__LegalMoveList(const __Board& board) {
-		ml.reset(new MoveList<Legal>(board.pos));
+		ml.reset(new MoveList<LegalAll>(board.pos));
 	}
 
 	bool end() const { return ml->end(); }
@@ -411,7 +411,7 @@ public:
 	int size() const { return (int)ml->size(); }
 
 private:
-	std::shared_ptr<MoveList<Legal>> ml;
+	std::shared_ptr<MoveList<LegalAll>> ml;
 };
 
 int __piece_to_piece_type(const int p) { return (int)pieceToPieceType((Piece)p); }
