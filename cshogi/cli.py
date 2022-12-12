@@ -49,7 +49,10 @@ def usi_info_to_csa_comment(board, info):
         pv.append(CSA.COLOR_SYMBOLS[board2.turn] + move_to_csa(move))
         board2.push(move)
 
-    return f"** {score} {' '.join(pv)}"
+    if len(pv) > 1:
+        return f"** {score} {' '.join(pv[1:])}"
+    else:
+        return f"** {score}"
 
 def usi_info_to_score(info):
     m = re_usi_info.match(info)
