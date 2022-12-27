@@ -62,7 +62,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: [ 'cp310-cp310' ]
+        python-version: [ 'cp310-cp310', 'cp311-cp311' ]
     steps:
     - name: Check out repository code
       uses: actions/checkout@v3
