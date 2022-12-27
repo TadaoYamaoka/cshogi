@@ -161,6 +161,7 @@ public:
 
 	std::vector<int> get_history() const {
 		std::vector<int> result;
+		result.reserve(history.size());
 		for (auto& m : history) {
 			result.emplace_back((int)m.first.value());
 		}
@@ -168,7 +169,7 @@ public:
 	}
 
 	bool is_game_over() const {
-		MoveList<LegalAll> ml(pos);
+		const MoveList<LegalAll> ml(pos);
 		return ml.size() == 0;
 	}
 
@@ -226,7 +227,7 @@ public:
 	bool isOK() const { return pos.isOK(); }
 
 	std::vector<int> pieces_in_hand(const int color) const {
-		Hand h = pos.hand((Color)color);
+		const Hand h = pos.hand((Color)color);
 		return std::vector<int>{
 			(int)h.numOf<HPawn>(), (int)h.numOf<HLance>(), (int)h.numOf<HKnight>(), (int)h.numOf<HSilver>(), (int)h.numOf<HGold>(), (int)h.numOf<HBishop>(), (int)h.numOf<HRook>()
 		};
@@ -265,7 +266,7 @@ public:
 		bbToVector(Horse, White, WHorse, board);
 		bbToVector(Dragon, White, WDragon, board);
 
-		return board;
+		return std::move(board);
 	}
 
 	void piece_planes(char* mem) const {
