@@ -78,5 +78,5 @@ jobs:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
-        docker run --rm -v $(pwd):/work -w /work quay.io/pypa/manylinux_2_24_x86_64 sh -c "/opt/python/${{ matrix.python-version }}/bin/pip install numpy==1.21.5 Cython && /opt/python/${{ matrix.python-version }}/bin/python setup.py bdist_wheel && cd dist && auditwheel repair *.whl"
+        docker run --rm -v $(pwd):/work -w /work quay.io/pypa/manylinux_2_24_x86_64 sh -c "/opt/python/${{ matrix.python-version }}/bin/pip install numpy Cython && /opt/python/${{ matrix.python-version }}/bin/python setup.py bdist_wheel && cd dist && auditwheel repair *.whl"
         twine upload dist/wheelhouse/*
