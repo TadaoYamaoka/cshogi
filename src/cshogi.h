@@ -159,6 +159,14 @@ public:
 		history.pop_back();
 	}
 
+	std::vector<int> get_history() const {
+		std::vector<int> result;
+		for (auto& m : history) {
+			result.emplace_back((int)m.first.value());
+		}
+		return std::move(result);
+	}
+
 	bool is_game_over() const {
 		MoveList<LegalAll> ml(pos);
 		return ml.size() == 0;

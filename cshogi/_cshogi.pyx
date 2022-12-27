@@ -241,6 +241,7 @@ cdef extern from "cshogi.h":
 		void push(const int move)
 		void pop()
 		int peek()
+		vector[int] get_history()
 		bool is_game_over()
 		int isDraw(const int checkMaxPly)
 		int move(const int from_square, const int to_square, const bool promotion)
@@ -354,6 +355,10 @@ cdef class Board:
 
 	def peek(self):
 		return self.__board.peek()
+
+	@property
+	def history(self):
+		return self.__board.get_history()
 
 	def is_game_over(self):
 		return self.__board.is_game_over()
