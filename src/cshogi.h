@@ -138,9 +138,11 @@ public:
 		pos.doMove(Move(move), history.back().second);
 	}
 
-	void pop() {
-		pos.undoMove(history.back().first);
+	int pop() {
+		const auto move = history.back().first;
+		pos.undoMove(move);
 		history.pop_back();
+		return move.value();
 	}
 
 	int peek() {

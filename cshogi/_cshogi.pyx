@@ -239,7 +239,7 @@ cdef extern from "cshogi.h":
 		void reset()
 		string dump()
 		void push(const int move)
-		void pop()
+		int pop()
 		int peek()
 		vector[int] get_history()
 		bool is_game_over()
@@ -348,10 +348,10 @@ cdef class Board:
 		return self.__board.push_pass()
 
 	def pop_pass(self):
-		return self.__board.pop_pass()
+		self.__board.pop_pass()
 
 	def pop(self):
-		self.__board.pop()
+		return self.__board.pop()
 
 	def peek(self):
 		return self.__board.peek()
