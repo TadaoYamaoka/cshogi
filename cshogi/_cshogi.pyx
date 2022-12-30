@@ -602,7 +602,6 @@ cdef extern from "cshogi.h":
 	int __move_rotate(const int move)
 	string __move_to_usi(const int move)
 	string __move_to_csa(const int move)
-	int __move_from_csa(const string& csa)
 	int __dlshogi_get_features1_num()
 	int __dlshogi_get_features2_num()
 	int __dlshogi_make_move_label(const int move, const int color)
@@ -664,10 +663,6 @@ def move_to_usi(int move):
 
 def move_to_csa(int move):
 	return __move_to_csa(move).decode('ascii')
-
-def move_from_csa(str csa):
-	cdef string csa_b = csa.encode('ascii')
-	return __move_from_csa(csa_b)
 
 def opponent(int color):
 	return BLACK if color == WHITE else WHITE
