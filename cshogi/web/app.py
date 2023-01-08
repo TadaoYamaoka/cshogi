@@ -1,9 +1,8 @@
-import sys
 import math
-from cshogi import Board, CSA, KIF, move_from_csa, BLACK, WHITE, opponent, REPETITION_WIN, REPETITION_LOSE
+from cshogi import Board, CSA, KIF, BLACK, WHITE, opponent, REPETITION_WIN, REPETITION_LOSE
 from cshogi.usi import Engine
 from cshogi.cli import usi_info_to_score, usi_info_to_csa_comment, re_usi_info
-from flask import Flask, render_template, Markup, request
+from flask import Flask, render_template, request
 from wsgiref.simple_server import make_server
 
 TURN_SYMBOLS = ('▲', '△')
@@ -259,22 +258,32 @@ def run(engine1=None, engine2=None, options1={}, options2={}, name1=None, name2=
         moves = []
         kif = CSA.Parser.parse_file(csa)[0]
         names = kif.names
+        board = Board(sfen=kif.sfen)
         for i, (move, prev_move, time, comment) in enumerate(zip(kif.moves, [None] + kif.moves[:-1], kif.times, kif.comments)):
             comment_items = comment.split(' ')
             eval = 'null'
-            pv = ''
+            pv = []
+            assert board.is_legal(move)
+            board.push(move)
             if len(comment_items) > 0 and comment_items[0] != '':
                 eval = int(comment_items[0])
             if len(comment_items) > 1:
+                board2 = board.copy()
                 for csa in comment_items[1:]:
-                    pv += CSA_TURN_SYMBOLS[csa[0]] + KIF.move_to_kif(move_from_csa(csa[1:]))
+                    move2 = board2.move_from_csa(csa[1:])
+                    if board2.is_legal(move2):
+                        pv.append(CSA_TURN_SYMBOLS[csa[0]] + KIF.move_to_kif(move2))
+                        board2.push(move2)
+                    else:
+                        pv = comment_items[1:]
+                        break
             moves.append({
                 'number': i + 1,
                 'kif_move': TURN_SYMBOLS[i % 2] + KIF.move_to_kif(move, prev_move),
                 'time': time,
                 'move': move,
                 'eval': eval,
-                'pv': pv,
+                'pv': ' '.join(pv),
                 })
         moves.append({
             'number': i + 2,
