@@ -234,6 +234,7 @@ cdef extern from "cshogi.h":
 		__Board(const __Board& board) except +
 		void set(const string& sfen)
 		bool set_position(const string& position)
+		void set_pieces(const int pieces[], const int pieces_in_hand[][7])
 		bool set_hcp(char* hcp)
 		bool set_psfen(char* psfen)
 		void reset()
@@ -251,7 +252,9 @@ cdef extern from "cshogi.h":
 		int move_from_move16(const unsigned short move16)
 		int move_from_psv(const unsigned short move16)
 		int turn()
+		void setTurn(const int turn)
 		int ply()
+		void setPly(const int ply)
 		string toSFEN()
 		string toCSAPos()
 		void toHuffmanCodedPos(char* data)
@@ -303,6 +306,17 @@ cdef class Board:
 	def set_position(self, str position):
 		cdef string position_b = position.encode('ascii')
 		return self.__board.set_position(position_b)
+
+	def set_pieces(self, list pieces, tuple pieces_in_hand):
+		cdef int __pieces[81]
+		cdef int __pieces_in_hand[2][7]
+		cdef int sq, c, hp
+		for sq in range(81):
+			__pieces[sq] = pieces[sq];
+		for c in range(2):
+			for hp in range(7):
+				__pieces_in_hand[c][hp] = pieces_in_hand[c][hp]
+		self.__board.set_pieces(__pieces, __pieces_in_hand)
 
 	def set_hcp(self, np.ndarray hcp):
 		return self.__board.set_hcp(hcp.data)
@@ -399,9 +413,19 @@ cdef class Board:
 	def turn(self):
 		return self.__board.turn()
 
+	@turn.setter
+	def turn(self, int turn):
+		assert turn == BLACK or turn == WHITE
+		self.__board.setTurn(turn)
+
 	@property
 	def move_number(self):
 		return self.__board.ply()
+
+	@move_number.setter
+	def move_number(self, int ply):
+		assert ply > 0
+		self.__board.setPly(ply)
 
 	def sfen(self):
 		return self.__board.toSFEN().decode('ascii')

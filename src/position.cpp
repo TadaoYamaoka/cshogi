@@ -3279,6 +3279,38 @@ INCORRECT:
     std::cout << "incorrect SFEN string : " << sfen << std::endl;
 }
 
+void Position::set(const Piece pieces[SquareNum], const int pieces_in_hand[ColorNum][HandPieceNum]) {
+    const auto turn = turn_;
+    const auto ply = gamePly_;
+    clear();
+
+    // 盤上の駒
+    for (Square sq = SQ11; sq < SquareNum; ++sq) {
+        if (pieces[sq] != Piece::Empty)
+            setPiece(pieces[sq], sq);
+    }
+    // 持ち駒
+    for (Color c = Black; c < ColorNum; ++c) {
+        for (HandPiece hp = HPawn; hp < HandPieceNum; ++hp) {
+            setHand(hp, c, pieces_in_hand[c][hp]);
+        }
+    }
+    // 手番
+    turn_ = turn;
+
+    kingSquare_[Black] = bbOf(King, Black).constFirstOneFromSQ11();
+    kingSquare_[White] = bbOf(King, White).constFirstOneFromSQ11();
+    goldsBB_ = bbOf(Gold, ProPawn, ProLance, ProKnight, ProSilver);
+
+    gamePly_ = ply;
+
+    st_->boardKey = computeBoardKey();
+    st_->handKey = computeHandKey();
+    st_->hand = hand(turn_);
+
+    findCheckers();
+}
+
 bool Position::set_hcp(const char* hcp_data) {
     clear();
 

@@ -113,6 +113,10 @@ public:
 
 		return true;
 	}
+	void set_pieces(const int pieces[], const int pieces_in_hand[][7]) {
+		history.clear();
+		pos.set((const Piece*)pieces, pieces_in_hand);
+	}
 	bool set_hcp(char* hcp) {
 		history.clear();
 		return pos.set_hcp(hcp);
@@ -205,7 +209,9 @@ public:
 	}
 
 	int turn() const { return pos.turn(); }
+	void setTurn(const int turn) { pos.setTurn((Color)turn); }
 	int ply() const { return pos.gamePly(); }
+	void setPly(const int ply) { pos.setStartPosPly(ply); }
 	std::string toSFEN() const { return pos.toSFEN(); }
 	std::string toCSAPos() const { return pos.toCSAPos(); }
 	void toHuffmanCodedPos(char* data) const { pos.toHuffmanCodedPos((u8*)data); }

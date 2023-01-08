@@ -246,6 +246,7 @@ public:
 
     Position& operator = (const Position& pos);
     void set(const std::string& sfen);
+    void set(const Piece pieces[SquareNum], const int pieces_in_hand[ColorNum][HandPieceNum]);
 	bool set_hcp(const char* hcp_data); // for python
 	bool set(const HuffmanCodedPos& hcp) { set_hcp((const char*)hcp.data); };
 	bool set_psfen(const char* psfen_data); // for python
@@ -382,6 +383,15 @@ public:
 
     // 次の手番
     Color turn() const { return turn_; }
+    void setTurn(const Color turn) {
+        turn_ = turn;
+
+        st_->boardKey = computeBoardKey();
+        st_->handKey = computeHandKey();
+        st_->hand = hand(turn_);
+
+        findCheckers();
+    }
 
     // pseudoLegal とは
     // ・玉が相手駒の利きがある場所に移動する
