@@ -24,6 +24,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="import_test.py" />
     <Compile Include="read_csa.py" />
     <Compile Include="test_usi_engine.py" />
     <Compile Include="write_kif.py" />
