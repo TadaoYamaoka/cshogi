@@ -432,6 +432,7 @@ private:
 };
 
 int __piece_to_piece_type(const int p) { return (int)pieceToPieceType((Piece)p); }
+int __hand_piece_to_piece_type(const int hp) { return (int)handPieceToPieceType((HandPiece)hp); }
 
 // 移動先
 int __move_to(const int move) { return (move >> 0) & 0x7f; }

@@ -279,6 +279,7 @@ cdef extern from "cshogi.h":
 		unsigned long long bookKey()
 
 	int __piece_to_piece_type(const int p)
+	int __hand_piece_to_piece_type(const int hp)
 
 cdef class Board:
 	cdef __Board __board
@@ -603,6 +604,9 @@ cdef class Board:
 
 def piece_to_piece_type(int p):
 	return __piece_to_piece_type(p)
+
+def hand_piece_to_piece_type(int hp):
+	return __hand_piece_to_piece_type(hp)
 
 cdef extern from "cshogi.h":
 	cdef cppclass __LegalMoveList:
