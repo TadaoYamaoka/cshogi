@@ -274,7 +274,9 @@ class Exporter:
     def close(self):
         self.kifu.close()
 
-    def header(self, names, starttime=datetime.now()):
+    def header(self, names, starttime=None):
+        if starttime is None:
+            starttime = datetime.now()
         self.kifu.write('開始日時：' + starttime.strftime('%Y/%m/%d %H:%M:%S\n'))
         self.kifu.write('手合割：平手\n')
         self.kifu.write('先手：' + names[0] + '\n')
@@ -331,7 +333,7 @@ class Exporter:
         elif reason == 'draw':
             self.kifu.write('まで{}手で持将棋\n'.format(self.move_number + 1))
         elif reason == 'win':
-            print('まで{}手で入玉宣言\n'.format(self.move_number - 1))
+            self.kifu.write('まで{}手で入玉宣言\n'.format(self.move_number - 1))
         elif reason == 'sennichite':
             self.kifu.write('まで{}手で千日手\n'.format(self.move_number - 1))
         elif reason == 'illegal_win':
