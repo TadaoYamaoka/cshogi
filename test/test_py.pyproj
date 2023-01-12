@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>c3734095-4012-4a90-a409-4b7047378794</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>write_kif.py</StartupFile>
+    <StartupFile>import_test.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -12,7 +12,7 @@
     <Name>test_py</Name>
     <RootNamespace>test_py</RootNamespace>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>"R:\20191022_221834_あなたvsあなた.kif"</CommandLineArguments>
+    <CommandLineArguments>"R:\wdoor+floodgate-300-10F+4t4t4t+SQMZ-pearl_763_ymkbook_2000k+20221008000012.ki2" R:\a.ki2</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -26,6 +26,7 @@
   <ItemGroup>
     <Compile Include="import_test.py" />
     <Compile Include="read_csa.py" />
+    <Compile Include="ki2_test.py" />
     <Compile Include="test_usi_engine.py" />
     <Compile Include="write_kif.py" />
     <Compile Include="read_kif.py" />

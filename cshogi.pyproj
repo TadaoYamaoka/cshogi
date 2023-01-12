@@ -48,6 +48,7 @@
     <Compile Include="cshogi\gym_shogi\envs\shogi_env.pyx" />
     <Compile Include="cshogi\gym_shogi\envs\__init__.py" />
     <Compile Include="cshogi\gym_shogi\__init__.py" />
+    <Compile Include="cshogi\KI2.py" />
     <Compile Include="cshogi\KIF.py" />
     <Compile Include="cshogi\PGN.py">
       <SubType>Code</SubType>
