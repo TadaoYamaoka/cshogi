@@ -411,6 +411,10 @@ cdef class Board:
 		return LegalMoveList(self)
 
 	@property
+	def pseudo_legal_moves(self):
+		return PseudoLegalMoveList(self)
+
+	@property
 	def turn(self):
 		return self.__board.turn()
 
@@ -616,6 +620,13 @@ cdef extern from "cshogi.h":
 		int move()
 		void next()
 		int size()
+	cdef cppclass __PseudoLegalMoveList:
+		__PseudoLegalMoveList() except +
+		__PseudoLegalMoveList(const __Board& board) except +
+		bool end()
+		int move()
+		void next()
+		int size()
 
 	int __move_to(const int move)
 	int __move_from(const int move)
@@ -639,6 +650,25 @@ cdef class LegalMoveList:
 
 	def __cinit__(self, Board board):
 		self.__ml = __LegalMoveList(board.__board)
+
+	def __iter__(self):
+		return self
+
+	def __next__(self):
+		if self.__ml.end():
+			raise StopIteration()
+		move = self.__ml.move()
+		self.__ml.next()
+		return move
+
+	def __len__(self):
+		return self.__ml.size()
+
+cdef class PseudoLegalMoveList:
+	cdef __PseudoLegalMoveList __ml
+
+	def __cinit__(self, Board board):
+		self.__ml = __PseudoLegalMoveList(board.__board)
 
 	def __iter__(self):
 		return self

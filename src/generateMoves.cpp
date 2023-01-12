@@ -562,6 +562,19 @@ namespace {
 		}
 	};
 
+	// 部分特殊化
+	// 玉の移動による自殺手と、pinされている駒の移動による自殺手を削除しない
+	template <Color US> struct GenerateMoves<PseudoLegal, US> {
+		FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos) {
+			ExtMove* curr = moveList;
+
+			moveList = pos.inCheck() ?
+				GenerateMoves<Evasion, US, true>()(moveList, pos) : GenerateMoves<NonEvasion, US>()(moveList, pos);
+
+			return moveList;
+		}
+	};
+
 	// 王手用
 	template <Color US, bool ALL>
 	FORCE_INLINE ExtMove* generatCheckMoves(ExtMove* moveList, const PieceType pt, const Position& pos, const Square from, const Square to) {
@@ -1141,6 +1154,7 @@ template ExtMove* generateMoves<Evasion           >(ExtMove* moveList, const Pos
 template ExtMove* generateMoves<NonEvasion        >(ExtMove* moveList, const Position& pos);
 template ExtMove* generateMoves<Legal             >(ExtMove* moveList, const Position& pos);
 template ExtMove* generateMoves<LegalAll          >(ExtMove* moveList, const Position& pos);
+template ExtMove* generateMoves<PseudoLegal       >(ExtMove* moveList, const Position& pos);
 template ExtMove* generateMoves<Recapture         >(ExtMove* moveList, const Position& pos, const Square to);
 template ExtMove* generateMoves<Check             >(ExtMove* moveList, const Position& pos);
 template ExtMove* generateMoves<CheckAll          >(ExtMove* moveList, const Position& pos);

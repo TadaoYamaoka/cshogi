@@ -431,6 +431,23 @@ private:
 	std::shared_ptr<MoveList<LegalAll>> ml;
 };
 
+class __PseudoLegalMoveList
+{
+public:
+	__PseudoLegalMoveList() {}
+	__PseudoLegalMoveList(const __Board& board) {
+		ml.reset(new MoveList<PseudoLegal>(board.pos));
+	}
+
+	bool end() const { return ml->end(); }
+	int move() const { return ml->move().value(); }
+	void next() { ++(*ml); }
+	int size() const { return (int)ml->size(); }
+
+private:
+	std::shared_ptr<MoveList<PseudoLegal>> ml;
+};
+
 int __piece_to_piece_type(const int p) { return (int)pieceToPieceType((Piece)p); }
 int __hand_piece_to_piece_type(const int hp) { return (int)handPieceToPieceType((HandPiece)hp); }
 

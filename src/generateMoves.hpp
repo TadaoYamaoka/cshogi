@@ -39,6 +39,7 @@ enum MoveType {
     Legal,              // 王手が掛かっていれば Evasion, そうでないなら NonEvasion を生成し、
                         // 玉の自殺手と pin されてる駒の移動による自殺手を排除。(連続王手の千日手は排除しない。)
     LegalAll,           // Legal + 歩, 飛, 角 の不成、香の二段目の不成、香の三段目への駒を取らない不成を生成
+    PseudoLegal,        // 玉の移動による自殺手と、pinされている駒の移動による自殺手を削除しない
 	Check,              // 王手をかける手
     CheckAll,           // Check + 歩, 飛, 角 の不成、香の二段目の不成
     MoveTypeNone
