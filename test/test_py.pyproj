@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>c3734095-4012-4a90-a409-4b7047378794</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>import_test.py</StartupFile>
+    <StartupFile>ki2_test.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
