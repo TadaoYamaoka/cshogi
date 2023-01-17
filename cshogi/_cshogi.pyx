@@ -186,6 +186,9 @@ PIECE_JAPANESE_SYMBOLS = [
 	'',
 	'歩', '香', '桂', '銀', '角', '飛', '金', '玉', 'と', '杏', '圭', '全', '馬', '龍'
 ]
+HAND_PIECE_SYMBOLS = [
+	'p', 'l', 'n', 's', 'g', 'b', 'r'
+]
 HAND_PIECE_JAPANESE_SYMBOLS = [
 	"歩", "香", "桂", "銀",
 	"金",
