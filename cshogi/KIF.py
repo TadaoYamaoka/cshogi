@@ -21,6 +21,7 @@ from datetime import datetime
 import math
 
 import cshogi
+from cshogi import Board, BLACK_WIN, WHITE_WIN, DRAW, move_to
 
 KIFU_TO_SQUARE_NAMES = [
     '１一', '１二', '１三', '１四', '１五', '１六', '１七', '１八', '１九',
@@ -70,7 +71,7 @@ class Parser:
         'その他': None
     }
 
-    RESULT_RE = re.compile(r'　*まで(\d+)手で((先|下|後|上)手の(勝ち|反則勝ち|反則負け)|千日手|持将棋|中断)')
+    RESULT_RE = re.compile(r'　*まで、?(\d+)手で((先|下|後|上)手の(勝ち|入玉勝ち|反則勝ち|反則負け)|千日手|持将棋|中断)')
 
     @staticmethod
     def parse_file(path):
@@ -98,7 +99,7 @@ class Parser:
         return result
 
     @staticmethod
-    def parse_move_str(line, last_to_square):
+    def parse_move_str(line, board):
         # Normalize king/promoted kanji
         line = line.replace('王', '玉')
         line = line.replace('竜', '龍')
@@ -108,6 +109,7 @@ class Parser:
 
         m = Parser.MOVE_RE.match(line)
         if m and m.group(1) not in [
+                    '入玉勝ち',
                     '中断',
                     '投了',
                     '持将棋',
@@ -120,25 +122,23 @@ class Parser:
             piece_type = cshogi.PIECE_JAPANESE_SYMBOLS.index(m.group(5))
             if m.group(2) == '同　':
                 # same position
-                to_square = last_to_square
+                to_square = move_to(board.peek())
             else:
                 to_field = cshogi.NUMBER_JAPANESE_NUMBER_SYMBOLS.index(m.group(3)) - 1
                 to_rank = cshogi.NUMBER_JAPANESE_KANJI_SYMBOLS.index(m.group(4)) - 1
                 to_square = to_rank + to_field * 9
-                last_to_square = to_square
 
-            if m.group(6) == '打':
+            if m.group(6) == '打' or (m.group(8) == '0' and m.group(9) == '0'):
                 # piece drop
-                return ('{0}*{1}'.format(cshogi.PIECE_SYMBOLS[piece_type].upper(),
-                    cshogi.SQUARE_NAMES[to_square]), last_to_square)
+                return board.drop_move(to_square, piece_type)
             else:
                 from_field = int(m.group(8)) - 1
                 from_rank = int(m.group(9)) - 1
                 from_square = from_rank + from_field * 9
 
                 promotion = (m.group(7) == '成')
-                return (cshogi.SQUARE_NAMES[from_square] + cshogi.SQUARE_NAMES[to_square] + ('+' if promotion else ''), last_to_square)
-        return (None, last_to_square)
+                return board.move(from_square, to_square, promotion)
+        return None
 
     @staticmethod
     def parse_str(kif_str):
@@ -147,15 +147,27 @@ class Parser:
         starttime = None
         names = [None, None]
         pieces_in_hand = [{}, {}]
-        current_turn = cshogi.BLACK
         sfen = cshogi.STARTING_SFEN
+        var_info = {}
+        header_comments = []
         moves = []
-        last_to_square = None
+        comments = []
         win = None
+        board = Board()
         kif_str = kif_str.replace('\r\n', '\n').replace('\r', '\n')
         for line in kif_str.split('\n'):
-            if len(line) == 0 or line[0] == "*":
+            if len(line) == 0:
                 pass
+            elif line[0] == "*":
+                if len(moves) > 0:
+                    if len(moves) - len(comments) > 1:
+                        comments.extend([None]*(len(moves) - len(comments) - 1))
+                    if line[:2] == "**":
+                        comments.append(line[2:])
+                    else:
+                        comments.append(line[1:])
+                else:
+                    header_comments.append(line[1:])
             elif '：' in line:
                 (key, value) = line.split('：', 1)
                 value = value.rstrip('　')
@@ -185,44 +197,54 @@ class Parser:
                     sfen = Parser.HANDYCAP_SFENS[value]
                     if sfen is None:
                         raise ParserException('Cannot support handycap type "other"')
-            elif line == '後手番':
-                # Current turn is white
-                current_turn = cshogi.WHITE
+                    board.set_sfen(sfen)
+                else:
+                    var_info[key] = value
             else:
-                (move, last_to_square) = Parser.parse_move_str(line, last_to_square)
+                move = Parser.parse_move_str(line, board)
                 if move is not None:
                     moves.append(move)
+                    if board.is_legal(move):
+                        board.push(move)
                 else:
                     m = Parser.RESULT_RE.match(line)
                     if m:
                         win_side_str = m.group(3)
                         if win_side_str == '先' or win_side_str == '下':
                             if m.group(4) == '反則負け':
-                                win = 'w'
+                                win = WHITE_WIN
+                                endgame = '%ILLEGAL_MOVE'
                             else:
-                                win = 'b'
+                                win = BLACK_WIN
+                                endgame = '%+ILLEGAL_ACTION' if m.group(4) == '反則勝ち' else ('%KACHI' if m.group(4) == '入玉勝ち' else '%TORYO')
                         elif win_side_str == '後' or win_side_str == '上':
                             if m.group(4) == '反則負け':
-                                win = 'b'
+                                win = BLACK_WIN
+                                endgame = '%ILLEGAL_MOVE'
                             else:
-                                win = 'w'
+                                win = WHITE_WIN
+                                endgame = '%-ILLEGAL_ACTION' if m.group(4) == '反則勝ち' else ('%KACHI' if m.group(4) == '入玉勝ち' else '%TORYO')
                         elif m.group(2) == '中断':
                             win = None
+                            endgame = '%CHUDAN'
                         else:
                             # TODO: repetition of moves with continuous check
-                            win = '-'
+                            win = DRAW
+                            endgame = '%SENNICHITE'
             line_no += 1
 
-        summary = {
-            'starttime': starttime,
-            'names': names,
-            'sfen': sfen,
-            'moves': moves,
-            'win': win
-        }
+        parser = Parser()
+        parser.starttime = starttime
+        parser.names = names
+        parser.sfen = sfen
+        parser.var_info = var_info
+        parser.comment = '\n'.join(header_comments)
+        parser.moves = moves
+        parser.comments = comments
+        parser.win = win
+        parser.endgame = endgame
 
-        # NOTE: for the same interface with CSA parser
-        return [summary]
+        return parser
 
 def sec_to_time(sec):
     h, m_ = divmod(math.ceil(sec), 60*60)
