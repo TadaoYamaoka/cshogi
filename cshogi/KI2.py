@@ -128,8 +128,8 @@ class Parser:
                     assert len(candidates) == 1
                 move = candidates[0]
                 moves.append(move)
-                assert board.is_legal(move)
-                board.push(move)
+                if board.is_legal(move):
+                    board.push(move)
                 pos = m.end()
             else:
                 break
