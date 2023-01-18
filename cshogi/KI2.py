@@ -25,7 +25,7 @@ class Parser:
         'その他': None
     }
 
-    RESULT_RE = re.compile(r'まで(\d+)手で((先|下|後|上)手の(入玉勝ち|勝ち|反則勝ち|反則負け)|千日手|持将棋|中断)')
+    RESULT_RE = re.compile(r'まで(\d+)手で((先|下|後|上)手の(勝ち|入玉勝ち|反則勝ち|反則負け)|千日手|持将棋|中断)')
 
     @staticmethod
     def parse_file(path):
