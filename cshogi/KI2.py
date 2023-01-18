@@ -2,7 +2,7 @@
 from datetime import datetime
 
 import cshogi
-from cshogi import Board, KIF, move_to, move_from, move_is_drop, move_is_promotion, move_from_piece_type, move_drop_hand_piece, hand_piece_to_piece_type
+from cshogi import Board, KIF, BLACK_WIN, WHITE_WIN, DRAW, move_to, move_from, move_is_drop, move_is_promotion, move_from_piece_type, move_drop_hand_piece, hand_piece_to_piece_type
 
 class Parser:
     MOVE_RE = re.compile(r'(▲|△)(([１２３４５６７８９])([零一二三四五六七八九])|同　?)([歩香桂銀金角飛玉と杏圭全馬龍])(左|直|右)?(上|寄|引)?(打|成|不成)?\s*')
@@ -191,27 +191,27 @@ class Parser:
                     win_side_str = m.group(3)
                     if win_side_str == '先' or win_side_str == '下':
                         if m.group(4) == '反則負け':
-                            win = 'w'
+                            win = WHITE_WIN
                             endgame = '%ILLEGAL_MOVE'
                         else:
-                            win = 'b'
+                            win = BLACK_WIN
                             endgame = '%+ILLEGAL_ACTION' if m.group(4) == '反則勝ち' else ('%KACHI' if m.group(4) == '入玉勝ち' else '%TORYO')
                     elif win_side_str == '後' or win_side_str == '上':
                         if m.group(4) == '反則負け':
-                            win = 'b'
+                            win = BLACK_WIN
                             endgame = '%ILLEGAL_MOVE'
                         else:
-                            win = 'w'
+                            win = WHITE_WIN
                             endgame = '%-ILLEGAL_ACTION' if m.group(4) == '反則勝ち' else ('%KACHI' if m.group(4) == '入玉勝ち' else '%TORYO')
                     elif m.group(2) == '持将棋':
-                        win = None
+                        win = DRAW
                         endgame = '%JISHOGI'
                     elif m.group(2) == '中断':
-                        win = '-'
+                        win = DRAW
                         endgame = '%CHUDAN'
                     else:
                         # TODO: repetition of moves with continuous check
-                        win = '-'
+                        win = DRAW
                         endgame = '%SENNICHITE'
                     break
 
