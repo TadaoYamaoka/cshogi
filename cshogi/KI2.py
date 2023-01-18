@@ -207,7 +207,7 @@ class Parser:
                         win = DRAW
                         endgame = '%JISHOGI'
                     elif m.group(2) == '中断':
-                        win = DRAW
+                        win = None
                         endgame = '%CHUDAN'
                     else:
                         # TODO: repetition of moves with continuous check
