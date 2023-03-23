@@ -153,6 +153,7 @@ class Parser:
         moves = []
         comments = []
         win = None
+        endgame = None
         board = Board()
         kif_str = kif_str.replace('\r\n', '\n').replace('\r', '\n')
         for line in kif_str.split('\n'):
