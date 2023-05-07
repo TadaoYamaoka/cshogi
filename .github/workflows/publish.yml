@@ -7,7 +7,7 @@ jobs:
     runs-on: windows-2019
     strategy:
       matrix:
-        python-version: [ '3.6', '3.7', '3.8', '3.9', '3.10' ]
+        python-version: [ 3.6, 3.7, 3.8, 3.9, 3.10, 3.11 ]
     steps:
     - name: Check out repository code
       uses: actions/checkout@v3
@@ -19,7 +19,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools wheel twine Cython
     - name: Build and publish 3_6-3_9
-      if: ${{ matrix.python-version != '3.10' }}
+      if: ${{ matrix.python-version < 3.10 }}
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
@@ -28,7 +28,7 @@ jobs:
         python setup.py bdist_wheel
         twine upload dist/*
     - name: Build and publish 3_10
-      if: ${{ matrix.python-version == '3.10' }}
+      if: ${{ matrix.python-version >= 3.10 }}
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
