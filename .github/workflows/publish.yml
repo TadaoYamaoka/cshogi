@@ -28,13 +28,22 @@ jobs:
         python setup.py bdist_wheel
         twine upload dist/*
     - name: Build and publish 3_10
-      if: ${{ matrix.python-version == '3.10' || matrix.python-version == '3.11' }}
+      if: ${{ matrix.python-version == '3.10' }}
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        pip install numpy==1.21.5
+        python setup.py sdist bdist_wheel
+        twine upload dist/*
+    - name: Build and publish 3_11
+      if: ${{ matrix.python-version == '3.11' }}
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
         pip install numpy
-        python setup.py sdist bdist_wheel
+        python setup.py bdist_wheel
         twine upload dist/*
   deploy-manylinux2010:
     runs-on: ubuntu-20.04
