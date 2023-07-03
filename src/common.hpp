@@ -22,6 +22,13 @@
 #ifndef APERY_COMMON_HPP
 #define APERY_COMMON_HPP
 
+#if defined(__arm64__)
+#undef HAVE_SSE2
+#undef HAVE_SSE4
+#undef HAVE_SSE42
+#undef HAVE_AVX2
+#endif
+
 #include "ifdef.hpp"
 #include <cinttypes>
 #include <iostream>

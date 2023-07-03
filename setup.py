@@ -5,7 +5,7 @@ class my_build_ext(build_ext):
     def build_extensions(self):
         if self.compiler.compiler_type == 'unix':
             for e in self.extensions:
-                e.extra_compile_args = ['-msse4.2', '-mavx2']
+                e.extra_compile_args = ['-msse4.2', '-mavx2', '-Wno-enum-constexpr-conversion']
 
         build_ext.build_extensions(self)
 
