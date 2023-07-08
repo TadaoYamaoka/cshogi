@@ -36,6 +36,7 @@ class Book {
 public:
     static void init();
     static Key bookKey(const Position& pos);
+    static Key bookKeyAfter(const Position& pos, const Key key, const Move move);
 
 private:
     static MT64bit mt64bit_; // 定跡のhash生成用なので、seedは固定でデフォルト値を使う。

@@ -400,6 +400,10 @@ public:
 		return Book::bookKey(pos);
 	}
 
+	unsigned long long bookKeyAfter(const unsigned long long key, const int move) {
+		return Book::bookKeyAfter(pos, key, Move(move));
+	}
+
 	Position pos;
 
 private:

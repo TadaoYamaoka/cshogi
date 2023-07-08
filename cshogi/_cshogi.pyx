@@ -280,6 +280,7 @@ cdef extern from "cshogi.h":
 		void pop_pass()
 		bool isOK()
 		unsigned long long bookKey()
+		unsigned long long bookKeyAfter(const unsigned long long key, const int move)
 
 	int __piece_to_piece_type(const int p)
 	int __hand_piece_to_piece_type(const int hp)
@@ -502,6 +503,9 @@ cdef class Board:
 
 	def book_key(self):
 		return self.__board.bookKey()
+
+	def book_key_after(self, unsigned long long key, int move):
+		return self.__board.bookKeyAfter(key, move)
 
 	def to_svg(self, lastmove=None, scale=1.0):
 		import xml.etree.ElementTree as ET

@@ -21,6 +21,7 @@
 
 #include "book.hpp"
 #include "position.hpp"
+#include "move.hpp"
 
 MT64bit Book::mt64bit_; // 定跡のhash生成用なので、seedは固定でデフォルト値を使う。
 Key Book::ZobPiece[PieceNone][SquareNum];
@@ -53,6 +54,34 @@ Key Book::bookKey(const Position& pos) {
     if (pos.turn() == White)
         key ^= ZobTurn;
     return key;
+}
+
+Key Book::bookKeyAfter(const Position& pos, const Key key, const Move move) {
+    Key key_after = key;
+    const Square to = move.to();
+    if (move.isDrop()) {
+        const Piece pc = colorAndPieceTypeToPiece(pos.turn(), move.pieceTypeDropped());
+        key_after ^= ZobPiece[pc][to];
+    }
+    else {
+        const Square from = move.from();
+        key_after ^= ZobPiece[pos.piece(from)][from];
+
+        const Piece pc = colorAndPieceTypeToPiece(pos.turn(), move.pieceTypeTo());
+        key_after ^= ZobPiece[pc][to];
+
+        if (move.isCapture())
+            key_after ^= ZobPiece[pos.piece(to)][to];
+    }
+    const Hand hand = pos.hand(pos.turn());
+    for (HandPiece hp = HPawn; hp < HandPieceNum; ++hp)
+        key_after ^= ZobHand[hp][hand.numOf(hp)];
+    const Hand hand_after = pos.hand(oppositeColor(pos.turn()));
+    for (HandPiece hp = HPawn; hp < HandPieceNum; ++hp)
+        key_after ^= ZobHand[hp][hand_after.numOf(hp)];
+
+    key_after ^= ZobTurn;
+    return key_after;
 }
 
 inline bool countCompare(const BookEntry& b1, const BookEntry& b2) {
