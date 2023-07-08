@@ -26,6 +26,10 @@
 #include "square.hpp"
 #include "color.hpp"
 
+#if defined(__arm64__)
+#include "endianness.h"
+#endif
+
 class Bitboard;
 extern const Bitboard SetMaskBB[SquareNum];
 
