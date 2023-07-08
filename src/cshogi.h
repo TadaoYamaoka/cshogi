@@ -230,7 +230,13 @@ public:
 	}
 	unsigned long long getKey() const { return pos.getKey(); }
 	bool moveIsPseudoLegal(const int move) const { return pos.moveIsPseudoLegal<false>(Move(move)); }
-	bool moveIsLegal(const int move) const { return pos.moveIsLegal(Move(move)); }
+	bool pseudoLegalMoveIsLegal(const int move) const {
+		const Bitboard pinned = pos.pinnedBB();
+		return pos.pseudoLegalMoveIsLegal<false, false>(Move(move), pinned);
+	}
+	bool moveIsLegal(const int move) const {
+		return moveIsPseudoLegal(move) && pseudoLegalMoveIsLegal(move);
+	}
 	bool is_nyugyoku() const { return nyugyoku(pos); }
 	bool isOK() const { return pos.isOK(); }
 
