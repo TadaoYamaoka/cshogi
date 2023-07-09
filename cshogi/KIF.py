@@ -47,6 +47,14 @@ KIFU_FROM_SQUARE_NAMES = [
     '91', '92', '93', '94', '95', '96', '97', '98', '99',
 ]
 
+PIECE_BOD_SYMBOLS = [
+    ' ・', ' 歩', ' 香', ' 桂', ' 銀', ' 角', ' 飛', ' 金', 
+    ' 玉', ' と', ' 杏', ' 圭', ' 全', ' 馬', ' 龍', 
+    '', 
+    ' ・', 'v歩', 'v香', 'v桂', 'v銀', 'v角', 'v飛', 'v金', 
+    'v玉', 'vと', 'v杏', 'v圭', 'v全', 'v馬', 'v龍'
+]
+
 class ParserException(Exception):
     pass
 
@@ -279,6 +287,43 @@ def move_to_kif(move, prev_move=None):
             move_to,
             move_piece
             )
+
+def board_to_bod(board: Board) -> str:
+    def hand_pieces_str(color):
+        if any(board.pieces_in_hand[color]):
+            str_list = []
+            for symbol, n in zip(reversed(cshogi.HAND_PIECE_JAPANESE_SYMBOLS), reversed(board.pieces_in_hand[color])):
+                if n > 1:
+                    str_list.append(symbol + cshogi.NUMBER_JAPANESE_KANJI_SYMBOLS[n])
+                elif n == 1:
+                    str_list.append(symbol)
+            return '　'.join(str_list)
+        else:
+            return 'なし'
+
+    str_list = [
+        '後手の持駒：' + hand_pieces_str(cshogi.WHITE),
+        '  ９ ８ ７ ６ ５ ４ ３ ２ １',
+        '+---------------------------+'
+    ]
+    str_list.extend(
+        ['|' + ''.join([PIECE_BOD_SYMBOLS[board.piece(f * 9 + r)] for f in reversed(range(9))]) + '|' + cshogi.NUMBER_JAPANESE_KANJI_SYMBOLS[r + 1] for r in range(9)]
+    )
+    str_list.append('+---------------------------+')
+    str_list.append('先手の持駒：' + hand_pieces_str(cshogi.BLACK))
+    if board.turn == cshogi.WHITE:
+        str_list.append('後手番')
+
+    return '\n'.join(str_list)
+
+def move_to_bod(move: int, board: Board) -> str:
+    import cshogi.KI2
+    move_str = cshogi.KI2.move_to_ki2(move, board)
+    if move_str[1] == '同':
+        to_sq = cshogi.move_to(move)
+        return move_str[0] + KIFU_TO_SQUARE_NAMES[to_sq] + '同' + move_str[3:]
+    else:
+        return move_str
 
 class Exporter:
     def __init__(self, path=None):
