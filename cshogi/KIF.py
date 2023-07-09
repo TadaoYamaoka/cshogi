@@ -342,11 +342,20 @@ class Exporter:
     def close(self):
         self.kifu.close()
 
-    def header(self, names, starttime=None):
+    def header(self, names, starttime=None, handicap=None):
         if starttime is None:
             starttime = datetime.now()
         self.kifu.write('開始日時：' + starttime.strftime('%Y/%m/%d %H:%M:%S\n'))
-        self.kifu.write('手合割：平手\n')
+        if handicap is None:
+            self.kifu.write('手合割：平手\n')
+        elif type(handicap) is Board or type(handicap) is str and handicap[:5] == 'sfen ':
+            if type(handicap) is Board:
+                board = handicap
+            else:
+                board = Board(sfen=handicap[5:])
+            self.kifu.write(board_to_bod(board) + '\n')
+        else:
+            self.kifu.write('手合割：' + handicap + '\n')
         self.kifu.write('先手：' + names[0] + '\n')
         self.kifu.write('後手：' + names[1] + '\n')
         self.kifu.write('手数----指手---------消費時間--\n')
