@@ -1,6 +1,127 @@
 ﻿import subprocess
 import os.path
 import locale
+import re
+
+
+class InfoListener:
+    """
+    USIエンジンが返すinfoコマンドの内容を取得するためのリスナークラス
+
+    使用例::
+        >>> info_listener = InfoListener()
+        >>> engine.go(byoyomi=1000, listener=info_listener.listen())
+        >>> print(info_listener.score)
+        >>> print(info_listener.pv)
+        >>> print(info_listener.info)
+    """
+    re_info = re.compile(r'^info (.* |)score (cp|mate) ([+\-0-9]+) (.* |)pv ([^ ]+)(.*)$')
+    re_bestmove = re.compile(r'bestmove ([^ ]+).*$')
+
+    def __init__(self, mate_score=100000, listner=None):
+        self.__info = {}
+        self.__listner = listner
+        self.__mate_score = mate_score
+        self.__bestmove = None
+
+    @staticmethod
+    def __split_info(m: re.Match[str]) -> dict:
+        items = (m[1] + m[4]).split(' ')
+        info_dict = {}
+        for name, value in zip(items[::2], items[1::2]):
+            info_dict[name] = int(value)
+        if m[2] == 'cp':
+            info_dict['score'] = 'cp'
+            info_dict['cp'] = int(m[3])
+        else:
+            info_dict['score'] = 'mate'
+            if m[3] == '+' or m[3] == '-':
+                info_dict['mate'] = m[3]
+            else:
+                info_dict['mate'] = int(m[3])
+        info_dict['pv'] = (m[5] + m[6]).split(' ')
+        return info_dict
+
+    def __call__(self, line: str):
+        if self.__listner is not None:
+            self.__listner(line)
+        m = InfoListener.re_info.match(line)
+        if m:
+            self.__info[m[5]] = m
+        self._last_line = line
+
+    def listen(self) -> 'InfoListener':
+        self.__info = {}
+        self.__bestmove = None
+        return self
+
+    @property
+    def bestmove(self) -> str:
+        if self.__bestmove is None:
+            self.__bestmove = InfoListener.re_bestmove.match(self._last_line)[1]
+        return self.__bestmove
+
+    @property
+    def mate_score(self) -> int:
+        return self.__mate_score
+    
+    @property
+    def info(self) -> dict:
+        return InfoListener.__split_info(self.__info[self.bestmove])
+
+    @property
+    def score(self) -> int:
+        m = self.__info[self.bestmove]
+        if m[2] == 'cp':
+            return int(m[3])
+        else:
+            if m[3] == '+':
+                return self.__mate_score
+            elif m[3] == '-':
+                return -self.__mate_score
+            else:
+                if int(m[3]) > 0:
+                    return self.__mate_score
+                else:
+                    return -self.__mate_score
+                
+    @property
+    def pv(self) -> list:
+        m = self.__info[self.bestmove]
+        return (m[5] + m[6]).split(' ')
+
+
+class MultiPVListener:
+    """
+    USIエンジンが返すMultiPVのinfoコマンドの内容を取得するためのリスナークラス
+
+    使用例::
+        >>> multipv_listener = MultiPVListener()
+        >>> engine.go(byoyomi=1000, listener=multipv_listener.listen())
+        >>> print(info_listener.info)
+    """
+    re_multipv = re.compile(r'^info.* multipv ([0-9]+).* pv .*$')
+
+    def __init__(self, listner=None):
+        self.__multipv = {}
+        self.__listner = listner
+
+    def __call__(self, line: str):
+        if self.__listner is not None:
+            self.__listner(line)
+        m_multipv = MultiPVListener.re_multipv.match(line)
+        if m_multipv:
+            multipv_i = int(m_multipv[1])
+            self.__multipv[multipv_i] = line
+
+    def listen(self) -> 'MultiPVListener':
+        self.__multipv = {}
+        return self
+
+    @property
+    def info(self) -> list:
+        return [InfoListener.__split_info(InfoListener.re_info.match(line)) for _, line in sorted(self.__multipv.items())]
+
 
 class Engine:
     def __init__(self, cmd, connect=True, debug=False):
