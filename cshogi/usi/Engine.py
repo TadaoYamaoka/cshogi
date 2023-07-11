@@ -25,7 +25,7 @@ class InfoListener:
         self.__bestmove = None
 
     @staticmethod
-    def __split_info(m: re.Match[str]) -> dict:
+    def _split_info(m: re.Match[str]) -> dict:
         items = (m[1] + m[4]).split(' ')
         info_dict = {}
         for name, value in zip(items[::2], items[1::2]):
@@ -67,7 +67,7 @@ class InfoListener:
     
     @property
     def info(self) -> dict:
-        return InfoListener.__split_info(self.__info[self.bestmove])
+        return InfoListener._split_info(self.__info[self.bestmove])
 
     @property
     def score(self) -> int:
@@ -120,7 +120,7 @@ class MultiPVListener:
 
     @property
     def info(self) -> list:
-        return [InfoListener.__split_info(InfoListener.re_info.match(line)) for _, line in sorted(self.__multipv.items())]
+        return [InfoListener._split_info(InfoListener.re_info.match(line)) for _, line in sorted(self.__multipv.items())]
 
 
 class Engine:
