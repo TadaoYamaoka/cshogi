@@ -25,7 +25,7 @@ class InfoListener:
         self.__bestmove = None
 
     @staticmethod
-    def _split_info(m: re.Match[str]) -> dict:
+    def _split_info(m: re.Match) -> dict:
         items = (m[1] + m[4]).split(' ')
         info_dict = {}
         for name, value in zip(items[::2], items[1::2]):
