@@ -1,4 +1,5 @@
 import cshogi
+from cshogi import Parser
 
 COLOR_SYMBOLS = ['+', '-']
 JAPANESE_END_GAMES = {
