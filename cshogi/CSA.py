@@ -1,5 +1,4 @@
 import cshogi
-from cshogi import Parser
 
 COLOR_SYMBOLS = ['+', '-']
 JAPANESE_END_GAMES = {
@@ -47,7 +46,15 @@ class Exporter:
                 self.f.write('$' + k + ':' + v)
                 self.f.write('\n')
         if init_board:
-            csa_pos = init_board.csa_pos()
+            if type(init_board) is str:
+                if init_board == cshogi.STARTING_SFEN:
+                    self.f.write('PI\n+\n')
+                    self.turn = cshogi.BLACK
+                    return
+                board = cshogi.Board(sfen=init_board)
+            else:
+                board = init_board
+            csa_pos = board.csa_pos()
             if csa_pos == 'P1-KY-KE-GI-KI-OU-KI-GI-KE-KY\nP2 * -HI *  *  *  *  * -KA * \nP3-FU-FU-FU-FU-FU-FU-FU-FU-FU\nP4 *  *  *  *  *  *  *  *  * \nP5 *  *  *  *  *  *  *  *  * \nP6 *  *  *  *  *  *  *  *  * \nP7+FU+FU+FU+FU+FU+FU+FU+FU+FU\nP8 * +KA *  *  *  *  * +HI * \nP9+KY+KE+GI+KI+OU+KI+GI+KE+KY\n+\n':
                 self.f.write('PI\n+\n')
             else:
