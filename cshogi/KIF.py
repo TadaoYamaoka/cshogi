@@ -59,7 +59,7 @@ class ParserException(Exception):
     pass
 
 class Parser:
-    MOVE_RE = re.compile(r'\A *[0-9]+\s+(中断|投了|持将棋|千日手|詰み|切れ負け|反則勝ち|反則負け|(([１２３４５６７８９])([零一二三四五六七八九])|同　)([歩香桂銀金角飛玉と杏圭全馬龍])(打|(成?)\(([0-9])([0-9])\)))\s*(\([ /:0-9]+\))?\s*\Z')
+    MOVE_RE = re.compile(r'\A *[0-9]+\s+(中断|投了|持将棋|千日手|詰み|切れ負け|反則勝ち|反則負け|(([１２３４５６７８９])([零一二三四五六七八九])|同　)([歩香桂銀金角飛玉と杏圭全馬龍])(打|(成?)\(([0-9])([0-9])\)))\s*(\( *([:0-9]+)/([:0-9]+)\))?.*\Z')
 
     HANDYCAP_SFENS = {
         '平手': cshogi.STARTING_SFEN,
@@ -116,7 +116,14 @@ class Parser:
         line = line.replace('成香', '杏')
 
         m = Parser.MOVE_RE.match(line)
-        if m and m.group(1) not in [
+        if m:
+            if m.group(11):
+                time = 0
+                for i, t in enumerate(reversed(m.group(11).split(':'))):
+                    time += int(t) * 60**i
+            else:
+                time = None
+            if m.group(1) not in [
                     '入玉勝ち',
                     '中断',
                     '投了',
@@ -127,26 +134,28 @@ class Parser:
                     '反則勝ち',
                     '反則負け'
                 ]:
-            piece_type = cshogi.PIECE_JAPANESE_SYMBOLS.index(m.group(5))
-            if m.group(2) == '同　':
-                # same position
-                to_square = move_to(board.peek())
-            else:
-                to_field = cshogi.NUMBER_JAPANESE_NUMBER_SYMBOLS.index(m.group(3)) - 1
-                to_rank = cshogi.NUMBER_JAPANESE_KANJI_SYMBOLS.index(m.group(4)) - 1
-                to_square = to_rank + to_field * 9
+                piece_type = cshogi.PIECE_JAPANESE_SYMBOLS.index(m.group(5))
+                if m.group(2) == '同　':
+                    # same position
+                    to_square = move_to(board.peek())
+                else:
+                    to_field = cshogi.NUMBER_JAPANESE_NUMBER_SYMBOLS.index(m.group(3)) - 1
+                    to_rank = cshogi.NUMBER_JAPANESE_KANJI_SYMBOLS.index(m.group(4)) - 1
+                    to_square = to_rank + to_field * 9
 
-            if m.group(6) == '打' or (m.group(8) == '0' and m.group(9) == '0'):
-                # piece drop
-                return board.drop_move(to_square, piece_type)
-            else:
-                from_field = int(m.group(8)) - 1
-                from_rank = int(m.group(9)) - 1
-                from_square = from_rank + from_field * 9
+                if m.group(6) == '打' or (m.group(8) == '0' and m.group(9) == '0'):
+                    # piece drop
+                    return board.drop_move(to_square, piece_type), time, None
+                else:
+                    from_field = int(m.group(8)) - 1
+                    from_rank = int(m.group(9)) - 1
+                    from_square = from_rank + from_field * 9
 
-                promotion = (m.group(7) == '成')
-                return board.move(from_square, to_square, promotion)
-        return None
+                    promotion = (m.group(7) == '成')
+                    return board.move(from_square, to_square, promotion), time, None
+            else:
+                return None, time, m.group(1)
+        return None, None, None
 
     @staticmethod
     def parse_str(kif_str):
@@ -159,6 +168,7 @@ class Parser:
         var_info = {}
         header_comments = []
         moves = []
+        times = []
         comments = []
         win = None
         endgame = None
@@ -210,11 +220,15 @@ class Parser:
                 else:
                     var_info[key] = value
             else:
-                move = Parser.parse_move_str(line, board)
+                move, time, endmove = Parser.parse_move_str(line, board)
                 if move is not None:
                     moves.append(move)
                     if board.is_legal(move):
                         board.push(move)
+                    if time is not None:
+                        times.append(time)
+                elif time is not None:
+                    times.append(time)
                 else:
                     m = Parser.RESULT_RE.match(line)
                     if m:
@@ -240,6 +254,8 @@ class Parser:
                             # TODO: repetition of moves with continuous check
                             win = DRAW
                             endgame = '%SENNICHITE'
+                        # 変化には対応していないため、終局以降の行は読まない
+                        break
             line_no += 1
 
         parser = Parser()
@@ -249,6 +265,7 @@ class Parser:
         parser.var_info = var_info
         parser.comment = '\n'.join(header_comments)
         parser.moves = moves
+        parser.times = times
         parser.comments = comments
         parser.win = win
         parser.endgame = endgame

@@ -12,7 +12,7 @@
     <Name>test_py</Name>
     <RootNamespace>test_py</RootNamespace>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>"R:\kif\4416.kif"</CommandLineArguments>
+    <CommandLineArguments>"R:\9697.kif"</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
