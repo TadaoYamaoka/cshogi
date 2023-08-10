@@ -16,7 +16,7 @@ cshogi.CSA module
 -----------------
 
 .. automodule:: cshogi.CSA
-   :members:
+   :members: Parser, Exporter
    :undoc-members:
    :show-inheritance:
 
