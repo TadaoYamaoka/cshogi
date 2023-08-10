@@ -1,10 +1,13 @@
-﻿import re
+﻿from typing import Dict, List, Optional
+import re
 from datetime import datetime
 
 import cshogi
 from cshogi import Board, KIF, BLACK_WIN, WHITE_WIN, DRAW, move_to, move_from, move_is_drop, move_is_promotion, move_from_piece_type, move_drop_hand_piece, hand_piece_to_piece_type
 
 class Parser:
+    """A class for parsing Japanese Shogi notation in KI2 format."""
+
     MOVE_RE = re.compile(r'(▲|△)(([１２３４５６７８９])([零一二三四五六七八九])|同　?)([歩香桂銀金角飛玉と杏圭全馬龍])(左|直|右)?(上|寄|引)?(打|成|不成)?\s*')
 
     HANDYCAP_SFENS = {
@@ -28,12 +31,24 @@ class Parser:
     RESULT_RE = re.compile(r'まで(\d+)手で((先|下|後|上)手の(勝ち|入玉勝ち|反則勝ち|反則負け)|千日手|持将棋|中断)')
 
     @staticmethod
-    def parse_file(path):
+    def parse_file(path: str) -> "Parser":
+        """Parses a KI2 format Shogi game notation file.
+
+        :param path: Path to the file containing the KI2 notation.
+        :return: An instance of the Parser class containing all the extracted information.
+        :raises KIF.ParserException: In the case of a parse error.
+        """
         with open(path, 'r', encoding='cp932') as f:
             return Parser.parse_str(f.read())
 
     @staticmethod
-    def parse_pieces_in_hand(target):
+    def parse_pieces_in_hand(target: str) -> Dict:
+        """Parses pieces in hand from a given string.
+
+        :param target: String containing the description of the pieces in hand.
+        :return: A dictionary representing the pieces in hand.
+        :raises KIF.ParserException: In the case of a parse error.
+        """
         if target == 'なし': # None in japanese
             return {}
 
@@ -47,11 +62,17 @@ class Parser:
             elif len(item) == 0:
                 pass
             else:
-                raise ParserException('Invalid pieces in hand')
+                raise KIF.ParserException('Invalid pieces in hand')
         return result
 
     @staticmethod
-    def parse_move_str(line, board):
+    def parse_move_str(line: str, board: Board):
+        """Parses a string of moves and applies them to a given board.
+
+        :param line: String containing the moves in Japanese Shogi notation.
+        :param board: Board object to apply the moves to.
+        :return: A list of moves parsed from the line.
+        """
         # Normalize king/promoted kanji
         line = line.replace('王', '玉')
         line = line.replace('竜', '龍')
@@ -136,7 +157,13 @@ class Parser:
         return moves
 
     @staticmethod
-    def parse_str(kif_str):
+    def parse_str(kif_str: str) -> "Parser":
+        """Parses a KI2 formatted string into a Parser object.
+
+        :param kif_str: The KI2 formatted string representing the Shogi game.
+        :return: An instance of the Parser class containing all the extracted information.
+        :raises KIF.ParserException: In the case of a parse error.
+        """
         line_no = 1
 
         starttime = None
@@ -243,7 +270,13 @@ PIECE_JAPANESE_SYMBOLS2 = [
     '歩', '香', '桂', '銀', '角', '飛', '金', '玉', 'と', '成香', '成桂', '成銀', '馬', '龍'
 ]
 
-def move_to_ki2(move, board):
+def move_to_ki2(move: int, board: Board) -> str:
+    """Convert a given move to Japanese KI2 notation.
+
+    :param move: An integer representing the move.
+    :param board: A Board object representing the current state of the game.
+    :return: A string representing the move in KI2 notation.
+    """
     kifu_turn = '▲' if board.turn == cshogi.BLACK else '△'
     to_square = move_to(move)
     kifu_to = KIF.KIFU_TO_SQUARE_NAMES[to_square]
@@ -351,22 +384,37 @@ def move_to_ki2(move, board):
     return move_str
 
 class Exporter:
-    def __init__(self, path=None):
+    """A class to handle the exporting of a game to KI2 format.
+
+    :param path: Optional path to the file where the KI2 formatted game will be written. If None, no file is opened initially.
+    """
+
+    def __init__(self, path: Optional[str] = None):
         if path:
             self.open(path)
         else:
             self.kifu = None
 
-    def open(self, path):
+    def open(self, path: str):
+        """Open a file for writing the KI2 formatted game.
+
+        :param path: Path to the file.
+        """
         self.kifu = open(path, 'w', encoding='cp932')
         self.prev_move = None
         self.move_number = 1
         self.board = Board()
 
     def close(self):
+        """Close the file."""
         self.kifu.close()
 
-    def header(self, names, starttime=None):
+    def header(self, names: List[str], starttime: Optional[datetime] = None):
+        """Write the game's header information, including date and player names.
+
+        :param names: A list containing the names of the players [first_player, second_player].
+        :param starttime: Optional start time of the game. If None, the current time is used.
+        """
         if starttime is None:
             starttime = datetime.now()
         self.kifu.write('開始日時：' + starttime.strftime('%Y/%m/%d %H:%M:%S\n'))
@@ -374,7 +422,12 @@ class Exporter:
         self.kifu.write('先手：' + names[0] + '\n')
         self.kifu.write('後手：' + names[1] + '\n\n')
 
-    def move(self, move, comment=None):
+    def move(self, move: int, comment: Optional[str] = None):
+        """Write a move to the file in KI2 format.
+
+        :param move: An integer representing the move.
+        :param comment: Optional comment string to be associated with the move.
+        """
         move_str = move_to_ki2(move, self.board)
         self.board.push(move)
 
@@ -382,7 +435,11 @@ class Exporter:
         if comment:
             self.kifu.write('**{}\n'.format(comment))
 
-    def end(self, reason):
+    def end(self, reason: str):
+        """Write the game's ending condition.
+
+        :param reason: A string representing the reason for the game's end (e.g., %TORYO, %SENNICHITE).
+        """
         # 結果出力
         if reason == '%TORYO':
             self.kifu.write('まで{}手で{}の勝ち\n'.format(self.board.move_number - 1, '先手' if self.board.turn == cshogi.WHITE else '後手'))

@@ -1,3 +1,4 @@
+from typing import List, Optional
 import cshogi
 from datetime import datetime
 
@@ -34,19 +35,41 @@ def move_to_san(move):
     return PGN_PIECE_TYPES[cshogi.move_from_piece_type(move)] + move_from + move_to + promotion
 
 class Exporter:
-    def __init__(self, path=None, append=False):
+    """A class to handle the exporting of a game to PGN (Portable Game Notation) format.
+
+    :param path: Optional path to the file where the PGN formatted game will be written. If None, no file is opened initially.
+    :param append: Whether to append to the existing file or create a new one. Defaults to False.
+    """
+    def __init__(self, path: Optional[str] = None, append: bool = False):
         if path:
             self.open(path, append)
         else:
             self.f = None
 
-    def open(self, path, append=False):
+    def open(self, path: str, append: bool = False):
+        """Open a file for writing the PGN formatted game.
+
+        :param path: Path to the file.
+        :param append: Whether to append to the existing file or create a new one. Defaults to False.
+        """
         self.f = open(path, 'a' if append else 'w', newline='\n')
 
     def close(self):
+        """Close the file."""
         self.f.close()
 
-    def tag_pair(self, names, result, event='?', site='?', starttime=datetime.now(), round=1):
+    def tag_pair(self, names: List[str], result: int, event: str = '?', site: str = '?', starttime: Optional[datetime] = None, round: int = 1):
+        """Write the tag pairs section of the PGN format, containing metadata about the game.
+
+        :param names: List of player names for White and Black.
+        :param result: Game result code.
+        :param event: Event name, defaults to "?".
+        :param site: Site of the game, defaults to "?".
+        :param starttime: Start time of the game, defaults to current time.
+        :param round: Round number, defaults to 1.
+        """
+        if starttime is None:
+            starttime = datetime.now()
         self.f.write('[Event "' + event +'"]\n')
         self.f.write('[Site "' + site + '"]\n')
         self.f.write('[Date "' + (starttime.strftime('%Y.%m.%d') if starttime else '????.??.??') + '"]\n')
@@ -64,7 +87,11 @@ class Exporter:
         self.f.write('[Result "' + self.result_str + '"]\n\n')
         self.f.flush()
 
-    def movetext(self, moves):
+    def movetext(self, moves: List[int]):
+        """Write the move text section of the PGN format, containing the actual moves of the game.
+
+        :param moves: List of moves in the game.
+        """
         line = ''
         for i, move in enumerate(moves):
             if i % 2 == 0:

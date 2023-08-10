@@ -1,3 +1,4 @@
+from typing import Dict, List, Union, Optional
 import cshogi
 from cshogi import Parser
 
@@ -13,19 +14,44 @@ JAPANESE_END_GAMES = {
 }
 
 class Exporter:
-    def __init__(self, path=None, append=False, encoding=None):
+    """A class to handle the exporting of a game to CSA format.
+
+    :param path: The file path to export to, defaults to None.
+    :param append: Whether to append to the file, defaults to False.
+    :param encoding: The encoding of the file, defaults to None.
+    """
+
+    def __init__(self, path: Optional[str] = None, append: bool = False, encoding: Optional[str] = None):
         if path:
             self.open(path, append, encoding=encoding)
         else:
             self.f = None
 
-    def open(self, path, append=False, encoding=None):
+    def open(self, path: str, append: bool = False, encoding: Optional[str]=None):
+        """Open the file for writing.
+
+        :param path: The file path to export to.
+        :type path: str
+        :param append: Whether to append to the file, defaults to False.
+        :type append: bool, optional
+        :param encoding: The encoding of the file, defaults to None.
+        :type encoding: str, optional
+        """
         self.f = open(path, 'a' if append else 'w', newline='\n', encoding=encoding)
 
     def close(self):
+        """Close the file."""
         self.f.close()
 
-    def info(self, init_board=None, names=None, var_info=None, comment=None, version=None):
+    def info(self, init_board: Optional[Union[str, cshogi.Board]] = None, names: Optional[List[str]] = None, var_info: Optional[Dict] = None, comment: Optional[str] = None, version: Optional[str] = None):
+        """Write game information to the file.
+
+        :param init_board: The initial board state, defaults to None.
+        :param names: The names of the players, defaults to None.
+        :param var_info: Additional variable information, defaults to None.
+        :param comment: Comments about the game, defaults to None.
+        :param version: Version information, defaults to None.
+        """
         if self.f.tell() != 0:
             self.f.write('/\n')
         if version:
@@ -65,7 +91,14 @@ class Exporter:
             self.f.write('PI\n+\n')
             self.turn = cshogi.BLACK
 
-    def move(self, move, time=None, comment=None, sep='\n'):
+    def move(self, move: int, time: Optional[int] = None, comment: Optional[str] = None, sep: str = '\n'):
+        """Write a move to the file.
+
+        :param move: The move to write.
+        :param time: The time taken for the move, defaults to None.
+        :param comment: A comment about the move, defaults to None.
+        :param sep: Separator character, defaults to newline.
+        """
         self.f.write(COLOR_SYMBOLS[self.turn])
         self.f.write(cshogi.move_to_csa(move))
         if time is not None:
@@ -77,7 +110,12 @@ class Exporter:
         self.f.write('\n')
         self.turn = cshogi.opponent(self.turn)
 
-    def endgame(self, endgame, time=None):
+    def endgame(self, endgame: str, time: Optional[int] = None):
+        """Write the endgame result to the file.
+
+        :param endgame: The result of the endgame.
+        :param time: The time taken for the endgame, defaults to None.
+        """
         self.f.write(endgame)
         self.f.write('\n')
         if time is not None:

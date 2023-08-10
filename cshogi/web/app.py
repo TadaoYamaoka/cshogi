@@ -1,3 +1,4 @@
+from typing import Dict, Optional
 import math
 from cshogi import Board, CSA, KIF, BLACK, WHITE, opponent, REPETITION_WIN, REPETITION_LOSE
 from cshogi.usi import Engine
@@ -239,7 +240,24 @@ def match(moves, engine1=None, engine2=None, options1={}, options2={}, names=Non
         'pv': '',
     })
 
-def run(engine1=None, engine2=None, options1={}, options2={}, name1=None, name2=None, byoyomi=None, time=None, inc=None, draw=256, csa=None, host='localhost', port=8000):
+def run(engine1: Optional[str] = None, engine2: Optional[str] = None, options1: Dict = {}, options2: Dict = {}, name1: Optional[str] = None, name2: Optional[str] = None, byoyomi: Optional[int] = None, time: Optional[int] = None, inc: Optional[int] = None, draw: int = 256, csa: Optional[str] = None, host: str = 'localhost', port: int = 8000):
+    """Initializes and runs a shogi match between two engines or replays a game from a given CSA file.
+    The match or replay is rendered using Flask and is accessible via a web interface.
+
+    :param engine1: Name or path of the first engine, or 'human' for human player. Default is None.
+    :param engine2: Name or path of the second engine, or 'human' for human player. Default is None.
+    :param options1: Configuration options for the first engine. Default is an empty dictionary.
+    :param options2: Configuration options for the second engine. Default is an empty dictionary.
+    :param name1: Optional name for the first player. Default is None.
+    :param name2: Optional name for the second player. Default is None.
+    :param byoyomi: Byoyomi time in milliseconds. Default is None.
+    :param time: Time control for the match in milliseconds. Default is None.
+    :param inc: Increment time for each move in milliseconds. Default is None.
+    :param draw: Number of moves before a draw is claimed. Default is 256.
+    :param csa: Path to a CSA file to replay a game. Default is None.
+    :param host: Hostname to bind the Flask server to. Default is 'localhost'.
+    :param port: Port number to bind the Flask server to. Default is 8000.
+    """
     is_match = 'false'
     auto_update = 'false'
 

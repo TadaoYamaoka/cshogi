@@ -1,4 +1,5 @@
-﻿import random
+﻿from typing import Dict, List, Union, Optional, Callable
+import random
 import math
 from time import perf_counter
 import re
@@ -61,12 +62,47 @@ def usi_info_to_score(info):
 
     return to_score(m)
 
-def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign=None, mate_win=False,
-         byoyomi=None, time=None, inc=None,
-         draw=256, ponder=False, no_swap=False, opening=None, opening_moves=24, opening_seed=None, opening_index=None,
-         keep_process=False,
-         csa=None, multi_csa=False, pgn=None, no_pgn_moves=False, is_display=False, debug=False,
-         print_summary=True, callback=None):
+def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, names: Optional[List[str]] = None,
+         games: int = 1, resign: Optional[int] = None, mate_win: bool = False,
+         byoyomi: Optional[Union[int, List[int]]] = None, time: Optional[Union[int, List[int]]] = None, inc: Optional[Union[int, List[int]]] = None,
+         draw: int = 256, ponder: bool = False, no_swap: bool = False,
+         opening: Optional[str] = None, opening_moves: int = 24, opening_seed: Optional[int] = None, opening_index: Optional[int] = None,
+         keep_process: bool = False,
+         csa: Optional[str] = None, multi_csa: bool = False, pgn: Optional[str] = None, no_pgn_moves: bool = False,
+         is_display: bool = False, debug: bool = False,
+         print_summary: bool = True, callback: Optional[Callable] = None) -> Dict:
+    """Executes a series of games between two USI engines.
+
+    :param engine1: Path to the first USI engine.
+    :param engine2: Path to the second USI engine.
+    :param options1: Optional engine options for engine1.
+    :param options2: Optional engine options for engine2.
+    :param names: Optional names for the engines.
+    :param games: Number of games to play.
+    :param resign: Resignation threshold. If a score falls below the negative of this value, the engine resigns.
+    :param mate_win: Whether a checkmate is considered a win.
+    :param byoyomi: Byoyomi time in milliseconds. It can be different for each engine.
+    :param time: Time control in milliseconds. It can be different for each engine.
+    :param inc: Increment time in milliseconds per move. It can be different for each engine.
+    :param draw: Number of moves before a draw is declared.
+    :param ponder: Whether to use pondering.
+    :param no_swap: Whether to disable engine swapping.
+    :param opening: Path to a file containing opening positions.
+    :param opening_moves: Number of opening moves to play.
+    :param opening_seed: Seed for random shuffling of openings.
+    :param opening_index: Specific index of an opening to use.
+    :param keep_process: Whether to keep the engine process running after completion.
+    :param csa: Optional path for CSA file export.
+    :param multi_csa: Whether to use multi-CSA format.
+    :param pgn: Optional path for PGN file export.
+    :param no_pgn_moves: Whether to omit PGN move listing.
+    :param is_display: Whether to display the game board.
+    :param debug: Whether to enable debugging mode.
+    :param print_summary: Whether to print the summary after the match.
+    :param callback: Optional callback function executed after each game.
+    :return: Dictionary containing game results and statistics.
+    """
+
     engine1 = Engine(engine1, connect=False)
     engine2 = Engine(engine2, connect=False)
 
