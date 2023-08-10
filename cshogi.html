@@ -147,6 +147,25 @@
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.CSA.Exporter.open"><code class="docutils literal notranslate"><span class="pre">Exporter.open()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="#cshogi.CSA.Parser"><code class="docutils literal notranslate"><span class="pre">Parser</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.CSA.Parser.comment"><code class="docutils literal notranslate"><span class="pre">Parser.comment</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.CSA.Parser.comments"><code class="docutils literal notranslate"><span class="pre">Parser.comments</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.CSA.Parser.endgame"><code class="docutils literal notranslate"><span class="pre">Parser.endgame</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.CSA.Parser.moves"><code class="docutils literal notranslate"><span class="pre">Parser.moves</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.CSA.Parser.names"><code class="docutils literal notranslate"><span class="pre">Parser.names</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.CSA.Parser.parse_csa_file"><code class="docutils literal notranslate"><span class="pre">Parser.parse_csa_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.CSA.Parser.parse_csa_str"><code class="docutils literal notranslate"><span class="pre">Parser.parse_csa_str()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.CSA.Parser.parse_file"><code class="docutils literal notranslate"><span class="pre">Parser.parse_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.CSA.Parser.parse_str"><code class="docutils literal notranslate"><span class="pre">Parser.parse_str()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.CSA.Parser.ratings"><code class="docutils literal notranslate"><span class="pre">Parser.ratings</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.CSA.Parser.scores"><code class="docutils literal notranslate"><span class="pre">Parser.scores</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.CSA.Parser.sfen"><code class="docutils literal notranslate"><span class="pre">Parser.sfen</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.CSA.Parser.times"><code class="docutils literal notranslate"><span class="pre">Parser.times</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.CSA.Parser.var_info"><code class="docutils literal notranslate"><span class="pre">Parser.var_info</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.CSA.Parser.version"><code class="docutils literal notranslate"><span class="pre">Parser.version</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.CSA.Parser.win"><code class="docutils literal notranslate"><span class="pre">Parser.win</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#module-cshogi.KI2">cshogi.KI2 module</a><ul>
@@ -1687,6 +1706,240 @@
 <li><p><strong>append</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to append to the file, defaults to False.</p></li>
 <li><p><strong>encoding</strong> (<em>str</em><em>, </em><em>optional</em>) – The encoding of the file, defaults to None.</p></li>
 </ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cshogi.CSA.Parser">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.CSA.</span></span><span class="sig-name descname"><span class="pre">Parser</span></span><a class="headerlink" href="#cshogi.CSA.Parser" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class to parse Shogi game records in the CSA standard file format.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.CSA.Parser.comment">
+<span class="sig-name descname"><span class="pre">comment</span></span><a class="headerlink" href="#cshogi.CSA.Parser.comment" title="Permalink to this definition"></a></dt>
+<dd><p>Gets the general comment about the game.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The general comment about the game.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.CSA.Parser.comments">
+<span class="sig-name descname"><span class="pre">comments</span></span><a class="headerlink" href="#cshogi.CSA.Parser.comments" title="Permalink to this definition"></a></dt>
+<dd><p>Gets the list of comments for each move of the game.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The list of comments for each move of the game.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.CSA.Parser.endgame">
+<span class="sig-name descname"><span class="pre">endgame</span></span><a class="headerlink" href="#cshogi.CSA.Parser.endgame" title="Permalink to this definition"></a></dt>
+<dd><p>Gets the endgame result of the game.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The endgame result of the game.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.CSA.Parser.moves">
+<span class="sig-name descname"><span class="pre">moves</span></span><a class="headerlink" href="#cshogi.CSA.Parser.moves" title="Permalink to this definition"></a></dt>
+<dd><p>Gets the list of moves in the game.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The list of moves in the game.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.CSA.Parser.names">
+<span class="sig-name descname"><span class="pre">names</span></span><a class="headerlink" href="#cshogi.CSA.Parser.names" title="Permalink to this definition"></a></dt>
+<dd><p>Gets the names of the players.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The names of the players.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.CSA.Parser.parse_csa_file">
+<span class="sig-name descname"><span class="pre">parse_csa_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.CSA.Parser.parse_csa_file" title="Permalink to this definition"></a></dt>
+<dd><p>Parse a CSA standard Shogi game record from a file path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – The file path containing the game record.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.CSA.Parser.parse_csa_str">
+<span class="sig-name descname"><span class="pre">parse_csa_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csa_str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.CSA.Parser.parse_csa_str" title="Permalink to this definition"></a></dt>
+<dd><p>Parse a CSA standard Shogi game record from a string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>csa_str</strong> (<em>str</em>) – A string containing the game record.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.CSA.Parser.parse_file">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.CSA.Parser.parse_file" title="Permalink to this definition"></a></dt>
+<dd><p>Parse CSA standard Shogi game records from a file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file</strong> (<em>str</em><em> or </em><em>file object</em>) – The file path or file object containing the game records.</p></li>
+<li><p><strong>encoding</strong> (<em>str</em><em>, </em><em>optional</em>) – The character encoding of the file, defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of Parser objects representing the parsed game records.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.CSA.Parser.parse_str">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csa_str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.CSA.Parser.parse_str" title="Permalink to this definition"></a></dt>
+<dd><p>Parse CSA standard Shogi game records from a string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>csa_str</strong> (<em>str</em>) – A string containing one or more Shogi game records.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of Parser objects representing the parsed game records.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.CSA.Parser.ratings">
+<span class="sig-name descname"><span class="pre">ratings</span></span><a class="headerlink" href="#cshogi.CSA.Parser.ratings" title="Permalink to this definition"></a></dt>
+<dd><p>Gets the ratings of the players.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The ratings of the players.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.CSA.Parser.scores">
+<span class="sig-name descname"><span class="pre">scores</span></span><a class="headerlink" href="#cshogi.CSA.Parser.scores" title="Permalink to this definition"></a></dt>
+<dd><p>Gets the list of scores for each move of the game.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The list of scores for each move of the game.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.CSA.Parser.sfen">
+<span class="sig-name descname"><span class="pre">sfen</span></span><a class="headerlink" href="#cshogi.CSA.Parser.sfen" title="Permalink to this definition"></a></dt>
+<dd><p>Gets the SFEN representation of the initial position.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The SFEN representation of the initial position.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.CSA.Parser.times">
+<span class="sig-name descname"><span class="pre">times</span></span><a class="headerlink" href="#cshogi.CSA.Parser.times" title="Permalink to this definition"></a></dt>
+<dd><p>Gets the list of times for each move in the game.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The list of times for each move in the game.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.CSA.Parser.var_info">
+<span class="sig-name descname"><span class="pre">var_info</span></span><a class="headerlink" href="#cshogi.CSA.Parser.var_info" title="Permalink to this definition"></a></dt>
+<dd><p>Gets a dictionary containing various information about the game.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dictionary containing various information about the game.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.CSA.Parser.version">
+<span class="sig-name descname"><span class="pre">version</span></span><a class="headerlink" href="#cshogi.CSA.Parser.version" title="Permalink to this definition"></a></dt>
+<dd><p>Gets the version of the CSA standard game record file format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The version of the CSA standard game record file format.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.CSA.Parser.win">
+<span class="sig-name descname"><span class="pre">win</span></span><a class="headerlink" href="#cshogi.CSA.Parser.win" title="Permalink to this definition"></a></dt>
+<dd><p>Gets the result of the game.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The result of the game, which can be one of BLACK_WIN, WHITE_WIN, or DRAW.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>one of (BLACK_WIN, WHITE_WIN, DRAW)</p>
 </dd>
 </dl>
 </dd></dl>
