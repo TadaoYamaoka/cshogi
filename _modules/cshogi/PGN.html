@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>cshogi.PGN &mdash; cshogi  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            cshogi
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../cshogi.html">cshogi package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">cshogi</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">cshogi.PGN</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for cshogi.PGN</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">import</span> <span class="nn">cshogi</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="n">PGN_SQUARE_NAMES</span> <span class="o">=</span> <span class="p">[</span>
+	<span class="s1">&#39;i9&#39;</span><span class="p">,</span> <span class="s1">&#39;i8&#39;</span><span class="p">,</span> <span class="s1">&#39;i7&#39;</span><span class="p">,</span> <span class="s1">&#39;i6&#39;</span><span class="p">,</span> <span class="s1">&#39;i5&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">,</span> <span class="s1">&#39;i3&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">,</span> <span class="s1">&#39;i1&#39;</span><span class="p">,</span>
+	<span class="s1">&#39;h9&#39;</span><span class="p">,</span> <span class="s1">&#39;h8&#39;</span><span class="p">,</span> <span class="s1">&#39;h7&#39;</span><span class="p">,</span> <span class="s1">&#39;h6&#39;</span><span class="p">,</span> <span class="s1">&#39;h5&#39;</span><span class="p">,</span> <span class="s1">&#39;h4&#39;</span><span class="p">,</span> <span class="s1">&#39;h3&#39;</span><span class="p">,</span> <span class="s1">&#39;h2&#39;</span><span class="p">,</span> <span class="s1">&#39;h1&#39;</span><span class="p">,</span>
+	<span class="s1">&#39;g9&#39;</span><span class="p">,</span> <span class="s1">&#39;g8&#39;</span><span class="p">,</span> <span class="s1">&#39;g7&#39;</span><span class="p">,</span> <span class="s1">&#39;g6&#39;</span><span class="p">,</span> <span class="s1">&#39;g5&#39;</span><span class="p">,</span> <span class="s1">&#39;g4&#39;</span><span class="p">,</span> <span class="s1">&#39;g3&#39;</span><span class="p">,</span> <span class="s1">&#39;g2&#39;</span><span class="p">,</span> <span class="s1">&#39;g1&#39;</span><span class="p">,</span>
+	<span class="s1">&#39;f9&#39;</span><span class="p">,</span> <span class="s1">&#39;f8&#39;</span><span class="p">,</span> <span class="s1">&#39;f7&#39;</span><span class="p">,</span> <span class="s1">&#39;f6&#39;</span><span class="p">,</span> <span class="s1">&#39;f5&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">,</span> <span class="s1">&#39;f3&#39;</span><span class="p">,</span> <span class="s1">&#39;f2&#39;</span><span class="p">,</span> <span class="s1">&#39;f1&#39;</span><span class="p">,</span>
+	<span class="s1">&#39;e9&#39;</span><span class="p">,</span> <span class="s1">&#39;e8&#39;</span><span class="p">,</span> <span class="s1">&#39;e7&#39;</span><span class="p">,</span> <span class="s1">&#39;e6&#39;</span><span class="p">,</span> <span class="s1">&#39;e5&#39;</span><span class="p">,</span> <span class="s1">&#39;e4&#39;</span><span class="p">,</span> <span class="s1">&#39;e3&#39;</span><span class="p">,</span> <span class="s1">&#39;e2&#39;</span><span class="p">,</span> <span class="s1">&#39;e1&#39;</span><span class="p">,</span>
+	<span class="s1">&#39;d9&#39;</span><span class="p">,</span> <span class="s1">&#39;d8&#39;</span><span class="p">,</span> <span class="s1">&#39;d7&#39;</span><span class="p">,</span> <span class="s1">&#39;d6&#39;</span><span class="p">,</span> <span class="s1">&#39;d5&#39;</span><span class="p">,</span> <span class="s1">&#39;d4&#39;</span><span class="p">,</span> <span class="s1">&#39;d3&#39;</span><span class="p">,</span> <span class="s1">&#39;d2&#39;</span><span class="p">,</span> <span class="s1">&#39;d1&#39;</span><span class="p">,</span>
+	<span class="s1">&#39;c9&#39;</span><span class="p">,</span> <span class="s1">&#39;c8&#39;</span><span class="p">,</span> <span class="s1">&#39;c7&#39;</span><span class="p">,</span> <span class="s1">&#39;c6&#39;</span><span class="p">,</span> <span class="s1">&#39;c5&#39;</span><span class="p">,</span> <span class="s1">&#39;c4&#39;</span><span class="p">,</span> <span class="s1">&#39;c3&#39;</span><span class="p">,</span> <span class="s1">&#39;c2&#39;</span><span class="p">,</span> <span class="s1">&#39;c1&#39;</span><span class="p">,</span>
+	<span class="s1">&#39;b9&#39;</span><span class="p">,</span> <span class="s1">&#39;b8&#39;</span><span class="p">,</span> <span class="s1">&#39;b7&#39;</span><span class="p">,</span> <span class="s1">&#39;b6&#39;</span><span class="p">,</span> <span class="s1">&#39;b5&#39;</span><span class="p">,</span> <span class="s1">&#39;b4&#39;</span><span class="p">,</span> <span class="s1">&#39;b3&#39;</span><span class="p">,</span> <span class="s1">&#39;b2&#39;</span><span class="p">,</span> <span class="s1">&#39;b1&#39;</span><span class="p">,</span>
+	<span class="s1">&#39;a9&#39;</span><span class="p">,</span> <span class="s1">&#39;a8&#39;</span><span class="p">,</span> <span class="s1">&#39;a7&#39;</span><span class="p">,</span> <span class="s1">&#39;a6&#39;</span><span class="p">,</span> <span class="s1">&#39;a5&#39;</span><span class="p">,</span> <span class="s1">&#39;a4&#39;</span><span class="p">,</span> <span class="s1">&#39;a3&#39;</span><span class="p">,</span> <span class="s1">&#39;a2&#39;</span><span class="p">,</span> <span class="s1">&#39;a1&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">PGN_HAND_PIECES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;P&#39;</span><span class="p">,</span> <span class="s1">&#39;L&#39;</span><span class="p">,</span> <span class="s1">&#39;N&#39;</span><span class="p">,</span> <span class="s1">&#39;S&#39;</span><span class="p">,</span> <span class="s1">&#39;G&#39;</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">,</span> <span class="s1">&#39;R&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">PGN_PIECE_TYPES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="kc">None</span><span class="p">,</span>
+    <span class="s1">&#39;P&#39;</span><span class="p">,</span> <span class="s1">&#39;L&#39;</span><span class="p">,</span> <span class="s1">&#39;N&#39;</span><span class="p">,</span> <span class="s1">&#39;S&#39;</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">,</span> <span class="s1">&#39;R&#39;</span><span class="p">,</span> <span class="s1">&#39;G&#39;</span><span class="p">,</span> <span class="s1">&#39;K&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;+P&#39;</span><span class="p">,</span> <span class="s1">&#39;+L&#39;</span><span class="p">,</span> <span class="s1">&#39;+K&#39;</span><span class="p">,</span> <span class="s1">&#39;+S&#39;</span><span class="p">,</span> <span class="s1">&#39;+B&#39;</span><span class="p">,</span> <span class="s1">&#39;+R&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<div class="viewcode-block" id="move_to_san"><a class="viewcode-back" href="../../cshogi.html#cshogi.PGN.move_to_san">[docs]</a><span class="k">def</span> <span class="nf">move_to_san</span><span class="p">(</span><span class="n">move</span><span class="p">):</span>
+    <span class="n">move_to</span> <span class="o">=</span> <span class="n">PGN_SQUARE_NAMES</span><span class="p">[</span><span class="n">cshogi</span><span class="o">.</span><span class="n">move_to</span><span class="p">(</span><span class="n">move</span><span class="p">)]</span>
+
+    <span class="k">if</span> <span class="n">cshogi</span><span class="o">.</span><span class="n">move_is_drop</span><span class="p">(</span><span class="n">move</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">PGN_HAND_PIECES</span><span class="p">[</span><span class="n">cshogi</span><span class="o">.</span><span class="n">move_drop_hand_piece</span><span class="p">(</span><span class="n">move</span><span class="p">)]</span> <span class="o">+</span> <span class="s1">&#39;@&#39;</span> <span class="o">+</span> <span class="n">move_to</span>
+
+    <span class="n">move_from</span> <span class="o">=</span> <span class="n">PGN_SQUARE_NAMES</span><span class="p">[</span><span class="n">cshogi</span><span class="o">.</span><span class="n">move_from</span><span class="p">(</span><span class="n">move</span><span class="p">)]</span>
+    <span class="n">promotion</span> <span class="o">=</span> <span class="s1">&#39;+&#39;</span> <span class="k">if</span> <span class="n">cshogi</span><span class="o">.</span><span class="n">move_is_promotion</span><span class="p">(</span><span class="n">move</span><span class="p">)</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">PGN_PIECE_TYPES</span><span class="p">[</span><span class="n">cshogi</span><span class="o">.</span><span class="n">move_from_piece_type</span><span class="p">(</span><span class="n">move</span><span class="p">)]</span> <span class="o">+</span> <span class="n">move_from</span> <span class="o">+</span> <span class="n">move_to</span> <span class="o">+</span> <span class="n">promotion</span></div>
+
+<div class="viewcode-block" id="Exporter"><a class="viewcode-back" href="../../cshogi.html#cshogi.PGN.Exporter">[docs]</a><span class="k">class</span> <span class="nc">Exporter</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A class to handle the exporting of a game to PGN (Portable Game Notation) format.</span>
+
+<span class="sd">    :param path: Optional path to the file where the PGN formatted game will be written. If None, no file is opened initially.</span>
+<span class="sd">    :param append: Whether to append to the existing file or create a new one. Defaults to False.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">append</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">path</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">append</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="Exporter.open"><a class="viewcode-back" href="../../cshogi.html#cshogi.PGN.Exporter.open">[docs]</a>    <span class="k">def</span> <span class="nf">open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">append</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Open a file for writing the PGN formatted game.</span>
+
+<span class="sd">        :param path: Path to the file.</span>
+<span class="sd">        :param append: Whether to append to the existing file or create a new one. Defaults to False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span> <span class="k">if</span> <span class="n">append</span> <span class="k">else</span> <span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Exporter.close"><a class="viewcode-back" href="../../cshogi.html#cshogi.PGN.Exporter.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Close the file.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Exporter.tag_pair"><a class="viewcode-back" href="../../cshogi.html#cshogi.PGN.Exporter.tag_pair">[docs]</a>    <span class="k">def</span> <span class="nf">tag_pair</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">result</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;?&#39;</span><span class="p">,</span> <span class="n">site</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;?&#39;</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">round</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write the tag pairs section of the PGN format, containing metadata about the game.</span>
+
+<span class="sd">        :param names: List of player names for White and Black.</span>
+<span class="sd">        :param result: Game result code.</span>
+<span class="sd">        :param event: Event name, defaults to &quot;?&quot;.</span>
+<span class="sd">        :param site: Site of the game, defaults to &quot;?&quot;.</span>
+<span class="sd">        :param starttime: Start time of the game, defaults to current time.</span>
+<span class="sd">        :param round: Round number, defaults to 1.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">starttime</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">starttime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;[Event &quot;&#39;</span> <span class="o">+</span> <span class="n">event</span> <span class="o">+</span><span class="s1">&#39;&quot;]</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;[Site &quot;&#39;</span> <span class="o">+</span> <span class="n">site</span> <span class="o">+</span> <span class="s1">&#39;&quot;]</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;[Date &quot;&#39;</span> <span class="o">+</span> <span class="p">(</span><span class="n">starttime</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y.%m.</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">starttime</span> <span class="k">else</span> <span class="s1">&#39;????.??.??&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;&quot;]</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;[Round &quot;&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">round</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;&quot;]</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;[White &quot;&#39;</span> <span class="o">+</span> <span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;&quot;]</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;[Black &quot;&#39;</span> <span class="o">+</span> <span class="n">names</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;&quot;]</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span> <span class="o">==</span> <span class="n">cshogi</span><span class="o">.</span><span class="n">BLACK_WIN</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">result_str</span> <span class="o">=</span> <span class="s1">&#39;1-0&#39;</span>
+        <span class="k">elif</span> <span class="n">result</span> <span class="o">==</span> <span class="n">cshogi</span><span class="o">.</span><span class="n">WHITE_WIN</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">result_str</span> <span class="o">=</span> <span class="s1">&#39;0-1&#39;</span>
+        <span class="k">elif</span> <span class="n">result</span> <span class="o">==</span> <span class="n">cshogi</span><span class="o">.</span><span class="n">DRAW</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">result_str</span> <span class="o">=</span> <span class="s1">&#39;1/2-1/2&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">result_str</span> <span class="o">=</span> <span class="s1">&#39;*&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;[Result &quot;&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">result_str</span> <span class="o">+</span> <span class="s1">&#39;&quot;]</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Exporter.movetext"><a class="viewcode-back" href="../../cshogi.html#cshogi.PGN.Exporter.movetext">[docs]</a>    <span class="k">def</span> <span class="nf">movetext</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">moves</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write the move text section of the PGN format, containing the actual moves of the game.</span>
+
+<span class="sd">        :param moves: List of moves in the game.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">move</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">moves</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">part</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span> <span class="o">//</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;. &#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">part</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="n">part</span> <span class="o">+=</span> <span class="n">move_to_san</span><span class="p">(</span><span class="n">moves</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">moves</span><span class="p">):</span>
+                <span class="n">part</span> <span class="o">+=</span> <span class="s1">&#39; &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">result_str</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">part</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">80</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">line</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                    <span class="n">line</span> <span class="o">+=</span> <span class="s1">&#39; &#39;</span>
+                <span class="n">line</span> <span class="o">+=</span> <span class="n">part</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="n">part</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Tadao Yamaoka.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

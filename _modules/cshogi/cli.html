@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>cshogi.cli &mdash; cshogi  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            cshogi
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../cshogi.html">cshogi package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">cshogi</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">cshogi.cli</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for cshogi.cli</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Callable</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">perf_counter</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">concurrent.futures</span> <span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
+
+<span class="kn">from</span> <span class="nn">cshogi</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">cshogi.usi</span> <span class="kn">import</span> <span class="n">Engine</span>
+<span class="kn">from</span> <span class="nn">cshogi</span> <span class="kn">import</span> <span class="n">CSA</span>
+<span class="kn">from</span> <span class="nn">cshogi</span> <span class="kn">import</span> <span class="n">PGN</span>
+<span class="kn">from</span> <span class="nn">cshogi.elo</span> <span class="kn">import</span> <span class="n">Elo</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">is_jupyter</span> <span class="o">=</span> <span class="n">get_ipython</span><span class="p">()</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">!=</span> <span class="s1">&#39;TerminalInteractiveShell&#39;</span>
+    <span class="k">if</span> <span class="n">is_jupyter</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">SVG</span><span class="p">,</span> <span class="n">display</span>
+<span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
+    <span class="n">is_jupyter</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="n">re_usi_info</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;^.*score (cp|mate) ([+\-0-9]+).*pv (.*)$&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="to_score"><a class="viewcode-back" href="../../cshogi.html#cshogi.cli.to_score">[docs]</a><span class="k">def</span> <span class="nf">to_score</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;cp&#39;</span><span class="p">:</span>
+        <span class="n">score</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="k">elif</span> <span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;mate&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">m</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;-&#39;</span><span class="p">:</span>
+            <span class="n">score</span> <span class="o">=</span> <span class="o">-</span><span class="mi">100000</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">score</span> <span class="o">=</span> <span class="mi">100000</span>
+    <span class="k">return</span> <span class="n">score</span></div>
+
+<div class="viewcode-block" id="usi_info_to_csa_comment"><a class="viewcode-back" href="../../cshogi.html#cshogi.cli.usi_info_to_csa_comment">[docs]</a><span class="k">def</span> <span class="nf">usi_info_to_csa_comment</span><span class="p">(</span><span class="n">board</span><span class="p">,</span> <span class="n">info</span><span class="p">):</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">re_usi_info</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># score</span>
+    <span class="n">score</span> <span class="o">=</span> <span class="n">to_score</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">board</span><span class="o">.</span><span class="n">turn</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># pv</span>
+    <span class="n">pv</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">board2</span> <span class="o">=</span> <span class="n">board</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">usi_move</span> <span class="ow">in</span> <span class="n">m</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">):</span>
+        <span class="n">move</span> <span class="o">=</span> <span class="n">board2</span><span class="o">.</span><span class="n">move_from_usi</span><span class="p">(</span><span class="n">usi_move</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">board2</span><span class="o">.</span><span class="n">is_legal</span><span class="p">(</span><span class="n">move</span><span class="p">):</span>
+            <span class="k">break</span>
+        <span class="n">pv</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CSA</span><span class="o">.</span><span class="n">COLOR_SYMBOLS</span><span class="p">[</span><span class="n">board2</span><span class="o">.</span><span class="n">turn</span><span class="p">]</span> <span class="o">+</span> <span class="n">move_to_csa</span><span class="p">(</span><span class="n">move</span><span class="p">))</span>
+        <span class="n">board2</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">move</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;** </span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pv</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;** </span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+<div class="viewcode-block" id="usi_info_to_score"><a class="viewcode-back" href="../../cshogi.html#cshogi.cli.usi_info_to_score">[docs]</a><span class="k">def</span> <span class="nf">usi_info_to_score</span><span class="p">(</span><span class="n">info</span><span class="p">):</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">re_usi_info</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">to_score</span><span class="p">(</span><span class="n">m</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../cshogi.html#cshogi.cli.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">engine1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">engine2</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">options1</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="p">{},</span> <span class="n">options2</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="p">{},</span> <span class="n">names</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+         <span class="n">games</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">resign</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">mate_win</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+         <span class="n">byoyomi</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">inc</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+         <span class="n">draw</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span> <span class="n">ponder</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">no_swap</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+         <span class="n">opening</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">opening_moves</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">24</span><span class="p">,</span> <span class="n">opening_seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">opening_index</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+         <span class="n">keep_process</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+         <span class="n">csa</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">multi_csa</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">pgn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">no_pgn_moves</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+         <span class="n">is_display</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+         <span class="n">print_summary</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">callback</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Executes a series of games between two USI engines.</span>
+
+<span class="sd">    :param engine1: Path to the first USI engine.</span>
+<span class="sd">    :param engine2: Path to the second USI engine.</span>
+<span class="sd">    :param options1: Optional engine options for engine1.</span>
+<span class="sd">    :param options2: Optional engine options for engine2.</span>
+<span class="sd">    :param names: Optional names for the engines.</span>
+<span class="sd">    :param games: Number of games to play.</span>
+<span class="sd">    :param resign: Resignation threshold. If a score falls below the negative of this value, the engine resigns.</span>
+<span class="sd">    :param mate_win: Whether a checkmate is considered a win.</span>
+<span class="sd">    :param byoyomi: Byoyomi time in milliseconds. It can be different for each engine.</span>
+<span class="sd">    :param time: Time control in milliseconds. It can be different for each engine.</span>
+<span class="sd">    :param inc: Increment time in milliseconds per move. It can be different for each engine.</span>
+<span class="sd">    :param draw: Number of moves before a draw is declared.</span>
+<span class="sd">    :param ponder: Whether to use pondering.</span>
+<span class="sd">    :param no_swap: Whether to disable engine swapping.</span>
+<span class="sd">    :param opening: Path to a file containing opening positions.</span>
+<span class="sd">    :param opening_moves: Number of opening moves to play.</span>
+<span class="sd">    :param opening_seed: Seed for random shuffling of openings.</span>
+<span class="sd">    :param opening_index: Specific index of an opening to use.</span>
+<span class="sd">    :param keep_process: Whether to keep the engine process running after completion.</span>
+<span class="sd">    :param csa: Optional path for CSA file export.</span>
+<span class="sd">    :param multi_csa: Whether to use multi-CSA format.</span>
+<span class="sd">    :param pgn: Optional path for PGN file export.</span>
+<span class="sd">    :param no_pgn_moves: Whether to omit PGN move listing.</span>
+<span class="sd">    :param is_display: Whether to display the game board.</span>
+<span class="sd">    :param debug: Whether to enable debugging mode.</span>
+<span class="sd">    :param print_summary: Whether to print the summary after the match.</span>
+<span class="sd">    :param callback: Optional callback function executed after each game.</span>
+<span class="sd">    :return: Dictionary containing game results and statistics.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">engine1</span> <span class="o">=</span> <span class="n">Engine</span><span class="p">(</span><span class="n">engine1</span><span class="p">,</span> <span class="n">connect</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">engine2</span> <span class="o">=</span> <span class="n">Engine</span><span class="p">(</span><span class="n">engine2</span><span class="p">,</span> <span class="n">connect</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="c1"># byoyomi</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">byoyomi</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">byoyomi</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">byoyomi1</span><span class="p">,</span> <span class="n">byoyomi2</span> <span class="o">=</span> <span class="n">byoyomi</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">byoyomi1</span> <span class="o">=</span> <span class="n">byoyomi2</span> <span class="o">=</span> <span class="n">byoyomi</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">byoyomi1</span> <span class="o">=</span> <span class="n">byoyomi2</span> <span class="o">=</span> <span class="n">byoyomi</span>
+
+    <span class="c1"># time</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">time</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">time</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">time1</span><span class="p">,</span> <span class="n">time2</span> <span class="o">=</span> <span class="n">time</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">time1</span> <span class="o">=</span> <span class="n">time2</span> <span class="o">=</span> <span class="n">time</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">time1</span> <span class="o">=</span> <span class="n">time2</span> <span class="o">=</span> <span class="n">time</span>
+
+    <span class="c1"># inc</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">inc</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">inc</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">inc1</span><span class="p">,</span> <span class="n">inc2</span> <span class="o">=</span> <span class="n">inc</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">inc1</span> <span class="o">=</span> <span class="n">inc2</span> <span class="o">=</span> <span class="n">inc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">inc1</span> <span class="o">=</span> <span class="n">inc2</span> <span class="o">=</span> <span class="n">inc</span>
+
+    <span class="c1"># ponder</span>
+    <span class="k">if</span> <span class="n">ponder</span><span class="p">:</span>
+        <span class="n">executor</span> <span class="o">=</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># debug</span>
+    <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+        <span class="k">class</span> <span class="nc">Listener</span><span class="p">:</span>
+            <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bestmove</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+
+            <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">+</span> <span class="s1">&#39;:&#39;</span> <span class="o">+</span> <span class="n">line</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bestmove</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bestmove</span> <span class="o">=</span> <span class="n">line</span>
+
+        <span class="n">listener1</span> <span class="o">=</span> <span class="n">Listener</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>
+        <span class="n">listener2</span> <span class="o">=</span> <span class="n">Listener</span><span class="p">(</span><span class="s1">&#39;2&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">class</span> <span class="nc">Listener</span><span class="p">:</span>
+            <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bestmove</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+
+            <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bestmove</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bestmove</span> <span class="o">=</span> <span class="n">line</span>
+        <span class="n">listener1</span> <span class="o">=</span> <span class="n">listener2</span> <span class="o">=</span> <span class="n">Listener</span><span class="p">()</span>
+
+    <span class="c1"># CSA</span>
+    <span class="k">if</span> <span class="n">csa</span> <span class="ow">and</span> <span class="n">multi_csa</span><span class="p">:</span>
+        <span class="n">csa_exporter</span> <span class="o">=</span> <span class="n">CSA</span><span class="o">.</span><span class="n">Exporter</span><span class="p">(</span><span class="n">csa</span><span class="p">,</span> <span class="n">append</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># PGN</span>
+    <span class="k">if</span> <span class="n">pgn</span><span class="p">:</span>
+        <span class="n">pgn_exporter</span> <span class="o">=</span> <span class="n">PGN</span><span class="o">.</span><span class="n">Exporter</span><span class="p">(</span><span class="n">pgn</span><span class="p">,</span> <span class="n">append</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># 初期局面読み込み</span>
+    <span class="k">if</span> <span class="n">opening</span><span class="p">:</span>
+        <span class="n">opening_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">opening</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">opening_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()[</span><span class="mi">15</span><span class="p">:]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">]</span>
+        <span class="c1"># インデックス指定</span>
+        <span class="k">if</span> <span class="n">opening_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opening_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">opening_list</span><span class="p">[</span><span class="n">opening_index</span><span class="p">]]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># シャッフル</span>
+            <span class="k">if</span> <span class="n">opening_seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">opening_seed</span><span class="p">)</span>
+            <span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">opening_list</span><span class="p">)</span>
+
+    <span class="n">board</span> <span class="o">=</span> <span class="n">Board</span><span class="p">()</span>
+    <span class="n">engine1_won</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">engine2_won</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">draw_count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">WIN_DRAW</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">games</span><span class="p">):</span>
+        <span class="c1"># 先後入れ替え</span>
+        <span class="k">if</span> <span class="n">no_swap</span> <span class="ow">or</span> <span class="n">n</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">engines_order</span> <span class="o">=</span> <span class="p">(</span><span class="n">engine1</span><span class="p">,</span> <span class="n">engine2</span><span class="p">)</span>
+            <span class="n">options_order</span> <span class="o">=</span> <span class="p">(</span><span class="n">options1</span><span class="p">,</span> <span class="n">options2</span><span class="p">)</span>
+            <span class="n">listeners_order</span> <span class="o">=</span> <span class="p">(</span><span class="n">listener1</span><span class="p">,</span> <span class="n">listener2</span><span class="p">)</span>
+            <span class="n">byoyomi_order</span> <span class="o">=</span> <span class="p">(</span><span class="n">byoyomi1</span><span class="p">,</span> <span class="n">byoyomi2</span><span class="p">)</span>
+            <span class="n">btime</span> <span class="o">=</span> <span class="n">time1</span>
+            <span class="n">wtime</span> <span class="o">=</span> <span class="n">time2</span>
+            <span class="n">binc</span> <span class="o">=</span> <span class="n">inc1</span>
+            <span class="n">winc</span> <span class="o">=</span> <span class="n">inc2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">engines_order</span> <span class="o">=</span> <span class="p">(</span><span class="n">engine2</span><span class="p">,</span> <span class="n">engine1</span><span class="p">)</span>
+            <span class="n">options_order</span> <span class="o">=</span> <span class="p">(</span><span class="n">options2</span><span class="p">,</span> <span class="n">options1</span><span class="p">)</span>
+            <span class="n">listeners_order</span> <span class="o">=</span> <span class="p">(</span><span class="n">listener2</span><span class="p">,</span> <span class="n">listener1</span><span class="p">)</span>
+            <span class="n">byoyomi_order</span> <span class="o">=</span> <span class="p">(</span><span class="n">byoyomi2</span><span class="p">,</span> <span class="n">byoyomi1</span><span class="p">)</span>
+            <span class="n">btime</span> <span class="o">=</span> <span class="n">time2</span>
+            <span class="n">wtime</span> <span class="o">=</span> <span class="n">time1</span>
+            <span class="n">binc</span> <span class="o">=</span> <span class="n">inc2</span>
+            <span class="n">winc</span> <span class="o">=</span> <span class="n">inc1</span>
+
+        <span class="c1"># 接続とエンジン設定</span>
+        <span class="k">for</span> <span class="n">engine</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">listener</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">engines_order</span><span class="p">,</span> <span class="n">options_order</span><span class="p">,</span> <span class="n">listeners_order</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">engine</span><span class="o">.</span><span class="n">proc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">engine</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">listener</span><span class="o">=</span><span class="n">listener</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ponder</span><span class="p">:</span>
+                <span class="n">engine</span><span class="o">.</span><span class="n">setoption</span><span class="p">(</span><span class="s1">&#39;USI_Ponder&#39;</span><span class="p">,</span> <span class="s1">&#39;true&#39;</span><span class="p">,</span> <span class="n">listener</span><span class="o">=</span><span class="n">listener</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">options</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">engine</span><span class="o">.</span><span class="n">setoption</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">listener</span><span class="o">=</span><span class="n">listener</span><span class="p">)</span>
+            <span class="n">engine</span><span class="o">.</span><span class="n">isready</span><span class="p">(</span><span class="n">listener</span><span class="o">=</span><span class="n">listener</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">names</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="n">engine1</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">names</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="n">engine2</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">names</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> vs </span><span class="si">{}</span><span class="s1"> start.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">engines_order</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">engines_order</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+
+        <span class="c1"># 初期局設定</span>
+        <span class="n">board</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+        <span class="n">moves</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">usi_moves</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">repetition_hash</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">csa</span><span class="p">:</span>
+            <span class="n">engine_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">engine</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">engine</span> <span class="ow">in</span> <span class="n">engines_order</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">multi_csa</span><span class="p">:</span>
+                <span class="n">csa_exporter</span> <span class="o">=</span> <span class="n">CSA</span><span class="o">.</span><span class="n">Exporter</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">csa</span><span class="p">,</span> <span class="s1">&#39;+&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">engine_names</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;+&#39;</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y%m</span><span class="si">%d</span><span class="s1">%H%M%S&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;.csa&#39;</span><span class="p">),</span> <span class="n">append</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">csa_exporter</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">board</span><span class="p">,</span> <span class="n">engine_names</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="s1">&#39;V2&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">opening</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">move_usi</span> <span class="ow">in</span> <span class="n">opening_list</span><span class="p">[</span><span class="n">n</span> <span class="o">//</span> <span class="mi">2</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">opening_list</span><span class="p">)]:</span>
+                <span class="n">move</span> <span class="o">=</span> <span class="n">board</span><span class="o">.</span><span class="n">push_usi</span><span class="p">(</span><span class="n">move_usi</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">csa</span><span class="p">:</span>
+                    <span class="n">csa_exporter</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">move</span><span class="p">)</span>
+                <span class="n">moves</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">move</span><span class="p">)</span>
+                <span class="n">usi_moves</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">move_usi</span><span class="p">)</span>
+                <span class="n">repetition_hash</span><span class="p">[</span><span class="n">board</span><span class="o">.</span><span class="n">zobrist_hash</span><span class="p">()]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">board</span><span class="o">.</span><span class="n">move_number</span> <span class="o">&gt;</span> <span class="n">opening_moves</span><span class="p">:</span>
+                    <span class="k">break</span>
+
+        <span class="c1"># 盤面表示</span>
+        <span class="k">if</span> <span class="n">is_display</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;開始局面&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">is_jupyter</span><span class="p">:</span>
+                <span class="n">display</span><span class="p">(</span><span class="n">SVG</span><span class="p">(</span><span class="n">board</span><span class="o">.</span><span class="n">to_svg</span><span class="p">()))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">board</span><span class="p">)</span>
+
+        <span class="c1"># 新規ゲーム</span>
+        <span class="k">for</span> <span class="n">engine</span><span class="p">,</span> <span class="n">listener</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">engines_order</span><span class="p">,</span> <span class="n">listeners_order</span><span class="p">):</span>
+            <span class="n">engine</span><span class="o">.</span><span class="n">usinewgame</span><span class="p">(</span><span class="n">listener</span><span class="o">=</span><span class="n">listener</span><span class="p">)</span>
+
+        <span class="c1"># 対局</span>
+        <span class="n">is_game_over</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">is_nyugyoku</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">is_illegal</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">is_repetition_win</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">is_repetition_lose</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">is_fourfold_repetition</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">is_timeup</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">remain_time</span> <span class="o">=</span> <span class="p">[</span><span class="n">btime</span><span class="p">,</span> <span class="n">wtime</span><span class="p">]</span>
+        <span class="n">inc_time</span> <span class="o">=</span> <span class="p">(</span><span class="n">binc</span><span class="p">,</span> <span class="n">winc</span><span class="p">)</span>
+        <span class="n">bestmove</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">pondermove</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">pre_pondermove</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">feature</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">pre_feature</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">is_game_over</span><span class="p">:</span>
+            <span class="n">engine_index</span> <span class="o">=</span> <span class="p">(</span><span class="n">board</span><span class="o">.</span><span class="n">move_number</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span>
+            <span class="n">engine</span> <span class="o">=</span> <span class="n">engines_order</span><span class="p">[</span><span class="n">engine_index</span><span class="p">]</span>
+            <span class="n">listener</span> <span class="o">=</span> <span class="n">listeners_order</span><span class="p">[</span><span class="n">engine_index</span><span class="p">]</span>
+            <span class="n">byoyomi</span> <span class="o">=</span> <span class="n">byoyomi_order</span><span class="p">[</span><span class="n">engine_index</span><span class="p">]</span>
+
+            <span class="c1"># 持将棋</span>
+            <span class="k">if</span> <span class="n">board</span><span class="o">.</span><span class="n">move_number</span> <span class="o">&gt;</span> <span class="n">draw</span><span class="p">:</span>
+                <span class="n">is_game_over</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">break</span>
+
+            <span class="c1"># ponder</span>
+            <span class="n">ponderhit</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="n">ponder</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">pre_pondermove</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">bestmove</span> <span class="o">==</span> <span class="n">pre_pondermove</span><span class="p">:</span>
+                        <span class="n">ponderhit</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">pre_pondermove</span> <span class="o">=</span> <span class="n">pondermove</span>
+
+                        <span class="n">start_time</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
+
+                        <span class="n">engine</span><span class="o">.</span><span class="n">ponderhit</span><span class="p">(</span><span class="n">listener</span><span class="o">=</span><span class="n">listener</span><span class="p">)</span>
+                        <span class="n">bestmove</span><span class="p">,</span> <span class="n">pondermove</span> <span class="o">=</span> <span class="n">pre_feature</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+    
+                        <span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">pre_pondermove</span> <span class="o">=</span> <span class="n">pondermove</span>
+                        <span class="n">engine</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">listener</span><span class="o">=</span><span class="n">listener</span><span class="p">)</span>
+                        <span class="n">pre_feature</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">pre_pondermove</span> <span class="o">=</span> <span class="n">pondermove</span>
+                <span class="n">pre_feature</span> <span class="o">=</span> <span class="n">feature</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ponderhit</span><span class="p">:</span>
+                <span class="c1"># position</span>
+                <span class="n">engine</span><span class="o">.</span><span class="n">position</span><span class="p">(</span><span class="n">usi_moves</span><span class="p">,</span> <span class="n">listener</span><span class="o">=</span><span class="n">listener</span><span class="p">)</span>
+
+                <span class="n">start_time</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
+
+                <span class="c1"># go</span>
+                <span class="n">bestmove</span><span class="p">,</span> <span class="n">pondermove</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">go</span><span class="p">(</span><span class="n">byoyomi</span><span class="o">=</span><span class="n">byoyomi</span><span class="p">,</span> <span class="n">btime</span><span class="o">=</span><span class="n">remain_time</span><span class="p">[</span><span class="n">BLACK</span><span class="p">],</span> <span class="n">wtime</span><span class="o">=</span><span class="n">remain_time</span><span class="p">[</span><span class="n">WHITE</span><span class="p">],</span> <span class="n">binc</span><span class="o">=</span><span class="n">binc</span><span class="p">,</span> <span class="n">winc</span><span class="o">=</span><span class="n">winc</span><span class="p">,</span> <span class="n">listener</span><span class="o">=</span><span class="n">listener</span><span class="p">)</span>
+
+                <span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+
+            <span class="k">if</span> <span class="n">remain_time</span><span class="p">[</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">inc_time</span><span class="p">[</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">remain_time</span><span class="p">[</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span><span class="p">]</span> <span class="o">+=</span> <span class="n">inc_time</span><span class="p">[</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span><span class="p">]</span>
+                <span class="n">remain_time</span><span class="p">[</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span><span class="p">]</span> <span class="o">-=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">elapsed_time</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">remain_time</span><span class="p">[</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="c1"># 1秒未満は切れ負けにしない</span>
+                    <span class="k">if</span> <span class="n">remain_time</span><span class="p">[</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span><span class="p">]</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1000</span><span class="p">:</span>
+                        <span class="n">remain_time</span><span class="p">[</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># 時間切れ負け</span>
+                        <span class="n">is_timeup</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">is_game_over</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="k">break</span>
+
+            <span class="c1"># ponder</span>
+            <span class="k">if</span> <span class="n">ponder</span> <span class="ow">and</span> <span class="n">pondermove</span><span class="p">:</span>
+                <span class="n">engine</span><span class="o">.</span><span class="n">position</span><span class="p">(</span><span class="n">usi_moves</span> <span class="o">+</span> <span class="p">[</span><span class="n">bestmove</span><span class="p">,</span> <span class="n">pondermove</span><span class="p">],</span> <span class="n">listener</span><span class="o">=</span><span class="n">listener</span><span class="p">)</span>
+                <span class="n">feature</span> <span class="o">=</span> <span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">engine</span><span class="o">.</span><span class="n">go</span><span class="p">,</span> <span class="n">ponder</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">byoyomi</span><span class="o">=</span><span class="n">byoyomi</span><span class="p">,</span> <span class="n">btime</span><span class="o">=</span><span class="n">remain_time</span><span class="p">[</span><span class="n">BLACK</span><span class="p">],</span> <span class="n">wtime</span><span class="o">=</span><span class="n">remain_time</span><span class="p">[</span><span class="n">WHITE</span><span class="p">],</span> <span class="n">binc</span><span class="o">=</span><span class="n">binc</span><span class="p">,</span> <span class="n">winc</span><span class="o">=</span><span class="n">winc</span><span class="p">,</span> <span class="n">listener</span><span class="o">=</span><span class="n">listener</span><span class="p">)</span>
+
+            <span class="n">score</span> <span class="o">=</span> <span class="n">usi_info_to_score</span><span class="p">(</span><span class="n">listener</span><span class="o">.</span><span class="n">info</span><span class="p">)</span>
+            <span class="c1"># 投了閾値</span>
+            <span class="k">if</span> <span class="n">resign</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">score</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">score</span> <span class="o">&lt;=</span> <span class="o">-</span><span class="n">resign</span><span class="p">:</span>
+                    <span class="c1"># 投了</span>
+                    <span class="n">is_game_over</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">break</span>
+
+            <span class="c1"># 詰みを見つけたら終了</span>
+            <span class="k">if</span> <span class="n">mate_win</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">score</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">score</span> <span class="o">==</span> <span class="mi">100000</span><span class="p">:</span>
+                    <span class="n">move</span> <span class="o">=</span> <span class="n">board</span><span class="o">.</span><span class="n">move_from_usi</span><span class="p">(</span><span class="n">bestmove</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">csa</span><span class="p">:</span>
+                        <span class="n">csa_exporter</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">move</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">elapsed_time</span><span class="p">),</span> <span class="n">comment</span><span class="o">=</span><span class="n">usi_info_to_csa_comment</span><span class="p">(</span><span class="n">board</span><span class="p">,</span> <span class="n">listener</span><span class="o">.</span><span class="n">info</span><span class="p">))</span>
+                    <span class="n">board</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">move</span><span class="p">)</span>
+                    <span class="n">is_game_over</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">break</span>
+
+            <span class="k">if</span> <span class="n">bestmove</span> <span class="o">==</span> <span class="s1">&#39;resign&#39;</span><span class="p">:</span>
+                <span class="c1"># 投了</span>
+                <span class="n">is_game_over</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">break</span>
+            <span class="k">elif</span> <span class="n">bestmove</span> <span class="o">==</span> <span class="s1">&#39;win&#39;</span><span class="p">:</span>
+                <span class="c1"># 入玉勝ち宣言</span>
+                <span class="n">is_nyugyoku</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">is_game_over</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">move</span> <span class="o">=</span> <span class="n">board</span><span class="o">.</span><span class="n">move_from_usi</span><span class="p">(</span><span class="n">bestmove</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">board</span><span class="o">.</span><span class="n">is_legal</span><span class="p">(</span><span class="n">move</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">csa</span><span class="p">:</span>
+                        <span class="n">csa_exporter</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">move</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">elapsed_time</span><span class="p">),</span> <span class="n">comment</span><span class="o">=</span><span class="n">usi_info_to_csa_comment</span><span class="p">(</span><span class="n">board</span><span class="p">,</span> <span class="n">listener</span><span class="o">.</span><span class="n">info</span><span class="p">))</span>
+                    <span class="n">board</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">move</span><span class="p">)</span>
+                    <span class="n">moves</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">move</span><span class="p">)</span>
+                    <span class="n">usi_moves</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bestmove</span><span class="p">)</span>
+                    <span class="n">key</span> <span class="o">=</span> <span class="n">board</span><span class="o">.</span><span class="n">zobrist_hash</span><span class="p">()</span>
+                    <span class="n">repetition_hash</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="c1"># 千日手</span>
+                    <span class="k">if</span> <span class="n">repetition_hash</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+                        <span class="c1"># 連続王手</span>
+                        <span class="n">is_draw</span> <span class="o">=</span> <span class="n">board</span><span class="o">.</span><span class="n">is_draw</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="n">is_draw</span> <span class="o">==</span> <span class="n">REPETITION_WIN</span><span class="p">:</span>
+                            <span class="n">is_repetition_win</span> <span class="o">=</span> <span class="kc">True</span>
+                            <span class="n">is_game_over</span> <span class="o">=</span> <span class="kc">True</span>
+                            <span class="k">break</span>
+                        <span class="k">elif</span> <span class="n">is_draw</span> <span class="o">==</span> <span class="n">REPETITION_LOSE</span><span class="p">:</span>
+                            <span class="n">is_repetition_lose</span> <span class="o">=</span> <span class="kc">True</span>
+                            <span class="n">is_game_over</span> <span class="o">=</span> <span class="kc">True</span>
+                            <span class="k">break</span>
+                        <span class="n">is_fourfold_repetition</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">is_game_over</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">is_illegal</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="n">is_game_over</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">break</span>
+
+            <span class="c1"># 盤面表示</span>
+            <span class="k">if</span> <span class="n">is_display</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">手目&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">usi_moves</span><span class="p">)))</span>
+                <span class="k">if</span> <span class="n">is_jupyter</span><span class="p">:</span>
+                    <span class="n">display</span><span class="p">(</span><span class="n">SVG</span><span class="p">(</span><span class="n">board</span><span class="o">.</span><span class="n">to_svg</span><span class="p">(</span><span class="n">move</span><span class="p">)))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="n">board</span><span class="p">)</span>
+
+            <span class="c1"># 終局判定</span>
+            <span class="k">if</span> <span class="n">board</span><span class="o">.</span><span class="n">is_game_over</span><span class="p">():</span>
+                <span class="n">is_game_over</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">break</span>
+
+        <span class="c1"># ゲーム終了</span>
+        <span class="k">for</span> <span class="n">engine</span><span class="p">,</span> <span class="n">listener</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">engines_order</span><span class="p">,</span> <span class="n">listeners_order</span><span class="p">):</span>
+            <span class="n">engine</span><span class="o">.</span><span class="n">gameover</span><span class="p">(</span><span class="n">listener</span><span class="o">=</span><span class="n">listener</span><span class="p">)</span>
+
+        <span class="c1"># エンジン終了</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">keep_process</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">engine</span><span class="p">,</span> <span class="n">listener</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">engines_order</span><span class="p">,</span> <span class="n">listeners_order</span><span class="p">):</span>
+                <span class="n">engine</span><span class="o">.</span><span class="n">quit</span><span class="p">(</span><span class="n">listener</span><span class="o">=</span><span class="n">listener</span><span class="p">)</span>
+
+        <span class="c1"># 結果出力</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">board</span><span class="o">.</span><span class="n">is_game_over</span><span class="p">()</span> <span class="ow">and</span> <span class="n">board</span><span class="o">.</span><span class="n">move_number</span> <span class="o">&gt;</span> <span class="n">draw</span><span class="p">:</span>
+            <span class="n">win</span> <span class="o">=</span> <span class="n">WIN_DRAW</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;まで</span><span class="si">{}</span><span class="s1">手で持将棋&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">board</span><span class="o">.</span><span class="n">move_number</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">csa_endgame</span> <span class="o">=</span> <span class="s1">&#39;%JISHOGI&#39;</span>
+        <span class="k">elif</span> <span class="n">is_fourfold_repetition</span><span class="p">:</span>
+            <span class="n">win</span> <span class="o">=</span> <span class="n">WIN_DRAW</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;まで</span><span class="si">{}</span><span class="s1">手で千日手&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">board</span><span class="o">.</span><span class="n">move_number</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">csa_endgame</span> <span class="o">=</span> <span class="s1">&#39;%SENNICHITE&#39;</span>
+        <span class="k">elif</span> <span class="n">is_nyugyoku</span><span class="p">:</span>
+            <span class="n">win</span> <span class="o">=</span> <span class="n">board</span><span class="o">.</span><span class="n">turn</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;まで</span><span class="si">{}</span><span class="s1">手で入玉宣言&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">board</span><span class="o">.</span><span class="n">move_number</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">csa_endgame</span> <span class="o">=</span> <span class="s1">&#39;%KACHI&#39;</span>
+        <span class="k">elif</span> <span class="n">is_illegal</span><span class="p">:</span>
+            <span class="n">win</span> <span class="o">=</span> <span class="n">opponent</span><span class="p">(</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;まで</span><span class="si">{}</span><span class="s1">手で</span><span class="si">{}</span><span class="s1">の反則負け&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">board</span><span class="o">.</span><span class="n">move_number</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;先手&#39;</span> <span class="k">if</span> <span class="n">win</span> <span class="o">==</span> <span class="n">WHITE</span> <span class="k">else</span> <span class="s1">&#39;後手&#39;</span><span class="p">))</span>
+            <span class="n">csa_endgame</span> <span class="o">=</span> <span class="s1">&#39;%ILLEGAL_MOVE&#39;</span>
+        <span class="k">elif</span> <span class="n">is_repetition_win</span><span class="p">:</span>
+            <span class="n">win</span> <span class="o">=</span> <span class="n">board</span><span class="o">.</span><span class="n">turn</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;まで</span><span class="si">{}</span><span class="s1">手で</span><span class="si">{}</span><span class="s1">の反則勝ち&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">board</span><span class="o">.</span><span class="n">move_number</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;先手&#39;</span> <span class="k">if</span> <span class="n">win</span> <span class="o">==</span> <span class="n">BLACK</span> <span class="k">else</span> <span class="s1">&#39;後手&#39;</span><span class="p">))</span>
+            <span class="n">csa_endgame</span> <span class="o">=</span> <span class="s1">&#39;%+ILLEGAL_ACTION&#39;</span> <span class="k">if</span> <span class="n">board</span><span class="o">.</span><span class="n">turn</span> <span class="o">==</span> <span class="n">WHITE</span> <span class="k">else</span> <span class="s1">&#39;%-ILLEGAL_ACTION&#39;</span>
+        <span class="k">elif</span> <span class="n">is_repetition_lose</span><span class="p">:</span>
+            <span class="n">win</span> <span class="o">=</span> <span class="n">opponent</span><span class="p">(</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;まで</span><span class="si">{}</span><span class="s1">手で</span><span class="si">{}</span><span class="s1">の反則負け&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">board</span><span class="o">.</span><span class="n">move_number</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;先手&#39;</span> <span class="k">if</span> <span class="n">win</span> <span class="o">==</span> <span class="n">WHITE</span> <span class="k">else</span> <span class="s1">&#39;後手&#39;</span><span class="p">))</span>
+            <span class="n">csa_endgame</span> <span class="o">=</span> <span class="s1">&#39;ILLEGAL_MOVE&#39;</span>
+        <span class="k">elif</span> <span class="n">is_timeup</span><span class="p">:</span>
+            <span class="n">win</span> <span class="o">=</span> <span class="n">opponent</span><span class="p">(</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;まで</span><span class="si">{}</span><span class="s1">手で</span><span class="si">{}</span><span class="s1">の切れ負け&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">board</span><span class="o">.</span><span class="n">move_number</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;先手&#39;</span> <span class="k">if</span> <span class="n">win</span> <span class="o">==</span> <span class="n">WHITE</span> <span class="k">else</span> <span class="s1">&#39;後手&#39;</span><span class="p">))</span>
+            <span class="n">csa_endgame</span> <span class="o">=</span> <span class="s1">&#39;%TIME_UP&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">win</span> <span class="o">=</span> <span class="n">opponent</span><span class="p">(</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;まで</span><span class="si">{}</span><span class="s1">手で</span><span class="si">{}</span><span class="s1">の勝ち&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">board</span><span class="o">.</span><span class="n">move_number</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;先手&#39;</span> <span class="k">if</span> <span class="n">win</span> <span class="o">==</span> <span class="n">BLACK</span> <span class="k">else</span> <span class="s1">&#39;後手&#39;</span><span class="p">))</span>
+            <span class="n">csa_endgame</span> <span class="o">=</span> <span class="s1">&#39;%TORYO&#39;</span>
+
+        <span class="c1"># 勝敗カウント</span>
+        <span class="k">if</span> <span class="n">engines_order</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="n">engine1</span><span class="p">:</span>
+            <span class="n">engine1_turn</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">engine2_turn</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">engine1_turn</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">engine2_turn</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">win</span> <span class="o">==</span> <span class="n">WIN_DRAW</span><span class="p">:</span>
+            <span class="n">draw_count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">engine1_won</span><span class="p">[</span><span class="mi">4</span> <span class="o">+</span> <span class="n">engine1_turn</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">engine2_won</span><span class="p">[</span><span class="mi">4</span> <span class="o">+</span> <span class="n">engine2_turn</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">engine1_turn</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">win</span> <span class="o">==</span> <span class="n">BLACK</span> <span class="ow">or</span> <span class="n">engine1_turn</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">win</span> <span class="o">==</span> <span class="n">WHITE</span><span class="p">:</span>
+            <span class="n">engine1_won</span><span class="p">[</span><span class="n">engine1_turn</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">engine2_won</span><span class="p">[</span><span class="mi">2</span> <span class="o">+</span> <span class="n">engine2_turn</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">engine2_won</span><span class="p">[</span><span class="n">engine2_turn</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">engine1_won</span><span class="p">[</span><span class="mi">2</span> <span class="o">+</span> <span class="n">engine1_turn</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">black_won</span> <span class="o">=</span> <span class="n">engine1_won</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">engine2_won</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">white_won</span> <span class="o">=</span> <span class="n">engine1_won</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">engine2_won</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">engine1_won_sum</span> <span class="o">=</span> <span class="n">engine1_won</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">engine1_won</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">engine2_won_sum</span> <span class="o">=</span> <span class="n">engine2_won</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">engine2_won</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">total_count</span> <span class="o">=</span> <span class="n">engine1_won_sum</span> <span class="o">+</span> <span class="n">engine2_won_sum</span> <span class="o">+</span> <span class="n">draw_count</span>
+
+        <span class="c1"># 勝敗状況表示</span>
+        <span class="k">if</span> <span class="n">print_summary</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> of </span><span class="si">{}</span><span class="s1"> games finished.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">games</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> vs </span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="s1">-</span><span class="si">{}</span><span class="s1">-</span><span class="si">{}</span><span class="s1"> (</span><span class="si">{:.1f}</span><span class="s1">%)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">engine1</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">engine2</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">engine1_won_sum</span><span class="p">,</span> <span class="n">engine2_won_sum</span><span class="p">,</span> <span class="n">draw_count</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">engine1_won_sum</span> <span class="o">+</span> <span class="n">draw_count</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">total_count</span> <span class="o">*</span> <span class="mi">100</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Black vs White: </span><span class="si">{}</span><span class="s1">-</span><span class="si">{}</span><span class="s1">-</span><span class="si">{}</span><span class="s1"> (</span><span class="si">{:.1f}</span><span class="s1">%)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">black_won</span><span class="p">,</span> <span class="n">white_won</span><span class="p">,</span> <span class="n">draw_count</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">black_won</span> <span class="o">+</span> <span class="n">draw_count</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">total_count</span> <span class="o">*</span> <span class="mi">100</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> playing Black: </span><span class="si">{}</span><span class="s1">-</span><span class="si">{}</span><span class="s1">-</span><span class="si">{}</span><span class="s1"> (</span><span class="si">{:.1f}</span><span class="s1">%)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">engine1</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">engine1_won</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">engine1_won</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">engine1_won</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span>
+                <span class="p">(</span><span class="n">engine1_won</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">engine1_won</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">engine1_won</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">engine1_won</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">engine1_won</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span> <span class="o">*</span> <span class="mi">100</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> playing White: </span><span class="si">{}</span><span class="s1">-</span><span class="si">{}</span><span class="s1">-</span><span class="si">{}</span><span class="s1"> (</span><span class="si">{:.1f}</span><span class="s1">%)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">engine1</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">engine1_won</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">engine1_won</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">engine1_won</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span>
+                <span class="p">(</span><span class="n">engine1_won</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">engine1_won</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">engine1_won</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">engine1_won</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="n">engine1_won</span><span class="p">[</span><span class="mi">5</span><span class="p">])</span> <span class="o">*</span> <span class="mi">100</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">no_swap</span> <span class="ow">and</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> playing Black: </span><span class="si">{}</span><span class="s1">-</span><span class="si">{}</span><span class="s1">-</span><span class="si">{}</span><span class="s1"> (</span><span class="si">{:.1f}</span><span class="s1">%)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">engine2</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">engine2_won</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">engine2_won</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">engine2_won</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span>
+                <span class="p">(</span><span class="n">engine2_won</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">engine2_won</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">engine2_won</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">engine2_won</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">engine2_won</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span> <span class="o">*</span> <span class="mi">100</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">no_swap</span> <span class="ow">and</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> playing White: </span><span class="si">{}</span><span class="s1">-</span><span class="si">{}</span><span class="s1">-</span><span class="si">{}</span><span class="s1"> (</span><span class="si">{:.1f}</span><span class="s1">%)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">engine2</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">engine2_won</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">engine2_won</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">engine2_won</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span>
+                <span class="p">(</span><span class="n">engine2_won</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">engine2_won</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">engine2_won</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">engine2_won</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="n">engine2_won</span><span class="p">[</span><span class="mi">5</span><span class="p">])</span> <span class="o">*</span> <span class="mi">100</span><span class="p">))</span>
+            <span class="n">elo</span> <span class="o">=</span> <span class="n">Elo</span><span class="p">(</span><span class="n">engine1_won_sum</span><span class="p">,</span> <span class="n">engine2_won_sum</span><span class="p">,</span> <span class="n">draw_count</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">engine1_won_sum</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">engine2_won_sum</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">error_margin</span> <span class="o">=</span> <span class="n">elo</span><span class="o">.</span><span class="n">error_margin</span><span class="p">()</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="n">error_margin</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">nan</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Elo difference: </span><span class="si">{:.1f}</span><span class="s1"> +/- </span><span class="si">{:.1f}</span><span class="s1">, LOS: </span><span class="si">{:.1f}</span><span class="s1"> %, DrawRatio: </span><span class="si">{:.1f}</span><span class="s1"> %&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">elo</span><span class="o">.</span><span class="n">diff</span><span class="p">(),</span> <span class="n">error_margin</span><span class="p">,</span> <span class="n">elo</span><span class="o">.</span><span class="n">los</span><span class="p">(),</span> <span class="n">elo</span><span class="o">.</span><span class="n">draw_ratio</span><span class="p">()))</span>
+
+        <span class="c1"># CSA</span>
+        <span class="k">if</span> <span class="n">csa</span><span class="p">:</span>
+            <span class="n">csa_exporter</span><span class="o">.</span><span class="n">endgame</span><span class="p">(</span><span class="n">csa_endgame</span><span class="p">)</span>
+
+        <span class="c1"># PGN</span>
+        <span class="k">if</span> <span class="n">pgn</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">win</span> <span class="o">==</span> <span class="n">BLACK</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">BLACK_WIN</span>
+            <span class="k">elif</span> <span class="n">win</span> <span class="o">==</span> <span class="n">WHITE</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">WHITE_WIN</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">DRAW</span>
+            <span class="n">pgn_exporter</span><span class="o">.</span><span class="n">tag_pair</span><span class="p">([</span><span class="n">engine</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">engine</span> <span class="ow">in</span> <span class="n">engines_order</span><span class="p">],</span> <span class="n">result</span><span class="p">,</span> <span class="nb">round</span><span class="o">=</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">no_pgn_moves</span><span class="p">:</span>
+                <span class="n">pgn_exporter</span><span class="o">.</span><span class="n">movetext</span><span class="p">(</span><span class="n">moves</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">callback</span><span class="p">:</span>
+            <span class="n">is_continue</span> <span class="o">=</span> <span class="n">callback</span><span class="p">({</span>
+                <span class="s1">&#39;engine1_name&#39;</span><span class="p">:</span> <span class="n">engine1</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="s1">&#39;engine2_name&#39;</span><span class="p">:</span> <span class="n">engine2</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="s1">&#39;engine1_won&#39;</span><span class="p">:</span> <span class="n">engine1_won_sum</span><span class="p">,</span>
+                <span class="s1">&#39;engine2_won&#39;</span><span class="p">:</span> <span class="n">engine2_won_sum</span><span class="p">,</span>
+                <span class="s1">&#39;black_won&#39;</span><span class="p">:</span> <span class="n">black_won</span><span class="p">,</span>
+                <span class="s1">&#39;white_won&#39;</span><span class="p">:</span> <span class="n">white_won</span><span class="p">,</span>
+                <span class="s1">&#39;draw&#39;</span><span class="p">:</span> <span class="n">draw_count</span><span class="p">,</span>
+                <span class="s1">&#39;total&#39;</span><span class="p">:</span> <span class="n">total_count</span><span class="p">,</span>
+                <span class="p">})</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">is_continue</span><span class="p">:</span>
+                <span class="k">break</span>
+
+    <span class="c1"># CSA</span>
+    <span class="k">if</span> <span class="n">csa</span><span class="p">:</span>
+        <span class="n">csa_exporter</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="c1"># PGN</span>
+    <span class="k">if</span> <span class="n">pgn</span><span class="p">:</span>
+        <span class="n">pgn_exporter</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="c1"># エンジン終了</span>
+    <span class="k">if</span> <span class="n">keep_process</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">engine</span><span class="p">,</span> <span class="n">listener</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">engines_order</span><span class="p">,</span> <span class="n">listeners_order</span><span class="p">):</span>
+            <span class="n">engine</span><span class="o">.</span><span class="n">quit</span><span class="p">(</span><span class="n">listener</span><span class="o">=</span><span class="n">listener</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;engine1_name&#39;</span><span class="p">:</span> <span class="n">engine1</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="s1">&#39;engine2_name&#39;</span><span class="p">:</span> <span class="n">engine2</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="s1">&#39;engine1_won&#39;</span><span class="p">:</span> <span class="n">engine1_won_sum</span><span class="p">,</span>
+        <span class="s1">&#39;engine2_won&#39;</span><span class="p">:</span> <span class="n">engine2_won_sum</span><span class="p">,</span>
+        <span class="s1">&#39;black_won&#39;</span><span class="p">:</span> <span class="n">black_won</span><span class="p">,</span>
+        <span class="s1">&#39;white_won&#39;</span><span class="p">:</span> <span class="n">white_won</span><span class="p">,</span>
+        <span class="s1">&#39;draw&#39;</span><span class="p">:</span> <span class="n">draw_count</span><span class="p">,</span>
+        <span class="s1">&#39;total&#39;</span><span class="p">:</span> <span class="n">total_count</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">argparse</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">()</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;engine1&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;engine2&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;engine3&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;?&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--options1&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--options2&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--options3&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--name1&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--name2&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--name3&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--games&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--resign&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--mate-win&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--byoyomi&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--time&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--inc&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--draw&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--ponder&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--no-swap&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--opening&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--opening-moves&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--opening-seed&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--opening-index&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--keep-process&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--csa&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--multi-csa&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--pgn&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--no-pgn-moves&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--display&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--debug&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">csa</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">multi_csa</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">csa</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">options_list</span> <span class="o">=</span> <span class="p">[{},</span> <span class="p">{},</span> <span class="p">{}]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">kvs</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">([</span><span class="n">options</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">options</span> <span class="ow">in</span> <span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">options1</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">options2</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">options3</span><span class="p">)]):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">kvs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">kvs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">for</span> <span class="n">kv_str</span> <span class="ow">in</span> <span class="n">kvs</span><span class="p">:</span>
+            <span class="n">kv</span> <span class="o">=</span> <span class="n">kv_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">kv</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;options</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">options_list</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">kv</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">kv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">engine3</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># 1 on 1 matches</span>
+        <span class="n">main</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">engine1</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">engine2</span><span class="p">,</span>
+            <span class="n">options_list</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">options_list</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">name1</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">name2</span><span class="p">],</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">games</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">resign</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">mate_win</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">byoyomi</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">inc</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">draw</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">ponder</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">no_swap</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">opening</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">opening_moves</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">opening_seed</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">opening_index</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">keep_process</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">csa</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">multi_csa</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">pgn</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">no_pgn_moves</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">display</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">debug</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># league matches</span>
+        <span class="n">engines</span> <span class="o">=</span> <span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">engine1</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">engine2</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">engine3</span><span class="p">)</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">name1</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">name2</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">name3</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">byoyomi</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">byoyomi</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">byoyomis</span> <span class="o">=</span> <span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">byoyomi</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">args</span><span class="o">.</span><span class="n">byoyomi</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">args</span><span class="o">.</span><span class="n">byoyomi</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">byoyomis</span> <span class="o">=</span> <span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">byoyomi</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">args</span><span class="o">.</span><span class="n">byoyomi</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">args</span><span class="o">.</span><span class="n">byoyomi</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">byoyomis</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">time</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">time</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">times</span> <span class="o">=</span> <span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">time</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">args</span><span class="o">.</span><span class="n">time</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">args</span><span class="o">.</span><span class="n">time</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">times</span> <span class="o">=</span> <span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">time</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">args</span><span class="o">.</span><span class="n">time</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">args</span><span class="o">.</span><span class="n">time</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">times</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">inc</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">inc</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">incs</span> <span class="o">=</span> <span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">inc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">args</span><span class="o">.</span><span class="n">inc</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">args</span><span class="o">.</span><span class="n">inc</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">incs</span> <span class="o">=</span> <span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">inc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">args</span><span class="o">.</span><span class="n">inc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">args</span><span class="o">.</span><span class="n">inc</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">incs</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">combinations</span> <span class="o">=</span> <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">{</span> <span class="s1">&#39;engine1_won&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;engine2_won&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;draw&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;total&#39;</span><span class="p">:</span> <span class="mi">0</span> <span class="p">},</span>
+            <span class="p">{</span> <span class="s1">&#39;engine1_won&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;engine2_won&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;draw&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;total&#39;</span><span class="p">:</span> <span class="mi">0</span> <span class="p">},</span>
+            <span class="p">{</span> <span class="s1">&#39;engine1_won&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;engine2_won&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;draw&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;total&#39;</span><span class="p">:</span> <span class="mi">0</span> <span class="p">}]</span>
+
+        <span class="c1"># 初期局面</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">opening</span><span class="p">:</span>
+            <span class="c1"># インデックス指定</span>
+            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">opening_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">opening_index_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">opening_index</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">opening</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">opening_index_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">())))</span>
+                <span class="c1"># シャッフル</span>
+                <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">opening_seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">opening_seed</span><span class="p">)</span>
+                <span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">opening_index_list</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">games</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">opening</span><span class="p">:</span>
+                <span class="n">opening_index</span> <span class="o">=</span> <span class="n">opening_index_list</span><span class="p">[</span><span class="n">n</span> <span class="o">//</span> <span class="mi">2</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">opening_index_list</span><span class="p">)]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">opening_index</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">combinations</span><span class="p">):</span>
+                <span class="c1"># 先後入れ替えて1回ずつ対局</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">main</span><span class="p">(</span><span class="n">engines</span><span class="p">[</span><span class="n">a</span><span class="p">],</span> <span class="n">engines</span><span class="p">[</span><span class="n">b</span><span class="p">],</span>
+                    <span class="n">options_list</span><span class="p">[</span><span class="n">a</span><span class="p">],</span> <span class="n">options_list</span><span class="p">[</span><span class="n">b</span><span class="p">],</span>
+                    <span class="p">[</span><span class="n">names</span><span class="p">[</span><span class="n">a</span><span class="p">],</span> <span class="n">names</span><span class="p">[</span><span class="n">b</span><span class="p">]],</span>
+                    <span class="mi">2</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">resign</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">mate_win</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">byoyomis</span><span class="p">[</span><span class="n">a</span><span class="p">],</span> <span class="n">byoyomis</span><span class="p">[</span><span class="n">b</span><span class="p">]),</span> <span class="p">(</span><span class="n">times</span><span class="p">[</span><span class="n">a</span><span class="p">],</span> <span class="n">times</span><span class="p">[</span><span class="n">b</span><span class="p">]),</span> <span class="p">(</span><span class="n">incs</span><span class="p">[</span><span class="n">a</span><span class="p">],</span> <span class="n">incs</span><span class="p">[</span><span class="n">b</span><span class="p">]),</span>
+                    <span class="n">args</span><span class="o">.</span><span class="n">draw</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">ponder</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">opening</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">opening_moves</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">opening_index</span><span class="p">,</span>
+                    <span class="n">args</span><span class="o">.</span><span class="n">keep_process</span><span class="p">,</span>
+                    <span class="n">args</span><span class="o">.</span><span class="n">csa</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">multi_csa</span><span class="p">,</span>
+                    <span class="n">args</span><span class="o">.</span><span class="n">pgn</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">no_pgn_moves</span><span class="p">,</span>
+                    <span class="n">args</span><span class="o">.</span><span class="n">display</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">debug</span><span class="p">,</span>
+                    <span class="n">print_summary</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;engine1_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;engine1_name&#39;</span><span class="p">]</span>
+                <span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;engine2_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;engine2_name&#39;</span><span class="p">]</span>
+                <span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;engine1_won&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;engine1_won&#39;</span><span class="p">]</span>
+                <span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;engine2_won&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;engine2_won&#39;</span><span class="p">]</span>
+                <span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;draw&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;draw&#39;</span><span class="p">]</span>
+                <span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;total&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;total&#39;</span><span class="p">]</span>
+
+            <span class="c1"># 勝敗状況表示</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> of </span><span class="si">{}</span><span class="s1"> games finished.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">games</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">combinations</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> vs </span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="s1">-</span><span class="si">{}</span><span class="s1">-</span><span class="si">{}</span><span class="s1"> (</span><span class="si">{:.1f}</span><span class="s1">%)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;engine1_name&#39;</span><span class="p">],</span> <span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;engine2_name&#39;</span><span class="p">],</span>
+                    <span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;engine1_won&#39;</span><span class="p">],</span> <span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;engine2_won&#39;</span><span class="p">],</span> <span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;draw&#39;</span><span class="p">],</span>
+                    <span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;engine1_won&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;draw&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;total&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">100</span><span class="p">))</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Tadao Yamaoka.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

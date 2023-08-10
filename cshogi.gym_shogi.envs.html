@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>cshogi.gym_shogi.envs package &mdash; cshogi  documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="cshogi.usi package" href="cshogi.usi.html" />
+    <link rel="prev" title="cshogi.gym_shogi package" href="cshogi.gym_shogi.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            cshogi
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="cshogi.html">cshogi package</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="cshogi.html#module-cshogi">Module contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cshogi.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cshogi.html#module-cshogi.CSA">cshogi.CSA module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cshogi.html#module-cshogi.KI2">cshogi.KI2 module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cshogi.html#module-cshogi.KIF">cshogi.KIF module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cshogi.html#module-cshogi.PGN">cshogi.PGN module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cshogi.html#module-cshogi.cli">cshogi.cli module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cshogi.html#module-cshogi.elo">cshogi.elo module</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="cshogi.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="cshogi.dlshogi.html">cshogi.dlshogi package</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="cshogi.gym_shogi.html">cshogi.gym_shogi package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="cshogi.gym_shogi.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.gym_shogi.html#module-cshogi.gym_shogi">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.usi.html">cshogi.usi package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.web.html">cshogi.web package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">cshogi</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="cshogi.html">cshogi package</a></li>
+          <li class="breadcrumb-item"><a href="cshogi.gym_shogi.html">cshogi.gym_shogi package</a></li>
+      <li class="breadcrumb-item active">cshogi.gym_shogi.envs package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/cshogi.gym_shogi.envs.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="cshogi-gym-shogi-envs-package">
+<h1>cshogi.gym_shogi.envs package<a class="headerlink" href="#cshogi-gym-shogi-envs-package" title="Permalink to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-cshogi.gym_shogi.envs.shogi_env">
+<span id="cshogi-gym-shogi-envs-shogi-env-module"></span><h2>cshogi.gym_shogi.envs.shogi_env module<a class="headerlink" href="#module-cshogi.gym_shogi.envs.shogi_env" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="cshogi.gym_shogi.envs.shogi_env.ShogiEnv">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.gym_shogi.envs.shogi_env.</span></span><span class="sig-name descname"><span class="pre">ShogiEnv</span></span><a class="headerlink" href="#cshogi.gym_shogi.envs.shogi_env.ShogiEnv" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Env</span></code></p>
+<p>A Shogi environment that simulates the game of Shogi.</p>
+<p>This environment conforms to the OpenAI Gym interface.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.gym_shogi.envs.shogi_env.ShogiEnv.metadata">
+<span class="sig-name descname"><span class="pre">metadata</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'render.modes':</span> <span class="pre">['human',</span> <span class="pre">'svg',</span> <span class="pre">'ansi',</span> <span class="pre">'sfen']}</span></em><a class="headerlink" href="#cshogi.gym_shogi.envs.shogi_env.ShogiEnv.metadata" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.gym_shogi.envs.shogi_env.ShogiEnv.render">
+<span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'human'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.gym_shogi.envs.shogi_env.ShogiEnv.render" title="Permalink to this definition"></a></dt>
+<dd><p>Render the current game state in the specified mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mode</strong> (<em>str</em>) – The rendering mode (‘human’, ‘svg’, ‘ansi’, or ‘sfen’). Default is ‘human’.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An instance of Board if rendering in ‘human’ mode, an SVG if rendering in ‘svg’ mode, otherwise a string.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="cshogi.html#cshogi.Board" title="cshogi.Board">Board</a> or <a class="reference internal" href="cshogi.html#cshogi.SvgWrapper" title="cshogi.SvgWrapper">SvgWrapper</a> or str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.gym_shogi.envs.shogi_env.ShogiEnv.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sfen</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hcp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.gym_shogi.envs.shogi_env.ShogiEnv.reset" title="Permalink to this definition"></a></dt>
+<dd><p>Reset the game environment to an initial state, or a state specified by SFEN or HCP.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sfen</strong> (<em>str</em><em>, </em><em>optional</em>) – An SFEN string representing the desired initial board state. Optional.</p></li>
+<li><p><strong>hcp</strong> (<em>np.ndarray</em><em>, </em><em>optional</em>) – A HCP representing the desired initial board state. Optional.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The reset board.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="cshogi.html#cshogi.Board" title="cshogi.Board">cshogi.Board</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.gym_shogi.envs.shogi_env.ShogiEnv.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.gym_shogi.envs.shogi_env.ShogiEnv.step" title="Permalink to this definition"></a></dt>
+<dd><p>Advance the game by making the specified move.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>move</strong> (<em>int</em>) – The move to be made.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple containing the reward (float), done flag (bool), and draw status (bool or None).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-cshogi.gym_shogi.envs.shogi_vec_env">
+<span id="cshogi-gym-shogi-envs-shogi-vec-env-module"></span><h2>cshogi.gym_shogi.envs.shogi_vec_env module<a class="headerlink" href="#module-cshogi.gym_shogi.envs.shogi_vec_env" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="cshogi.gym_shogi.envs.shogi_vec_env.ShogiVecEnv">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.gym_shogi.envs.shogi_vec_env.</span></span><span class="sig-name descname"><span class="pre">ShogiVecEnv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_envs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.gym_shogi.envs.shogi_vec_env.ShogiVecEnv" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A vectorized Shogi environment that can manage multiple instances of Shogi games simultaneously.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>num_envs</strong> (<em>int</em>) – The number of environments to manage.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.gym_shogi.envs.shogi_vec_env.ShogiVecEnv.metadata">
+<span class="sig-name descname"><span class="pre">metadata</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'render.modes':</span> <span class="pre">['sfen']}</span></em><a class="headerlink" href="#cshogi.gym_shogi.envs.shogi_vec_env.ShogiVecEnv.metadata" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.gym_shogi.envs.shogi_vec_env.ShogiVecEnv.render">
+<span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sfen'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.gym_shogi.envs.shogi_vec_env.ShogiVecEnv.render" title="Permalink to this definition"></a></dt>
+<dd><p>Render the current game state in the specified mode for all environments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mode</strong> (<em>str</em>) – The rendering mode (‘sfen’). Default is ‘sfen’.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of string representations of the environments.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.gym_shogi.envs.shogi_vec_env.ShogiVecEnv.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.gym_shogi.envs.shogi_vec_env.ShogiVecEnv.reset" title="Permalink to this definition"></a></dt>
+<dd><p>Reset all the environments to their initial state.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.gym_shogi.envs.shogi_vec_env.ShogiVecEnv.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">moves</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.gym_shogi.envs.shogi_vec_env.ShogiVecEnv.step" title="Permalink to this definition"></a></dt>
+<dd><p>Advance the games by making the specified moves in all environments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>moves</strong> (<em>list</em><em> of </em><em>int</em>) – A list of moves to be made, one for each environment.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple containing lists of rewards, done flags, and draw statuses for each environment.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple of (list of float, list of bool, list of bool or None)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-cshogi.gym_shogi.envs">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-cshogi.gym_shogi.envs" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="cshogi.gym_shogi.envs.ShogiEnv">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.gym_shogi.envs.</span></span><span class="sig-name descname"><span class="pre">ShogiEnv</span></span><a class="headerlink" href="#cshogi.gym_shogi.envs.ShogiEnv" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Env</span></code></p>
+<p>A Shogi environment that simulates the game of Shogi.</p>
+<p>This environment conforms to the OpenAI Gym interface.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.gym_shogi.envs.ShogiEnv.action_space">
+<span class="sig-name descname"><span class="pre">action_space</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">spaces.Space</span><span class="p"><span class="pre">[</span></span><span class="pre">ActType</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#cshogi.gym_shogi.envs.ShogiEnv.action_space" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.gym_shogi.envs.ShogiEnv.metadata">
+<span class="sig-name descname"><span class="pre">metadata</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'render.modes':</span> <span class="pre">['human',</span> <span class="pre">'svg',</span> <span class="pre">'ansi',</span> <span class="pre">'sfen']}</span></em><a class="headerlink" href="#cshogi.gym_shogi.envs.ShogiEnv.metadata" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.gym_shogi.envs.ShogiEnv.observation_space">
+<span class="sig-name descname"><span class="pre">observation_space</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">spaces.Space</span><span class="p"><span class="pre">[</span></span><span class="pre">ObsType</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#cshogi.gym_shogi.envs.ShogiEnv.observation_space" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.gym_shogi.envs.ShogiEnv.render">
+<span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'human'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.gym_shogi.envs.ShogiEnv.render" title="Permalink to this definition"></a></dt>
+<dd><p>Render the current game state in the specified mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mode</strong> (<em>str</em>) – The rendering mode (‘human’, ‘svg’, ‘ansi’, or ‘sfen’). Default is ‘human’.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An instance of Board if rendering in ‘human’ mode, an SVG if rendering in ‘svg’ mode, otherwise a string.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="cshogi.html#cshogi.Board" title="cshogi.Board">Board</a> or <a class="reference internal" href="cshogi.html#cshogi.SvgWrapper" title="cshogi.SvgWrapper">SvgWrapper</a> or str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.gym_shogi.envs.ShogiEnv.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sfen</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hcp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.gym_shogi.envs.ShogiEnv.reset" title="Permalink to this definition"></a></dt>
+<dd><p>Reset the game environment to an initial state, or a state specified by SFEN or HCP.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sfen</strong> (<em>str</em><em>, </em><em>optional</em>) – An SFEN string representing the desired initial board state. Optional.</p></li>
+<li><p><strong>hcp</strong> (<em>np.ndarray</em><em>, </em><em>optional</em>) – A HCP representing the desired initial board state. Optional.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The reset board.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="cshogi.html#cshogi.Board" title="cshogi.Board">cshogi.Board</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.gym_shogi.envs.ShogiEnv.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.gym_shogi.envs.ShogiEnv.step" title="Permalink to this definition"></a></dt>
+<dd><p>Advance the game by making the specified move.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>move</strong> (<em>int</em>) – The move to be made.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple containing the reward (float), done flag (bool), and draw status (bool or None).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cshogi.gym_shogi.envs.ShogiVecEnv">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.gym_shogi.envs.</span></span><span class="sig-name descname"><span class="pre">ShogiVecEnv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_envs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.gym_shogi.envs.ShogiVecEnv" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A vectorized Shogi environment that can manage multiple instances of Shogi games simultaneously.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>num_envs</strong> (<em>int</em>) – The number of environments to manage.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.gym_shogi.envs.ShogiVecEnv.metadata">
+<span class="sig-name descname"><span class="pre">metadata</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'render.modes':</span> <span class="pre">['sfen']}</span></em><a class="headerlink" href="#cshogi.gym_shogi.envs.ShogiVecEnv.metadata" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.gym_shogi.envs.ShogiVecEnv.render">
+<span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sfen'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.gym_shogi.envs.ShogiVecEnv.render" title="Permalink to this definition"></a></dt>
+<dd><p>Render the current game state in the specified mode for all environments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mode</strong> (<em>str</em>) – The rendering mode (‘sfen’). Default is ‘sfen’.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of string representations of the environments.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.gym_shogi.envs.ShogiVecEnv.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.gym_shogi.envs.ShogiVecEnv.reset" title="Permalink to this definition"></a></dt>
+<dd><p>Reset all the environments to their initial state.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.gym_shogi.envs.ShogiVecEnv.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">moves</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.gym_shogi.envs.ShogiVecEnv.step" title="Permalink to this definition"></a></dt>
+<dd><p>Advance the games by making the specified moves in all environments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>moves</strong> (<em>list</em><em> of </em><em>int</em>) – A list of moves to be made, one for each environment.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple containing lists of rewards, done flags, and draw statuses for each environment.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple of (list of float, list of bool, list of bool or None)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="cshogi.gym_shogi.html" class="btn btn-neutral float-left" title="cshogi.gym_shogi package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="cshogi.usi.html" class="btn btn-neutral float-right" title="cshogi.usi package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Tadao Yamaoka.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

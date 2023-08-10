@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>cshogi.web.app &mdash; cshogi  documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            cshogi
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../cshogi.html">cshogi package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">cshogi</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">cshogi.web.app</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for cshogi.web.app</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">cshogi</span> <span class="kn">import</span> <span class="n">Board</span><span class="p">,</span> <span class="n">CSA</span><span class="p">,</span> <span class="n">KIF</span><span class="p">,</span> <span class="n">BLACK</span><span class="p">,</span> <span class="n">WHITE</span><span class="p">,</span> <span class="n">opponent</span><span class="p">,</span> <span class="n">REPETITION_WIN</span><span class="p">,</span> <span class="n">REPETITION_LOSE</span>
+<span class="kn">from</span> <span class="nn">cshogi.usi</span> <span class="kn">import</span> <span class="n">Engine</span>
+<span class="kn">from</span> <span class="nn">cshogi.cli</span> <span class="kn">import</span> <span class="n">usi_info_to_score</span><span class="p">,</span> <span class="n">usi_info_to_csa_comment</span><span class="p">,</span> <span class="n">re_usi_info</span>
+<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">render_template</span><span class="p">,</span> <span class="n">request</span>
+<span class="kn">from</span> <span class="nn">wsgiref.simple_server</span> <span class="kn">import</span> <span class="n">make_server</span>
+
+<span class="n">TURN_SYMBOLS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;▲&#39;</span><span class="p">,</span> <span class="s1">&#39;△&#39;</span><span class="p">)</span>
+<span class="n">CSA_TURN_SYMBOLS</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;+&#39;</span><span class="p">:</span> <span class="s1">&#39;▲&#39;</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">:</span> <span class="s1">&#39;△&#39;</span><span class="p">}</span>
+
+<div class="viewcode-block" id="Human"><a class="viewcode-back" href="../../../cshogi.web.html#cshogi.web.app.Human">[docs]</a><span class="k">class</span> <span class="nc">Human</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">human_input</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">board</span> <span class="o">=</span> <span class="n">Board</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Human&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">human_input</span> <span class="o">=</span> <span class="n">human_input</span>
+
+<div class="viewcode-block" id="Human.usi"><a class="viewcode-back" href="../../../cshogi.web.html#cshogi.web.app.Human.usi">[docs]</a>    <span class="k">def</span> <span class="nf">usi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">listener</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span></div>
+
+<div class="viewcode-block" id="Human.isready"><a class="viewcode-back" href="../../../cshogi.web.html#cshogi.web.app.Human.isready">[docs]</a>    <span class="k">def</span> <span class="nf">isready</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">listener</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="Human.usinewgame"><a class="viewcode-back" href="../../../cshogi.web.html#cshogi.web.app.Human.usinewgame">[docs]</a>    <span class="k">def</span> <span class="nf">usinewgame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">listener</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="Human.position"><a class="viewcode-back" href="../../../cshogi.web.html#cshogi.web.app.Human.position">[docs]</a>    <span class="k">def</span> <span class="nf">position</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">moves</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sfen</span><span class="o">=</span><span class="s2">&quot;startpos&quot;</span><span class="p">,</span> <span class="n">listener</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">move</span> <span class="ow">in</span> <span class="n">moves</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="o">.</span><span class="n">push_usi</span><span class="p">(</span><span class="n">move</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Human.go"><a class="viewcode-back" href="../../../cshogi.web.html#cshogi.web.app.Human.go">[docs]</a>    <span class="k">def</span> <span class="nf">go</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ponder</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">btime</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">wtime</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">byoyomi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">binc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">winc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nodes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">listener</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">time</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">human_input</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">human_input</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">human_input</span><span class="p">[</span><span class="s1">&#39;number&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="o">.</span><span class="n">move_number</span><span class="p">:</span>
+                <span class="n">usi_move</span> <span class="o">=</span> <span class="n">human_input</span><span class="p">[</span><span class="s1">&#39;move&#39;</span><span class="p">]</span>
+                <span class="n">move</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="o">.</span><span class="n">move_from_usi</span><span class="p">(</span><span class="n">usi_move</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="o">.</span><span class="n">is_legal</span><span class="p">(</span><span class="n">move</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">usi_move</span><span class="p">,</span> <span class="kc">None</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Human.quit"><a class="viewcode-back" href="../../../cshogi.web.html#cshogi.web.app.Human.quit">[docs]</a>    <span class="k">def</span> <span class="nf">quit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">listener</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">pass</span></div></div>
+
+<div class="viewcode-block" id="usi_info_to_pv"><a class="viewcode-back" href="../../../cshogi.web.html#cshogi.web.app.usi_info_to_pv">[docs]</a><span class="k">def</span> <span class="nf">usi_info_to_pv</span><span class="p">(</span><span class="n">board</span><span class="p">,</span> <span class="n">info</span><span class="p">):</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">re_usi_info</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># pv</span>
+    <span class="n">pv</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">board2</span> <span class="o">=</span> <span class="n">board</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">usi_move</span> <span class="ow">in</span> <span class="n">m</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">):</span>
+        <span class="n">move</span> <span class="o">=</span> <span class="n">board2</span><span class="o">.</span><span class="n">move_from_usi</span><span class="p">(</span><span class="n">usi_move</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">board2</span><span class="o">.</span><span class="n">is_legal</span><span class="p">(</span><span class="n">move</span><span class="p">):</span>
+            <span class="k">break</span>
+        <span class="n">pv</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">TURN_SYMBOLS</span><span class="p">[</span><span class="n">board2</span><span class="o">.</span><span class="n">turn</span><span class="p">]</span> <span class="o">+</span> <span class="n">KIF</span><span class="o">.</span><span class="n">move_to_kif</span><span class="p">(</span><span class="n">move</span><span class="p">,</span> <span class="n">board2</span><span class="o">.</span><span class="n">peek</span><span class="p">()))</span>
+        <span class="n">board2</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">move</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pv</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="match"><a class="viewcode-back" href="../../../cshogi.web.html#cshogi.web.app.match">[docs]</a><span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="n">moves</span><span class="p">,</span> <span class="n">engine1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">engine2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">options1</span><span class="o">=</span><span class="p">{},</span> <span class="n">options2</span><span class="o">=</span><span class="p">{},</span> <span class="n">names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">byoyomi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">draw</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">human_input</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">csa</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+    <span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">perf_counter</span>
+
+    <span class="k">class</span> <span class="nc">Listener</span><span class="p">:</span>
+        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bestmove</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+
+        <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bestmove</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bestmove</span> <span class="o">=</span> <span class="n">line</span>
+    <span class="n">listener</span> <span class="o">=</span> <span class="n">Listener</span><span class="p">()</span>
+
+    <span class="c1"># CSA</span>
+    <span class="k">if</span> <span class="n">csa</span><span class="p">:</span>
+        <span class="n">csa_exporter</span> <span class="o">=</span> <span class="n">CSA</span><span class="o">.</span><span class="n">Exporter</span><span class="p">(</span><span class="n">csa</span><span class="p">,</span> <span class="n">append</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">engines</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">engine</span> <span class="ow">in</span> <span class="p">(</span><span class="n">engine1</span><span class="p">,</span> <span class="n">engine2</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">engine</span> <span class="o">==</span> <span class="s1">&#39;human&#39;</span><span class="p">:</span>
+            <span class="n">engines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Human</span><span class="p">(</span><span class="n">human_input</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">engines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Engine</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">connect</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">engine</span><span class="p">,</span> <span class="n">options</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">engines</span><span class="p">,</span> <span class="p">(</span><span class="n">options1</span><span class="p">,</span> <span class="n">options2</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">options</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">engine</span><span class="o">.</span><span class="n">setoption</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">listener</span><span class="o">=</span><span class="n">listener</span><span class="p">)</span>
+        <span class="n">engine</span><span class="o">.</span><span class="n">isready</span><span class="p">(</span><span class="n">listener</span><span class="o">=</span><span class="n">listener</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">names</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+            <span class="n">engines</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">names</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">names</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">engines</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
+
+    <span class="n">board</span> <span class="o">=</span> <span class="n">Board</span><span class="p">()</span>
+    <span class="n">usi_moves</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">repetition_hash</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+    <span class="c1"># 新規ゲーム</span>
+    <span class="k">for</span> <span class="n">engine</span> <span class="ow">in</span> <span class="n">engines</span><span class="p">:</span>
+        <span class="n">engine</span><span class="o">.</span><span class="n">usinewgame</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">csa</span><span class="p">:</span>
+        <span class="n">csa_exporter</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">board</span><span class="p">,</span> <span class="n">names</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="s1">&#39;V2&#39;</span><span class="p">)</span>
+
+    <span class="c1"># 対局</span>
+    <span class="n">is_game_over</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">is_nyugyoku</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">is_illegal</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">is_repetition_win</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">is_repetition_lose</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">is_fourfold_repetition</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">is_timeup</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">remain_time</span> <span class="o">=</span> <span class="p">[</span><span class="n">time</span><span class="p">,</span> <span class="n">time</span><span class="p">]</span>
+    <span class="k">while</span> <span class="ow">not</span> <span class="n">is_game_over</span><span class="p">:</span>
+        <span class="n">engine_index</span> <span class="o">=</span> <span class="p">(</span><span class="n">board</span><span class="o">.</span><span class="n">move_number</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span>
+        <span class="n">engine</span> <span class="o">=</span> <span class="n">engines</span><span class="p">[</span><span class="n">engine_index</span><span class="p">]</span>
+
+        <span class="c1"># 持将棋</span>
+        <span class="k">if</span> <span class="n">board</span><span class="o">.</span><span class="n">move_number</span> <span class="o">&gt;</span> <span class="n">draw</span><span class="p">:</span>
+            <span class="n">is_game_over</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">break</span>
+
+        <span class="c1"># position</span>
+        <span class="n">engine</span><span class="o">.</span><span class="n">position</span><span class="p">(</span><span class="n">usi_moves</span><span class="p">)</span>
+
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
+
+        <span class="c1"># go</span>
+        <span class="n">listener</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">listener</span><span class="o">.</span><span class="n">bestmove</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">bestmove</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">go</span><span class="p">(</span><span class="n">byoyomi</span><span class="o">=</span><span class="n">byoyomi</span><span class="p">,</span> <span class="n">btime</span><span class="o">=</span><span class="n">remain_time</span><span class="p">[</span><span class="n">BLACK</span><span class="p">],</span> <span class="n">wtime</span><span class="o">=</span><span class="n">remain_time</span><span class="p">[</span><span class="n">WHITE</span><span class="p">],</span> <span class="n">binc</span><span class="o">=</span><span class="n">inc</span><span class="p">,</span> <span class="n">winc</span><span class="o">=</span><span class="n">inc</span><span class="p">,</span> <span class="n">listener</span><span class="o">=</span><span class="n">listener</span><span class="p">)</span>
+
+        <span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+
+        <span class="k">if</span> <span class="n">remain_time</span><span class="p">[</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">inc_time</span><span class="p">[</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">remain_time</span><span class="p">[</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span><span class="p">]</span> <span class="o">+=</span> <span class="n">inc_time</span><span class="p">[</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span><span class="p">]</span>
+            <span class="n">remain_time</span><span class="p">[</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span><span class="p">]</span> <span class="o">-=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">elapsed_time</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">bestmove</span> <span class="o">==</span> <span class="s1">&#39;resign&#39;</span><span class="p">:</span>
+            <span class="c1"># 投了</span>
+            <span class="n">is_game_over</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">break</span>
+        <span class="k">elif</span> <span class="n">bestmove</span> <span class="o">==</span> <span class="s1">&#39;win&#39;</span><span class="p">:</span>
+            <span class="c1"># 入玉勝ち宣言</span>
+            <span class="n">is_nyugyoku</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">is_game_over</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">break</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">move</span> <span class="o">=</span> <span class="n">board</span><span class="o">.</span><span class="n">move_from_usi</span><span class="p">(</span><span class="n">bestmove</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">board</span><span class="o">.</span><span class="n">is_legal</span><span class="p">(</span><span class="n">move</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">csa</span><span class="p">:</span>
+                    <span class="n">csa_exporter</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">move</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">elapsed_time</span><span class="p">),</span> <span class="n">comment</span><span class="o">=</span><span class="n">usi_info_to_csa_comment</span><span class="p">(</span><span class="n">board</span><span class="p">,</span> <span class="n">listener</span><span class="o">.</span><span class="n">info</span><span class="p">))</span>
+                <span class="n">score</span> <span class="o">=</span> <span class="n">usi_info_to_score</span><span class="p">(</span><span class="n">listener</span><span class="o">.</span><span class="n">info</span><span class="p">)</span>
+                <span class="n">pv</span> <span class="o">=</span> <span class="n">usi_info_to_pv</span><span class="p">(</span><span class="n">board</span><span class="p">,</span> <span class="n">listener</span><span class="o">.</span><span class="n">info</span><span class="p">)</span>
+                <span class="n">moves</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                    <span class="s1">&#39;number&#39;</span><span class="p">:</span> <span class="n">board</span><span class="o">.</span><span class="n">move_number</span><span class="p">,</span>
+                    <span class="s1">&#39;kif_move&#39;</span><span class="p">:</span> <span class="n">TURN_SYMBOLS</span><span class="p">[(</span><span class="n">board</span><span class="o">.</span><span class="n">move_number</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">KIF</span><span class="o">.</span><span class="n">move_to_kif</span><span class="p">(</span><span class="n">move</span><span class="p">,</span> <span class="n">board</span><span class="o">.</span><span class="n">peek</span><span class="p">()),</span>
+                    <span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">elapsed_time</span><span class="p">),</span>
+                    <span class="s1">&#39;move&#39;</span><span class="p">:</span> <span class="n">move</span><span class="p">,</span>
+                    <span class="s1">&#39;eval&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">score</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">board</span><span class="o">.</span><span class="n">turn</span> <span class="o">==</span> <span class="n">BLACK</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="k">if</span> <span class="n">score</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s1">&#39;null&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;pv&#39;</span><span class="p">:</span> <span class="n">pv</span> <span class="k">if</span> <span class="n">pv</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+                <span class="p">})</span>
+                <span class="n">board</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">move</span><span class="p">)</span>
+                <span class="n">usi_moves</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bestmove</span><span class="p">)</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="n">board</span><span class="o">.</span><span class="n">zobrist_hash</span><span class="p">()</span>
+                <span class="n">repetition_hash</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="c1"># 千日手</span>
+                <span class="k">if</span> <span class="n">repetition_hash</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+                    <span class="c1"># 連続王手</span>
+                    <span class="n">is_draw</span> <span class="o">=</span> <span class="n">board</span><span class="o">.</span><span class="n">is_draw</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">is_draw</span> <span class="o">==</span> <span class="n">REPETITION_WIN</span><span class="p">:</span>
+                        <span class="n">is_repetition_win</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">is_game_over</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="k">break</span>
+                    <span class="k">elif</span> <span class="n">is_draw</span> <span class="o">==</span> <span class="n">REPETITION_LOSE</span><span class="p">:</span>
+                        <span class="n">is_repetition_lose</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">is_game_over</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="k">break</span>
+                    <span class="n">is_fourfold_repetition</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="n">is_game_over</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">is_illegal</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">is_game_over</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">break</span>
+
+        <span class="c1"># 終局判定</span>
+        <span class="k">if</span> <span class="n">board</span><span class="o">.</span><span class="n">is_game_over</span><span class="p">():</span>
+            <span class="n">is_game_over</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">break</span>
+
+    <span class="c1"># エンジン終了</span>
+    <span class="k">for</span> <span class="n">engine</span> <span class="ow">in</span> <span class="n">engines</span><span class="p">:</span>
+        <span class="n">engine</span><span class="o">.</span><span class="n">quit</span><span class="p">()</span>
+
+    <span class="c1"># 結果出力</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">board</span><span class="o">.</span><span class="n">is_game_over</span><span class="p">()</span> <span class="ow">and</span> <span class="n">board</span><span class="o">.</span><span class="n">move_number</span> <span class="o">&gt;</span> <span class="n">draw</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="s1">&#39;持将棋&#39;</span>
+        <span class="n">csa_endgame</span> <span class="o">=</span> <span class="s1">&#39;%JISHOGI&#39;</span>
+    <span class="k">elif</span> <span class="n">is_fourfold_repetition</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="s1">&#39;千日手&#39;</span>
+        <span class="n">csa_endgame</span> <span class="o">=</span> <span class="s1">&#39;%SENNICHITE&#39;</span>
+    <span class="k">elif</span> <span class="n">is_nyugyoku</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">TURN_SYMBOLS</span><span class="p">[</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;入玉宣言&#39;</span>
+        <span class="n">csa_endgame</span> <span class="o">=</span> <span class="s1">&#39;%KACHI&#39;</span>
+    <span class="k">elif</span> <span class="n">is_illegal</span><span class="p">:</span>
+        <span class="n">win</span> <span class="o">=</span> <span class="n">opponent</span><span class="p">(</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">の反則負け&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;先手&#39;</span> <span class="k">if</span> <span class="n">win</span> <span class="o">==</span> <span class="n">WHITE</span> <span class="k">else</span> <span class="s1">&#39;後手&#39;</span><span class="p">)</span>
+        <span class="n">csa_endgame</span> <span class="o">=</span> <span class="s1">&#39;%ILLEGAL_MOVE&#39;</span>
+    <span class="k">elif</span> <span class="n">is_repetition_win</span><span class="p">:</span>
+        <span class="n">win</span> <span class="o">=</span> <span class="n">board</span><span class="o">.</span><span class="n">turn</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">の反則勝ち&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;先手&#39;</span> <span class="k">if</span> <span class="n">win</span> <span class="o">==</span> <span class="n">BLACK</span> <span class="k">else</span> <span class="s1">&#39;後手&#39;</span><span class="p">)</span>
+        <span class="n">csa_endgame</span> <span class="o">=</span> <span class="s1">&#39;%+ILLEGAL_ACTION&#39;</span> <span class="k">if</span> <span class="n">board</span><span class="o">.</span><span class="n">turn</span> <span class="o">==</span> <span class="n">WHITE</span> <span class="k">else</span> <span class="s1">&#39;%-ILLEGAL_ACTION&#39;</span>
+    <span class="k">elif</span> <span class="n">is_repetition_lose</span><span class="p">:</span>
+        <span class="n">win</span> <span class="o">=</span> <span class="n">opponent</span><span class="p">(</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">の反則負け&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;先手&#39;</span> <span class="k">if</span> <span class="n">win</span> <span class="o">==</span> <span class="n">WHITE</span> <span class="k">else</span> <span class="s1">&#39;後手&#39;</span><span class="p">)</span>
+        <span class="n">csa_endgame</span> <span class="o">=</span> <span class="s1">&#39;ILLEGAL_MOVE&#39;</span>
+    <span class="k">elif</span> <span class="n">is_timeup</span><span class="p">:</span>
+        <span class="n">win</span> <span class="o">=</span> <span class="n">opponent</span><span class="p">(</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">の切れ負け&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;先手&#39;</span> <span class="k">if</span> <span class="n">win</span> <span class="o">==</span> <span class="n">WHITE</span> <span class="k">else</span> <span class="s1">&#39;後手&#39;</span><span class="p">)</span>
+        <span class="n">csa_endgame</span> <span class="o">=</span> <span class="s1">&#39;%TIME_UP&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">TURN_SYMBOLS</span><span class="p">[</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;投了&#39;</span>
+        <span class="n">csa_endgame</span> <span class="o">=</span> <span class="s1">&#39;%TORYO&#39;</span>
+
+    <span class="c1"># CSA</span>
+    <span class="k">if</span> <span class="n">csa</span><span class="p">:</span>
+        <span class="n">csa_exporter</span><span class="o">.</span><span class="n">endgame</span><span class="p">(</span><span class="n">csa_endgame</span><span class="p">)</span>
+
+    <span class="n">moves</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+        <span class="s1">&#39;number&#39;</span><span class="p">:</span> <span class="n">board</span><span class="o">.</span><span class="n">move_number</span><span class="p">,</span>
+        <span class="s1">&#39;kif_move&#39;</span><span class="p">:</span> <span class="n">result</span><span class="p">,</span>
+        <span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s1">&#39;move&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s1">&#39;eval&#39;</span><span class="p">:</span> <span class="s1">&#39;null&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;pv&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">})</span></div>
+
+<div class="viewcode-block" id="run"><a class="viewcode-back" href="../../../cshogi.web.html#cshogi.web.app.run">[docs]</a><span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">engine1</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">engine2</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">options1</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="p">{},</span> <span class="n">options2</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="p">{},</span> <span class="n">name1</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">name2</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">byoyomi</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">inc</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">draw</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span> <span class="n">csa</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8000</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initializes and runs a shogi match between two engines or replays a game from a given CSA file.</span>
+<span class="sd">    The match or replay is rendered using Flask and is accessible via a web interface.</span>
+
+<span class="sd">    :param engine1: Name or path of the first engine, or &#39;human&#39; for human player. Default is None.</span>
+<span class="sd">    :param engine2: Name or path of the second engine, or &#39;human&#39; for human player. Default is None.</span>
+<span class="sd">    :param options1: Configuration options for the first engine. Default is an empty dictionary.</span>
+<span class="sd">    :param options2: Configuration options for the second engine. Default is an empty dictionary.</span>
+<span class="sd">    :param name1: Optional name for the first player. Default is None.</span>
+<span class="sd">    :param name2: Optional name for the second player. Default is None.</span>
+<span class="sd">    :param byoyomi: Byoyomi time in milliseconds. Default is None.</span>
+<span class="sd">    :param time: Time control for the match in milliseconds. Default is None.</span>
+<span class="sd">    :param inc: Increment time for each move in milliseconds. Default is None.</span>
+<span class="sd">    :param draw: Number of moves before a draw is claimed. Default is 256.</span>
+<span class="sd">    :param csa: Path to a CSA file to replay a game. Default is None.</span>
+<span class="sd">    :param host: Hostname to bind the Flask server to. Default is &#39;localhost&#39;.</span>
+<span class="sd">    :param port: Port number to bind the Flask server to. Default is 8000.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">is_match</span> <span class="o">=</span> <span class="s1">&#39;false&#39;</span>
+    <span class="n">auto_update</span> <span class="o">=</span> <span class="s1">&#39;false&#39;</span>
+
+    <span class="k">if</span> <span class="n">engine1</span> <span class="ow">and</span> <span class="n">engine2</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="kn">import</span> <span class="n">Process</span><span class="p">,</span> <span class="n">Manager</span>
+        <span class="n">manager</span> <span class="o">=</span> <span class="n">Manager</span><span class="p">()</span>
+        <span class="n">moves</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+        <span class="n">human_input</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">dict</span><span class="p">({</span> <span class="s1">&#39;number&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;move&#39;</span><span class="p">:</span> <span class="kc">None</span> <span class="p">})</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">list</span><span class="p">([</span><span class="n">name1</span><span class="p">,</span> <span class="n">name2</span><span class="p">])</span>
+        <span class="n">humans</span> <span class="o">=</span> <span class="p">[</span><span class="n">engine1</span> <span class="o">==</span> <span class="s1">&#39;human&#39;</span><span class="p">,</span> <span class="n">engine2</span> <span class="o">==</span> <span class="s1">&#39;human&#39;</span><span class="p">]</span>
+        <span class="n">match_proc</span> <span class="o">=</span> <span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">match</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="n">moves</span><span class="p">,</span> <span class="n">engine1</span><span class="p">,</span> <span class="n">engine2</span><span class="p">,</span> <span class="n">options1</span><span class="p">,</span> <span class="n">options2</span><span class="p">,</span> <span class="n">names</span><span class="p">,</span> <span class="n">byoyomi</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">inc</span><span class="p">,</span> <span class="n">draw</span><span class="p">,</span> <span class="n">human_input</span><span class="p">,</span> <span class="n">csa</span><span class="p">])</span>
+        <span class="n">match_proc</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="n">is_match</span> <span class="o">=</span> <span class="s1">&#39;true&#39;</span>
+        <span class="n">auto_update</span> <span class="o">=</span> <span class="s1">&#39;true&#39;</span>
+    <span class="k">elif</span> <span class="n">csa</span><span class="p">:</span>
+        <span class="n">moves</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">kif</span> <span class="o">=</span> <span class="n">CSA</span><span class="o">.</span><span class="n">Parser</span><span class="o">.</span><span class="n">parse_file</span><span class="p">(</span><span class="n">csa</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="n">kif</span><span class="o">.</span><span class="n">names</span>
+        <span class="n">board</span> <span class="o">=</span> <span class="n">Board</span><span class="p">(</span><span class="n">sfen</span><span class="o">=</span><span class="n">kif</span><span class="o">.</span><span class="n">sfen</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">move</span><span class="p">,</span> <span class="n">prev_move</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">comment</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">kif</span><span class="o">.</span><span class="n">moves</span><span class="p">,</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="n">kif</span><span class="o">.</span><span class="n">moves</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">kif</span><span class="o">.</span><span class="n">times</span><span class="p">,</span> <span class="n">kif</span><span class="o">.</span><span class="n">comments</span><span class="p">)):</span>
+            <span class="n">comment_items</span> <span class="o">=</span> <span class="n">comment</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+            <span class="nb">eval</span> <span class="o">=</span> <span class="s1">&#39;null&#39;</span>
+            <span class="n">pv</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">assert</span> <span class="n">board</span><span class="o">.</span><span class="n">is_legal</span><span class="p">(</span><span class="n">move</span><span class="p">)</span>
+            <span class="n">board</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">move</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">comment_items</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">comment_items</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                <span class="nb">eval</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">comment_items</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">comment_items</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">board2</span> <span class="o">=</span> <span class="n">board</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">csa</span> <span class="ow">in</span> <span class="n">comment_items</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+                    <span class="n">move2</span> <span class="o">=</span> <span class="n">board2</span><span class="o">.</span><span class="n">move_from_csa</span><span class="p">(</span><span class="n">csa</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+                    <span class="k">if</span> <span class="n">board2</span><span class="o">.</span><span class="n">is_legal</span><span class="p">(</span><span class="n">move2</span><span class="p">):</span>
+                        <span class="n">pv</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CSA_TURN_SYMBOLS</span><span class="p">[</span><span class="n">csa</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">+</span> <span class="n">KIF</span><span class="o">.</span><span class="n">move_to_kif</span><span class="p">(</span><span class="n">move2</span><span class="p">))</span>
+                        <span class="n">board2</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">move2</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">pv</span> <span class="o">=</span> <span class="n">comment_items</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+                        <span class="k">break</span>
+            <span class="n">moves</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s1">&#39;number&#39;</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="s1">&#39;kif_move&#39;</span><span class="p">:</span> <span class="n">TURN_SYMBOLS</span><span class="p">[</span><span class="n">i</span> <span class="o">%</span> <span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">KIF</span><span class="o">.</span><span class="n">move_to_kif</span><span class="p">(</span><span class="n">move</span><span class="p">,</span> <span class="n">prev_move</span><span class="p">),</span>
+                <span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="n">time</span><span class="p">,</span>
+                <span class="s1">&#39;move&#39;</span><span class="p">:</span> <span class="n">move</span><span class="p">,</span>
+                <span class="s1">&#39;eval&#39;</span><span class="p">:</span> <span class="nb">eval</span><span class="p">,</span>
+                <span class="s1">&#39;pv&#39;</span><span class="p">:</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pv</span><span class="p">),</span>
+                <span class="p">})</span>
+        <span class="n">moves</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+            <span class="s1">&#39;number&#39;</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s1">&#39;kif_move&#39;</span><span class="p">:</span> <span class="n">TURN_SYMBOLS</span><span class="p">[(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">CSA</span><span class="o">.</span><span class="n">JAPANESE_END_GAMES</span><span class="p">[</span><span class="n">kif</span><span class="o">.</span><span class="n">endgame</span><span class="p">],</span>
+            <span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;move&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;eval&#39;</span><span class="p">:</span> <span class="s1">&#39;null&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;pv&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="p">})</span>
+
+    <span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">init_board</span><span class="p">():</span>
+        <span class="n">autoupdate</span> <span class="o">=</span> <span class="s1">&#39;false&#39;</span>
+        <span class="n">human</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">is_match</span> <span class="o">==</span> <span class="s1">&#39;true&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">match_proc</span><span class="o">.</span><span class="n">is_alive</span><span class="p">():</span>
+                <span class="n">autoupdate</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;autoupdate&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">auto_update</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">humans</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">moves</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span><span class="p">]:</span>
+                    <span class="n">human</span> <span class="o">=</span> <span class="s1">&#39;black&#39;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">moves</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="s1">&#39;white&#39;</span>
+        <span class="k">return</span> <span class="n">render_template</span><span class="p">(</span><span class="s1">&#39;board.html&#39;</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">names</span><span class="p">,</span> <span class="n">moves</span><span class="o">=</span><span class="n">moves</span><span class="p">,</span> <span class="n">is_match</span><span class="o">=</span><span class="n">is_match</span><span class="p">,</span> <span class="n">autoupdate</span><span class="o">=</span><span class="n">autoupdate</span><span class="p">,</span> <span class="n">human</span><span class="o">=</span><span class="n">human</span><span class="p">)</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/update&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">update</span><span class="p">():</span>
+        <span class="n">human</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">humans</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">moves</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span><span class="p">]:</span>
+            <span class="n">human</span> <span class="o">=</span> <span class="s1">&#39;black&#39;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">moves</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="s1">&#39;white&#39;</span>
+        <span class="k">return</span> <span class="p">{</span> <span class="s1">&#39;names&#39;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">names</span><span class="p">),</span> <span class="s1">&#39;moves&#39;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">moves</span><span class="p">),</span> <span class="s1">&#39;human&#39;</span><span class="p">:</span><span class="n">human</span> <span class="p">}</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/move&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">human_move</span><span class="p">():</span>
+        <span class="kn">import</span> <span class="nn">time</span>
+        <span class="n">human_input</span><span class="p">[</span><span class="s1">&#39;move&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;move&#39;</span><span class="p">)</span>
+        <span class="n">human_input</span><span class="p">[</span><span class="s1">&#39;number&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;number&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.2</span><span class="p">)</span>
+        <span class="n">human</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">names</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">moves</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;Human&#39;</span><span class="p">:</span>
+            <span class="n">human</span> <span class="o">=</span> <span class="s1">&#39;black&#39;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">moves</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="s1">&#39;white&#39;</span>
+        <span class="k">return</span> <span class="p">{</span> <span class="s1">&#39;names&#39;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">names</span><span class="p">),</span> <span class="s1">&#39;moves&#39;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">moves</span><span class="p">),</span> <span class="s1">&#39;human&#39;</span><span class="p">:</span><span class="n">human</span> <span class="p">}</span>
+
+    <span class="n">server</span> <span class="o">=</span> <span class="n">make_server</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">app</span><span class="p">)</span>
+    <span class="n">server</span><span class="o">.</span><span class="n">serve_forever</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="colab"><a class="viewcode-back" href="../../../cshogi.web.html#cshogi.web.app.colab">[docs]</a><span class="k">def</span> <span class="nf">colab</span><span class="p">(</span><span class="n">engine1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">engine2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">options1</span><span class="o">=</span><span class="p">{},</span> <span class="n">options2</span><span class="o">=</span><span class="p">{},</span> <span class="n">name1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">byoyomi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">draw</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">csa</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="kn">import</span> <span class="n">Process</span>
+    <span class="kn">import</span> <span class="nn">portpicker</span>
+    <span class="kn">from</span> <span class="nn">google.colab</span> <span class="kn">import</span> <span class="n">output</span>
+
+    <span class="k">global</span> <span class="n">proc</span>
+    <span class="k">if</span> <span class="s1">&#39;proc&#39;</span> <span class="ow">in</span> <span class="nb">globals</span><span class="p">():</span>
+        <span class="n">proc</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span>
+        <span class="n">proc</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+    <span class="n">port</span> <span class="o">=</span> <span class="n">portpicker</span><span class="o">.</span><span class="n">pick_unused_port</span><span class="p">()</span>
+    <span class="n">proc</span> <span class="o">=</span> <span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">run</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">engine1</span><span class="p">,</span> <span class="n">engine2</span><span class="p">,</span> <span class="n">options1</span><span class="p">,</span> <span class="n">options2</span><span class="p">,</span> <span class="n">name1</span><span class="p">,</span> <span class="n">name2</span><span class="p">,</span> <span class="n">byoyomi</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">inc</span><span class="p">,</span> <span class="n">draw</span><span class="p">,</span> <span class="n">csa</span><span class="p">,</span> <span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="n">port</span><span class="p">))</span>
+    <span class="n">proc</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="n">output</span><span class="o">.</span><span class="n">serve_kernel_port_as_iframe</span><span class="p">(</span><span class="n">port</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="s1">&#39;680&#39;</span><span class="p">)</span></div>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">argparse</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">()</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;engine1&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;engine2&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--options1&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--options2&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--name1&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--name2&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--byoyomi&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--time&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--inc&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--draw&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--csa&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--host&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;localhost&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--port&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">8000</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="n">options_list</span> <span class="o">=</span> <span class="p">[{},</span> <span class="p">{}]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">kvs</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">([</span><span class="n">options</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">options</span> <span class="ow">in</span> <span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">options1</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">options2</span><span class="p">)]):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">kvs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">kvs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">for</span> <span class="n">kv_str</span> <span class="ow">in</span> <span class="n">kvs</span><span class="p">:</span>
+            <span class="n">kv</span> <span class="o">=</span> <span class="n">kv_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">kv</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;options</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">options_list</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">kv</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">kv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">run</span><span class="p">(</span><span class="n">engine1</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">engine1</span><span class="p">,</span> <span class="n">engine2</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">engine2</span><span class="p">,</span>
+        <span class="n">options1</span><span class="o">=</span><span class="n">options_list</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">options2</span><span class="o">=</span><span class="n">options_list</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+        <span class="n">name1</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">name1</span><span class="p">,</span> <span class="n">name2</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">name2</span><span class="p">,</span>
+        <span class="n">byoyomi</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">byoyomi</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">inc</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">inc</span><span class="p">,</span> <span class="n">draw</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">draw</span><span class="p">,</span>
+        <span class="n">csa</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">csa</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">port</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Tadao Yamaoka.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

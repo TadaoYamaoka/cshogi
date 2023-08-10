@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>cshogi.KI2 &mdash; cshogi  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            cshogi
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../cshogi.html">cshogi package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">cshogi</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">cshogi.KI2</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for cshogi.KI2</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">import</span> <span class="nn">cshogi</span>
+<span class="kn">from</span> <span class="nn">cshogi</span> <span class="kn">import</span> <span class="n">Board</span><span class="p">,</span> <span class="n">KIF</span><span class="p">,</span> <span class="n">BLACK_WIN</span><span class="p">,</span> <span class="n">WHITE_WIN</span><span class="p">,</span> <span class="n">DRAW</span><span class="p">,</span> <span class="n">move_to</span><span class="p">,</span> <span class="n">move_from</span><span class="p">,</span> <span class="n">move_is_drop</span><span class="p">,</span> <span class="n">move_is_promotion</span><span class="p">,</span> <span class="n">move_from_piece_type</span><span class="p">,</span> <span class="n">move_drop_hand_piece</span><span class="p">,</span> <span class="n">hand_piece_to_piece_type</span>
+
+<div class="viewcode-block" id="Parser"><a class="viewcode-back" href="../../cshogi.html#cshogi.KI2.Parser">[docs]</a><span class="k">class</span> <span class="nc">Parser</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A class for parsing Japanese Shogi notation in KI2 format.&quot;&quot;&quot;</span>
+
+    <span class="n">MOVE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(▲|△)(([１２３４５６７８９])([零一二三四五六七八九])|同　?)([歩香桂銀金角飛玉と杏圭全馬龍])(左|直|右)?(上|寄|引)?(打|成|不成)?\s*&#39;</span><span class="p">)</span>
+
+    <span class="n">HANDYCAP_SFENS</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;平手&#39;</span><span class="p">:</span> <span class="n">cshogi</span><span class="o">.</span><span class="n">STARTING_SFEN</span><span class="p">,</span>
+        <span class="s1">&#39;香落ち&#39;</span><span class="p">:</span> <span class="s1">&#39;lnsgkgsn1/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL w - 1&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;右香落ち&#39;</span><span class="p">:</span> <span class="s1">&#39;1nsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL w - 1&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;角落ち&#39;</span><span class="p">:</span> <span class="s1">&#39;lnsgkgsnl/1r7/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL w - 1&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;飛車落ち&#39;</span><span class="p">:</span> <span class="s1">&#39;lnsgkgsnl/7b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL w - 1&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;飛香落ち&#39;</span><span class="p">:</span> <span class="s1">&#39;lnsgkgsn1/7b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL w - 1&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;二枚落ち&#39;</span><span class="p">:</span> <span class="s1">&#39;lnsgkgsnl/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL w - 1&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;三枚落ち&#39;</span><span class="p">:</span> <span class="s1">&#39;lnsgkgsn1/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL w - 1&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;四枚落ち&#39;</span><span class="p">:</span> <span class="s1">&#39;1nsgkgsn1/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL w - 1&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;五枚落ち&#39;</span><span class="p">:</span> <span class="s1">&#39;2sgkgsn1/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL w - 1&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;左五枚落ち&#39;</span><span class="p">:</span> <span class="s1">&#39;1nsgkgs2/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL w - 1&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;六枚落ち&#39;</span><span class="p">:</span> <span class="s1">&#39;2sgkgs2/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL w - 1&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;八枚落ち&#39;</span><span class="p">:</span> <span class="s1">&#39;3gkg3/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL w - 1&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;十枚落ち&#39;</span><span class="p">:</span> <span class="s1">&#39;4k4/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL w - 1&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;その他&#39;</span><span class="p">:</span> <span class="kc">None</span>
+    <span class="p">}</span>
+
+    <span class="n">RESULT_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;まで(\d+)手で((先|下|後|上)手の(勝ち|入玉勝ち|反則勝ち|反則負け)|千日手|持将棋|中断)&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Parser.parse_file"><a class="viewcode-back" href="../../cshogi.html#cshogi.KI2.Parser.parse_file">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">parse_file</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Parser&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parses a KI2 format Shogi game notation file.</span>
+
+<span class="sd">        :param path: Path to the file containing the KI2 notation.</span>
+<span class="sd">        :return: An instance of the Parser class containing all the extracted information.</span>
+<span class="sd">        :raises KIF.ParserException: In the case of a parse error.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;cp932&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Parser</span><span class="o">.</span><span class="n">parse_str</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="Parser.parse_pieces_in_hand"><a class="viewcode-back" href="../../cshogi.html#cshogi.KI2.Parser.parse_pieces_in_hand">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">parse_pieces_in_hand</span><span class="p">(</span><span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parses pieces in hand from a given string.</span>
+
+<span class="sd">        :param target: String containing the description of the pieces in hand.</span>
+<span class="sd">        :return: A dictionary representing the pieces in hand.</span>
+<span class="sd">        :raises KIF.ParserException: In the case of a parse error.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">target</span> <span class="o">==</span> <span class="s1">&#39;なし&#39;</span><span class="p">:</span> <span class="c1"># None in japanese</span>
+            <span class="k">return</span> <span class="p">{}</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">target</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;　&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">result</span><span class="p">[</span><span class="n">cshogi</span><span class="o">.</span><span class="n">PIECE_JAPANESE_SYMBOLS</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">item</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">result</span><span class="p">[</span><span class="n">cshogi</span><span class="o">.</span><span class="n">PIECE_JAPANESE_SYMBOLS</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span> <span class="o">=</span> \
+                    <span class="n">cshogi</span><span class="o">.</span><span class="n">NUMBER_JAPANESE_KANJI_SYMBOLS</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">KIF</span><span class="o">.</span><span class="n">ParserException</span><span class="p">(</span><span class="s1">&#39;Invalid pieces in hand&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+<div class="viewcode-block" id="Parser.parse_move_str"><a class="viewcode-back" href="../../cshogi.html#cshogi.KI2.Parser.parse_move_str">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">parse_move_str</span><span class="p">(</span><span class="n">line</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">board</span><span class="p">:</span> <span class="n">Board</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parses a string of moves and applies them to a given board.</span>
+
+<span class="sd">        :param line: String containing the moves in Japanese Shogi notation.</span>
+<span class="sd">        :param board: Board object to apply the moves to.</span>
+<span class="sd">        :return: A list of moves parsed from the line.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Normalize king/promoted kanji</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;王&#39;</span><span class="p">,</span> <span class="s1">&#39;玉&#39;</span><span class="p">)</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;竜&#39;</span><span class="p">,</span> <span class="s1">&#39;龍&#39;</span><span class="p">)</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;成銀&#39;</span><span class="p">,</span> <span class="s1">&#39;全&#39;</span><span class="p">)</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;成桂&#39;</span><span class="p">,</span> <span class="s1">&#39;圭&#39;</span><span class="p">)</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;成香&#39;</span><span class="p">,</span> <span class="s1">&#39;杏&#39;</span><span class="p">)</span>
+
+        <span class="n">moves</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">Parser</span><span class="o">.</span><span class="n">MOVE_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="n">pos</span><span class="p">:])</span>
+            <span class="k">if</span> <span class="n">m</span><span class="p">:</span>
+                <span class="n">piece_type</span> <span class="o">=</span> <span class="n">cshogi</span><span class="o">.</span><span class="n">PIECE_JAPANESE_SYMBOLS</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;　&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;同&#39;</span><span class="p">:</span>
+                    <span class="c1"># same position</span>
+                    <span class="n">to_square</span> <span class="o">=</span> <span class="n">move_to</span><span class="p">(</span><span class="n">board</span><span class="o">.</span><span class="n">peek</span><span class="p">())</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">to_file</span> <span class="o">=</span> <span class="n">cshogi</span><span class="o">.</span><span class="n">NUMBER_JAPANESE_NUMBER_SYMBOLS</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span>
+                    <span class="n">to_rank</span> <span class="o">=</span> <span class="n">cshogi</span><span class="o">.</span><span class="n">NUMBER_JAPANESE_KANJI_SYMBOLS</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span>
+                    <span class="n">to_square</span> <span class="o">=</span> <span class="n">to_rank</span> <span class="o">+</span> <span class="n">to_file</span> <span class="o">*</span> <span class="mi">9</span>
+
+                <span class="c1"># 候補手</span>
+                <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">move</span> <span class="k">for</span> <span class="n">move</span> <span class="ow">in</span> <span class="n">board</span><span class="o">.</span><span class="n">legal_moves</span> <span class="k">if</span> <span class="n">move_to</span><span class="p">(</span><span class="n">move</span><span class="p">)</span> <span class="o">==</span> <span class="n">to_square</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">move_is_drop</span><span class="p">(</span><span class="n">move</span><span class="p">)</span> <span class="ow">and</span> <span class="n">move_from_piece_type</span><span class="p">(</span><span class="n">move</span><span class="p">)</span> <span class="o">==</span> <span class="n">piece_type</span> <span class="ow">or</span> <span class="n">move_is_drop</span><span class="p">(</span><span class="n">move</span><span class="p">)</span> <span class="ow">and</span> <span class="n">hand_piece_to_piece_type</span><span class="p">(</span><span class="n">move_drop_hand_piece</span><span class="p">(</span><span class="n">move</span><span class="p">))</span> <span class="o">==</span> <span class="n">piece_type</span><span class="p">)]</span>
+
+                <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span> <span class="ow">or</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">7</span><span class="p">):</span>
+                    <span class="n">from_file_min</span> <span class="o">=</span> <span class="n">from_rank_min</span> <span class="o">=</span> <span class="mi">9</span>
+                    <span class="n">from_file_max</span> <span class="o">=</span> <span class="n">from_rank_max</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="k">for</span> <span class="n">move</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+                        <span class="n">from_file</span><span class="p">,</span> <span class="n">from_rank</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">move_from</span><span class="p">(</span><span class="n">move</span><span class="p">),</span> <span class="mi">9</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">from_file</span> <span class="o">&lt;</span> <span class="n">from_file_min</span><span class="p">:</span>
+                            <span class="n">from_file_min</span> <span class="o">=</span> <span class="n">from_file</span>
+                        <span class="k">if</span> <span class="n">from_file</span> <span class="o">&gt;</span> <span class="n">from_file_max</span><span class="p">:</span>
+                            <span class="n">from_file_max</span> <span class="o">=</span> <span class="n">from_file</span>
+                        <span class="k">if</span> <span class="n">from_rank</span> <span class="o">&lt;</span> <span class="n">from_rank_min</span><span class="p">:</span>
+                            <span class="n">from_rank_min</span> <span class="o">=</span> <span class="n">from_rank</span>
+                        <span class="k">if</span> <span class="n">from_rank</span> <span class="o">&gt;</span> <span class="n">from_rank_max</span><span class="p">:</span>
+                            <span class="n">from_rank_max</span> <span class="o">=</span> <span class="n">from_rank</span>
+
+                    <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;左&#39;</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">board</span><span class="o">.</span><span class="n">turn</span> <span class="o">==</span> <span class="n">cshogi</span><span class="o">.</span><span class="n">BLACK</span><span class="p">:</span>
+                            <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">move</span> <span class="k">for</span> <span class="n">move</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="n">move_from</span><span class="p">(</span><span class="n">move</span><span class="p">)</span> <span class="o">//</span> <span class="mi">9</span> <span class="o">==</span> <span class="n">from_file_max</span><span class="p">]</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">move</span> <span class="k">for</span> <span class="n">move</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="n">move_from</span><span class="p">(</span><span class="n">move</span><span class="p">)</span> <span class="o">//</span> <span class="mi">9</span> <span class="o">==</span> <span class="n">from_file_min</span><span class="p">]</span>
+                    <span class="k">elif</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;右&#39;</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">board</span><span class="o">.</span><span class="n">turn</span> <span class="o">==</span> <span class="n">cshogi</span><span class="o">.</span><span class="n">BLACK</span><span class="p">:</span>
+                            <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">move</span> <span class="k">for</span> <span class="n">move</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="n">move_from</span><span class="p">(</span><span class="n">move</span><span class="p">)</span> <span class="o">//</span> <span class="mi">9</span> <span class="o">==</span> <span class="n">from_file_min</span><span class="p">]</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">move</span> <span class="k">for</span> <span class="n">move</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="n">move_from</span><span class="p">(</span><span class="n">move</span><span class="p">)</span> <span class="o">//</span> <span class="mi">9</span> <span class="o">==</span> <span class="n">from_file_max</span><span class="p">]</span>
+                    <span class="k">elif</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;直&#39;</span><span class="p">:</span>
+                        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">move</span> <span class="k">for</span> <span class="n">move</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="n">move_to</span><span class="p">(</span><span class="n">move</span><span class="p">)</span> <span class="o">//</span> <span class="mi">9</span> <span class="o">==</span> <span class="n">move_from</span><span class="p">(</span><span class="n">move</span><span class="p">)</span> <span class="o">//</span> <span class="mi">9</span><span class="p">]</span>
+
+                    <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;上&#39;</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">board</span><span class="o">.</span><span class="n">turn</span> <span class="o">==</span> <span class="n">cshogi</span><span class="o">.</span><span class="n">BLACK</span><span class="p">:</span>
+                            <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">move</span> <span class="k">for</span> <span class="n">move</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="n">move_from</span><span class="p">(</span><span class="n">move</span><span class="p">)</span> <span class="o">%</span> <span class="mi">9</span> <span class="o">==</span> <span class="n">from_rank_max</span><span class="p">]</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">move</span> <span class="k">for</span> <span class="n">move</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="n">move_from</span><span class="p">(</span><span class="n">move</span><span class="p">)</span> <span class="o">%</span> <span class="mi">9</span> <span class="o">==</span> <span class="n">from_rank_min</span><span class="p">]</span>
+                    <span class="k">elif</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;引&#39;</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">board</span><span class="o">.</span><span class="n">turn</span> <span class="o">==</span> <span class="n">cshogi</span><span class="o">.</span><span class="n">BLACK</span><span class="p">:</span>
+                            <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">move</span> <span class="k">for</span> <span class="n">move</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="n">move_from</span><span class="p">(</span><span class="n">move</span><span class="p">)</span> <span class="o">%</span> <span class="mi">9</span> <span class="o">==</span> <span class="n">from_rank_min</span><span class="p">]</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">move</span> <span class="k">for</span> <span class="n">move</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="n">move_from</span><span class="p">(</span><span class="n">move</span><span class="p">)</span> <span class="o">%</span> <span class="mi">9</span> <span class="o">==</span> <span class="n">from_rank_max</span><span class="p">]</span>
+                    <span class="k">elif</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;寄&#39;</span><span class="p">:</span>
+                        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">move</span> <span class="k">for</span> <span class="n">move</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="n">move_to</span><span class="p">(</span><span class="n">move</span><span class="p">)</span> <span class="o">%</span> <span class="mi">9</span> <span class="o">==</span> <span class="n">move_from</span><span class="p">(</span><span class="n">move</span><span class="p">)</span> <span class="o">%</span> <span class="mi">9</span><span class="p">]</span>
+
+                <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;打&#39;</span><span class="p">:</span>
+                    <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">move</span> <span class="k">for</span> <span class="n">move</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="n">move_is_drop</span><span class="p">(</span><span class="n">move</span><span class="p">)]</span>
+                <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;成&#39;</span><span class="p">:</span>
+                    <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">move</span> <span class="k">for</span> <span class="n">move</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="n">move_is_promotion</span><span class="p">(</span><span class="n">move</span><span class="p">)]</span>
+                <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;不成&#39;</span><span class="p">:</span>
+                    <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">move</span> <span class="k">for</span> <span class="n">move</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">move_is_promotion</span><span class="p">(</span><span class="n">move</span><span class="p">)]</span>
+
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">move</span> <span class="k">for</span> <span class="n">move</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">move_is_drop</span><span class="p">(</span><span class="n">move</span><span class="p">)]</span>
+                    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+                <span class="n">move</span> <span class="o">=</span> <span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">moves</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">move</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">board</span><span class="o">.</span><span class="n">is_legal</span><span class="p">(</span><span class="n">move</span><span class="p">):</span>
+                    <span class="n">board</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">move</span><span class="p">)</span>
+                <span class="n">pos</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">break</span>
+        <span class="k">return</span> <span class="n">moves</span></div>
+
+<div class="viewcode-block" id="Parser.parse_str"><a class="viewcode-back" href="../../cshogi.html#cshogi.KI2.Parser.parse_str">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">parse_str</span><span class="p">(</span><span class="n">kif_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Parser&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parses a KI2 formatted string into a Parser object.</span>
+
+<span class="sd">        :param kif_str: The KI2 formatted string representing the Shogi game.</span>
+<span class="sd">        :return: An instance of the Parser class containing all the extracted information.</span>
+<span class="sd">        :raises KIF.ParserException: In the case of a parse error.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">line_no</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="n">starttime</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="n">sfen</span> <span class="o">=</span> <span class="n">cshogi</span><span class="o">.</span><span class="n">STARTING_SFEN</span>
+        <span class="n">var_info</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">header_comments</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">moves</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">comments</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">win</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">endgame</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">kif_str</span> <span class="o">=</span> <span class="n">kif_str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\r\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\r</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">board</span> <span class="o">=</span> <span class="n">Board</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">kif_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="k">elif</span> <span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;*&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">moves</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">moves</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">comments</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">comments</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="kc">None</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">moves</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">comments</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+                    <span class="k">if</span> <span class="n">line</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;**&quot;</span><span class="p">:</span>
+                        <span class="n">comments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">comments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">header_comments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+            <span class="k">elif</span> <span class="s1">&#39;：&#39;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;：&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;　&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;開始日時&#39;</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">starttime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s1">&#39;%Y/%m/</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="c1"># if KIF file has not second information, try another parse</span>
+                            <span class="n">starttime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s1">&#39;%Y/%m/</span><span class="si">%d</span><span class="s1"> %H:%M&#39;</span><span class="p">)</span> 
+                        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                            <span class="k">pass</span>
+                <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;先手&#39;</span> <span class="ow">or</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;下手&#39;</span><span class="p">:</span> <span class="c1"># sente or shitate</span>
+                    <span class="c1"># Blacks&#39;s name</span>
+                    <span class="n">names</span><span class="p">[</span><span class="n">cshogi</span><span class="o">.</span><span class="n">BLACK</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+                <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;後手&#39;</span> <span class="ow">or</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;上手&#39;</span><span class="p">:</span> <span class="c1"># gote or uwate</span>
+                    <span class="c1"># White&#39;s name</span>
+                    <span class="n">names</span><span class="p">[</span><span class="n">cshogi</span><span class="o">.</span><span class="n">WHITE</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+                <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;手合割&#39;</span><span class="p">:</span> <span class="c1"># teai wari</span>
+                    <span class="n">sfen</span> <span class="o">=</span> <span class="n">Parser</span><span class="o">.</span><span class="n">HANDYCAP_SFENS</span><span class="p">[</span><span class="n">value</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">sfen</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">KIF</span><span class="o">.</span><span class="n">ParserException</span><span class="p">(</span><span class="s1">&#39;Cannot support handycap type &quot;other&quot;&#39;</span><span class="p">)</span>
+                    <span class="n">board</span><span class="o">.</span><span class="n">set_sfen</span><span class="p">(</span><span class="n">sfen</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">var_info</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">m</span> <span class="o">=</span> <span class="n">Parser</span><span class="o">.</span><span class="n">RESULT_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">m</span><span class="p">:</span>
+                    <span class="n">win_side_str</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">win_side_str</span> <span class="o">==</span> <span class="s1">&#39;先&#39;</span> <span class="ow">or</span> <span class="n">win_side_str</span> <span class="o">==</span> <span class="s1">&#39;下&#39;</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;反則負け&#39;</span><span class="p">:</span>
+                            <span class="n">win</span> <span class="o">=</span> <span class="n">WHITE_WIN</span>
+                            <span class="n">endgame</span> <span class="o">=</span> <span class="s1">&#39;%ILLEGAL_MOVE&#39;</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">win</span> <span class="o">=</span> <span class="n">BLACK_WIN</span>
+                            <span class="n">endgame</span> <span class="o">=</span> <span class="s1">&#39;%+ILLEGAL_ACTION&#39;</span> <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;反則勝ち&#39;</span> <span class="k">else</span> <span class="p">(</span><span class="s1">&#39;%KACHI&#39;</span> <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;入玉勝ち&#39;</span> <span class="k">else</span> <span class="s1">&#39;%TORYO&#39;</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">win_side_str</span> <span class="o">==</span> <span class="s1">&#39;後&#39;</span> <span class="ow">or</span> <span class="n">win_side_str</span> <span class="o">==</span> <span class="s1">&#39;上&#39;</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;反則負け&#39;</span><span class="p">:</span>
+                            <span class="n">win</span> <span class="o">=</span> <span class="n">BLACK_WIN</span>
+                            <span class="n">endgame</span> <span class="o">=</span> <span class="s1">&#39;%ILLEGAL_MOVE&#39;</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">win</span> <span class="o">=</span> <span class="n">WHITE_WIN</span>
+                            <span class="n">endgame</span> <span class="o">=</span> <span class="s1">&#39;%-ILLEGAL_ACTION&#39;</span> <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;反則勝ち&#39;</span> <span class="k">else</span> <span class="p">(</span><span class="s1">&#39;%KACHI&#39;</span> <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;入玉勝ち&#39;</span> <span class="k">else</span> <span class="s1">&#39;%TORYO&#39;</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;持将棋&#39;</span><span class="p">:</span>
+                        <span class="n">win</span> <span class="o">=</span> <span class="n">DRAW</span>
+                        <span class="n">endgame</span> <span class="o">=</span> <span class="s1">&#39;%JISHOGI&#39;</span>
+                    <span class="k">elif</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;中断&#39;</span><span class="p">:</span>
+                        <span class="n">win</span> <span class="o">=</span> <span class="kc">None</span>
+                        <span class="n">endgame</span> <span class="o">=</span> <span class="s1">&#39;%CHUDAN&#39;</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># TODO: repetition of moves with continuous check</span>
+                        <span class="n">win</span> <span class="o">=</span> <span class="n">DRAW</span>
+                        <span class="n">endgame</span> <span class="o">=</span> <span class="s1">&#39;%SENNICHITE&#39;</span>
+                    <span class="k">break</span>
+
+                <span class="k">for</span> <span class="n">move</span> <span class="ow">in</span> <span class="n">Parser</span><span class="o">.</span><span class="n">parse_move_str</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">board</span><span class="p">):</span>
+                    <span class="n">moves</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">move</span><span class="p">)</span>
+            <span class="n">line_no</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">moves</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">comments</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">comments</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="kc">None</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">moves</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">comments</span><span class="p">)))</span>
+
+        <span class="n">parser</span> <span class="o">=</span> <span class="n">Parser</span><span class="p">()</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">starttime</span> <span class="o">=</span> <span class="n">starttime</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="n">names</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">sfen</span> <span class="o">=</span> <span class="n">sfen</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">var_info</span> <span class="o">=</span> <span class="n">var_info</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">comment</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">header_comments</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">moves</span> <span class="o">=</span> <span class="n">moves</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">comments</span> <span class="o">=</span> <span class="n">comments</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">win</span> <span class="o">=</span> <span class="n">win</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">endgame</span> <span class="o">=</span> <span class="n">endgame</span>
+
+        <span class="k">return</span> <span class="n">parser</span></div></div>
+
+<span class="n">PIECE_JAPANESE_SYMBOLS2</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;歩&#39;</span><span class="p">,</span> <span class="s1">&#39;香&#39;</span><span class="p">,</span> <span class="s1">&#39;桂&#39;</span><span class="p">,</span> <span class="s1">&#39;銀&#39;</span><span class="p">,</span> <span class="s1">&#39;角&#39;</span><span class="p">,</span> <span class="s1">&#39;飛&#39;</span><span class="p">,</span> <span class="s1">&#39;金&#39;</span><span class="p">,</span> <span class="s1">&#39;玉&#39;</span><span class="p">,</span> <span class="s1">&#39;と&#39;</span><span class="p">,</span> <span class="s1">&#39;成香&#39;</span><span class="p">,</span> <span class="s1">&#39;成桂&#39;</span><span class="p">,</span> <span class="s1">&#39;成銀&#39;</span><span class="p">,</span> <span class="s1">&#39;馬&#39;</span><span class="p">,</span> <span class="s1">&#39;龍&#39;</span>
+<span class="p">]</span>
+
+<div class="viewcode-block" id="move_to_ki2"><a class="viewcode-back" href="../../cshogi.html#cshogi.KI2.move_to_ki2">[docs]</a><span class="k">def</span> <span class="nf">move_to_ki2</span><span class="p">(</span><span class="n">move</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">board</span><span class="p">:</span> <span class="n">Board</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a given move to Japanese KI2 notation.</span>
+
+<span class="sd">    :param move: An integer representing the move.</span>
+<span class="sd">    :param board: A Board object representing the current state of the game.</span>
+<span class="sd">    :return: A string representing the move in KI2 notation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">kifu_turn</span> <span class="o">=</span> <span class="s1">&#39;▲&#39;</span> <span class="k">if</span> <span class="n">board</span><span class="o">.</span><span class="n">turn</span> <span class="o">==</span> <span class="n">cshogi</span><span class="o">.</span><span class="n">BLACK</span> <span class="k">else</span> <span class="s1">&#39;△&#39;</span>
+    <span class="n">to_square</span> <span class="o">=</span> <span class="n">move_to</span><span class="p">(</span><span class="n">move</span><span class="p">)</span>
+    <span class="n">kifu_to</span> <span class="o">=</span> <span class="n">KIF</span><span class="o">.</span><span class="n">KIFU_TO_SQUARE_NAMES</span><span class="p">[</span><span class="n">to_square</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">board</span><span class="o">.</span><span class="n">peek</span><span class="p">()</span> <span class="o">!=</span> <span class="n">cshogi</span><span class="o">.</span><span class="n">MOVE_NONE</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">move_to</span><span class="p">(</span><span class="n">board</span><span class="o">.</span><span class="n">peek</span><span class="p">())</span> <span class="o">==</span> <span class="n">to_square</span><span class="p">:</span>
+            <span class="n">kifu_to</span> <span class="o">=</span> <span class="s2">&quot;同&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">move_is_drop</span><span class="p">(</span><span class="n">move</span><span class="p">):</span>
+        <span class="n">relative</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span> <span class="c1"># 駒の相対位置</span>
+        <span class="n">motion</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span> <span class="c1"># 駒の動作</span>
+        <span class="n">from_square</span> <span class="o">=</span> <span class="n">move_from</span><span class="p">(</span><span class="n">move</span><span class="p">)</span>
+        <span class="n">piece_type</span> <span class="o">=</span> <span class="n">move_from_piece_type</span><span class="p">(</span><span class="n">move</span><span class="p">)</span>
+        <span class="n">kifu_piece</span> <span class="o">=</span> <span class="n">PIECE_JAPANESE_SYMBOLS2</span><span class="p">[</span><span class="n">piece_type</span><span class="p">]</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">promotion</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">move2</span> <span class="ow">in</span> <span class="n">board</span><span class="o">.</span><span class="n">pseudo_legal_moves</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">move_to</span><span class="p">(</span><span class="n">move2</span><span class="p">)</span> <span class="o">==</span> <span class="n">to_square</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">move_is_drop</span><span class="p">(</span><span class="n">move2</span><span class="p">)</span> <span class="ow">and</span> <span class="n">move_from_piece_type</span><span class="p">(</span><span class="n">move2</span><span class="p">)</span> <span class="o">==</span> <span class="n">piece_type</span><span class="p">:</span>
+                <span class="n">from_square2</span> <span class="o">=</span> <span class="n">move_from</span><span class="p">(</span><span class="n">move2</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">from_square2</span> <span class="ow">in</span> <span class="n">promotion</span><span class="p">:</span>
+                    <span class="n">promotion</span><span class="p">[</span><span class="n">from_square2</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">continue</span>
+                <span class="n">promotion</span><span class="p">[</span><span class="n">from_square2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">move2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># 後手は180度回転</span>
+            <span class="n">to_file</span><span class="p">,</span> <span class="n">to_rank</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">to_square</span> <span class="k">if</span> <span class="n">board</span><span class="o">.</span><span class="n">turn</span> <span class="o">==</span> <span class="n">cshogi</span><span class="o">.</span><span class="n">BLACK</span> <span class="k">else</span> <span class="mi">80</span> <span class="o">-</span> <span class="n">to_square</span><span class="p">,</span> <span class="mi">9</span><span class="p">)</span>
+            <span class="n">from_file</span><span class="p">,</span> <span class="n">from_rank</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">from_square</span> <span class="k">if</span> <span class="n">board</span><span class="o">.</span><span class="n">turn</span> <span class="o">==</span> <span class="n">cshogi</span><span class="o">.</span><span class="n">BLACK</span> <span class="k">else</span> <span class="mi">80</span> <span class="o">-</span> <span class="n">from_square</span><span class="p">,</span> <span class="mi">9</span><span class="p">)</span>
+            <span class="n">candidates_left</span> <span class="o">=</span> <span class="n">candidates_right</span> <span class="o">=</span> <span class="n">candidates_up</span> <span class="o">=</span> <span class="n">candidates_down</span> <span class="o">=</span> <span class="n">candidates_side</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">move2</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+                <span class="n">from_square2</span> <span class="o">=</span> <span class="n">move_from</span><span class="p">(</span><span class="n">move2</span><span class="p">)</span>
+                <span class="c1"># 後手は180度回転</span>
+                <span class="n">from_file2</span><span class="p">,</span> <span class="n">from_rank2</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">from_square2</span> <span class="k">if</span> <span class="n">board</span><span class="o">.</span><span class="n">turn</span> <span class="o">==</span> <span class="n">cshogi</span><span class="o">.</span><span class="n">BLACK</span> <span class="k">else</span> <span class="mi">80</span> <span class="o">-</span> <span class="n">from_square2</span><span class="p">,</span> <span class="mi">9</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">from_file2</span> <span class="o">==</span> <span class="n">to_file</span> <span class="ow">and</span> <span class="n">from_rank2</span> <span class="o">&gt;</span> <span class="n">to_rank</span><span class="p">:</span> <span class="c1"># 直</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">from_file2</span> <span class="o">&gt;</span> <span class="n">to_file</span><span class="p">:</span> <span class="c1"># 左</span>
+                    <span class="n">candidates_left</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">candidates_right</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                <span class="k">if</span> <span class="n">from_rank2</span> <span class="o">&gt;</span> <span class="n">to_rank</span><span class="p">:</span> <span class="c1"># 上</span>
+                    <span class="n">candidates_up</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">elif</span> <span class="n">from_rank2</span> <span class="o">&lt;</span> <span class="n">to_rank</span><span class="p">:</span> <span class="c1"># 引</span>
+                    <span class="n">candidates_down</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span> <span class="c1"># 寄</span>
+                    <span class="n">candidates_side</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">if</span> <span class="n">from_file</span> <span class="o">==</span> <span class="n">to_file</span> <span class="ow">and</span> <span class="n">from_rank</span> <span class="o">&gt;</span> <span class="n">to_rank</span><span class="p">:</span> <span class="c1"># 直</span>
+                <span class="n">relative</span> <span class="o">=</span> <span class="s1">&#39;直&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">from_rank</span> <span class="o">&gt;</span> <span class="n">to_rank</span><span class="p">:</span> <span class="c1"># 上</span>
+                    <span class="k">if</span> <span class="n">candidates_up</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">motion</span> <span class="o">=</span> <span class="s1">&#39;上&#39;</span>
+                    <span class="k">elif</span> <span class="n">from_file</span> <span class="o">&gt;</span> <span class="n">to_file</span><span class="p">:</span> <span class="c1"># 左</span>
+                        <span class="n">relative</span> <span class="o">=</span> <span class="s1">&#39;左&#39;</span>
+                        <span class="k">if</span> <span class="n">candidates_left</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                            <span class="n">motion</span> <span class="o">=</span> <span class="s1">&#39;上&#39;</span>
+                    <span class="k">else</span><span class="p">:</span> <span class="c1"># 右</span>
+                        <span class="n">relative</span> <span class="o">=</span> <span class="s1">&#39;右&#39;</span>
+                        <span class="k">if</span> <span class="n">candidates_right</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                            <span class="n">motion</span> <span class="o">=</span> <span class="s1">&#39;上&#39;</span>
+                <span class="k">elif</span> <span class="n">from_rank</span> <span class="o">&lt;</span> <span class="n">to_rank</span><span class="p">:</span> <span class="c1"># 引</span>
+                    <span class="k">if</span> <span class="n">candidates_down</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">motion</span> <span class="o">=</span> <span class="s1">&#39;引&#39;</span>
+                    <span class="k">elif</span> <span class="n">from_file</span> <span class="o">&gt;</span> <span class="n">to_file</span><span class="p">:</span> <span class="c1"># 左</span>
+                        <span class="n">relative</span> <span class="o">=</span> <span class="s1">&#39;左&#39;</span>
+                        <span class="k">if</span> <span class="n">candidates_left</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                            <span class="n">motion</span> <span class="o">=</span> <span class="s1">&#39;引&#39;</span>
+                    <span class="k">else</span><span class="p">:</span> <span class="c1"># 右</span>
+                        <span class="n">relative</span> <span class="o">=</span> <span class="s1">&#39;右&#39;</span>
+                        <span class="k">if</span> <span class="n">candidates_right</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                            <span class="n">motion</span> <span class="o">=</span> <span class="s1">&#39;上&#39;</span>
+                <span class="k">else</span><span class="p">:</span> <span class="c1"># 寄</span>
+                    <span class="k">if</span> <span class="n">candidates_side</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">motion</span> <span class="o">=</span> <span class="s1">&#39;寄&#39;</span>
+                    <span class="k">elif</span> <span class="n">from_file</span> <span class="o">&gt;</span> <span class="n">to_file</span><span class="p">:</span> <span class="c1"># 左</span>
+                        <span class="n">relative</span> <span class="o">=</span> <span class="s1">&#39;左&#39;</span>
+                        <span class="k">if</span> <span class="n">candidates_left</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                            <span class="n">motion</span> <span class="o">=</span> <span class="s1">&#39;寄&#39;</span>
+                    <span class="k">else</span><span class="p">:</span> <span class="c1"># 右</span>
+                        <span class="n">relative</span> <span class="o">=</span> <span class="s1">&#39;右&#39;</span>
+                        <span class="k">if</span> <span class="n">candidates_right</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                            <span class="n">motion</span> <span class="o">=</span> <span class="s1">&#39;寄&#39;</span>
+
+        <span class="n">move_str</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}{}{}{}{}{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">kifu_turn</span><span class="p">,</span>
+            <span class="n">kifu_to</span><span class="p">,</span>
+            <span class="n">kifu_piece</span><span class="p">,</span>
+            <span class="n">relative</span><span class="p">,</span>
+            <span class="n">motion</span><span class="p">,</span>
+            <span class="s1">&#39;成&#39;</span> <span class="k">if</span> <span class="n">move_is_promotion</span><span class="p">(</span><span class="n">move</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="s1">&#39;不成&#39;</span> <span class="k">if</span> <span class="n">promotion</span><span class="p">[</span><span class="n">from_square</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span> <span class="c1"># 打</span>
+        <span class="n">hand_peice</span> <span class="o">=</span> <span class="n">move_drop_hand_piece</span><span class="p">(</span><span class="n">move</span><span class="p">)</span>
+        <span class="n">piece_type</span> <span class="o">=</span> <span class="n">hand_piece_to_piece_type</span><span class="p">(</span><span class="n">hand_peice</span><span class="p">)</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">move</span> <span class="k">for</span> <span class="n">move</span> <span class="ow">in</span> <span class="n">board</span><span class="o">.</span><span class="n">legal_moves</span> <span class="k">if</span> <span class="n">move_to</span><span class="p">(</span><span class="n">move</span><span class="p">)</span> <span class="o">==</span> <span class="n">to_square</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">move_is_drop</span><span class="p">(</span><span class="n">move</span><span class="p">)</span> <span class="ow">and</span> <span class="n">move_from_piece_type</span><span class="p">(</span><span class="n">move</span><span class="p">)</span> <span class="o">==</span> <span class="n">piece_type</span><span class="p">]</span>
+        <span class="n">kifu_piece</span> <span class="o">=</span> <span class="n">cshogi</span><span class="o">.</span><span class="n">HAND_PIECE_JAPANESE_SYMBOLS</span><span class="p">[</span><span class="n">hand_peice</span><span class="p">]</span>
+        <span class="n">move_str</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}{}{}{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">kifu_turn</span><span class="p">,</span>
+            <span class="n">kifu_to</span><span class="p">,</span>
+            <span class="n">kifu_piece</span><span class="p">,</span>
+            <span class="s1">&#39;打&#39;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+            <span class="p">)</span>
+    <span class="k">if</span> <span class="n">move_str</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;同&#39;</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">move_str</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">move_str</span> <span class="o">=</span> <span class="n">move_str</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;　&#39;</span> <span class="o">+</span> <span class="n">move_str</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">move_str</span></div>
+
+<div class="viewcode-block" id="Exporter"><a class="viewcode-back" href="../../cshogi.html#cshogi.KI2.Exporter">[docs]</a><span class="k">class</span> <span class="nc">Exporter</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A class to handle the exporting of a game to KI2 format.</span>
+
+<span class="sd">    :param path: Optional path to the file where the KI2 formatted game will be written. If None, no file is opened initially.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">path</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">kifu</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="Exporter.open"><a class="viewcode-back" href="../../cshogi.html#cshogi.KI2.Exporter.open">[docs]</a>    <span class="k">def</span> <span class="nf">open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Open a file for writing the KI2 formatted game.</span>
+
+<span class="sd">        :param path: Path to the file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kifu</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;cp932&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prev_move</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">move_number</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">board</span> <span class="o">=</span> <span class="n">Board</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Exporter.close"><a class="viewcode-back" href="../../cshogi.html#cshogi.KI2.Exporter.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Close the file.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kifu</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Exporter.header"><a class="viewcode-back" href="../../cshogi.html#cshogi.KI2.Exporter.header">[docs]</a>    <span class="k">def</span> <span class="nf">header</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write the game&#39;s header information, including date and player names.</span>
+
+<span class="sd">        :param names: A list containing the names of the players [first_player, second_player].</span>
+<span class="sd">        :param starttime: Optional start time of the game. If None, the current time is used.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">starttime</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">starttime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kifu</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;開始日時：&#39;</span> <span class="o">+</span> <span class="n">starttime</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y/%m/</span><span class="si">%d</span><span class="s1"> %H:%M:%S</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kifu</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;手合割：平手</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kifu</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;先手：&#39;</span> <span class="o">+</span> <span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kifu</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;後手：&#39;</span> <span class="o">+</span> <span class="n">names</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Exporter.move"><a class="viewcode-back" href="../../cshogi.html#cshogi.KI2.Exporter.move">[docs]</a>    <span class="k">def</span> <span class="nf">move</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">move</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write a move to the file in KI2 format.</span>
+
+<span class="sd">        :param move: An integer representing the move.</span>
+<span class="sd">        :param comment: Optional comment string to be associated with the move.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">move_str</span> <span class="o">=</span> <span class="n">move_to_ki2</span><span class="p">(</span><span class="n">move</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">move</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">kifu</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">move_str</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">comment</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">kifu</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;**</span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">comment</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Exporter.end"><a class="viewcode-back" href="../../cshogi.html#cshogi.KI2.Exporter.end">[docs]</a>    <span class="k">def</span> <span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write the game&#39;s ending condition.</span>
+
+<span class="sd">        :param reason: A string representing the reason for the game&#39;s end (e.g., %TORYO, %SENNICHITE).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># 結果出力</span>
+        <span class="k">if</span> <span class="n">reason</span> <span class="o">==</span> <span class="s1">&#39;%TORYO&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">kifu</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;まで</span><span class="si">{}</span><span class="s1">手で</span><span class="si">{}</span><span class="s1">の勝ち</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="o">.</span><span class="n">move_number</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;先手&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span> <span class="o">==</span> <span class="n">cshogi</span><span class="o">.</span><span class="n">WHITE</span> <span class="k">else</span> <span class="s1">&#39;後手&#39;</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">reason</span> <span class="o">==</span> <span class="s1">&#39;%JISHOGI&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">kifu</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;まで</span><span class="si">{}</span><span class="s1">手で持将棋</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="o">.</span><span class="n">move_number</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">reason</span> <span class="o">==</span> <span class="s1">&#39;%KACHI&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">kifu</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;まで</span><span class="si">{}</span><span class="s1">手で</span><span class="si">{}</span><span class="s1">の入玉勝ち</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="o">.</span><span class="n">move_number</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;先手&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span> <span class="o">==</span> <span class="n">cshogi</span><span class="o">.</span><span class="n">BLACK</span> <span class="k">else</span> <span class="s1">&#39;後手&#39;</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">reason</span> <span class="o">==</span> <span class="s1">&#39;%SENNICHITE&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">kifu</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;まで</span><span class="si">{}</span><span class="s1">手で千日手</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="o">.</span><span class="n">move_number</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">reason</span> <span class="o">==</span> <span class="s1">&#39;%+ILLEGAL_ACTION&#39;</span> <span class="ow">or</span> <span class="n">reason</span> <span class="o">==</span> <span class="s1">&#39;%-ILLEGAL_ACTION&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">kifu</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;まで</span><span class="si">{}</span><span class="s1">手で</span><span class="si">{}</span><span class="s1">の反則勝ち</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="o">.</span><span class="n">move_number</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;先手&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span> <span class="o">==</span> <span class="n">cshogi</span><span class="o">.</span><span class="n">WHITE</span> <span class="k">else</span> <span class="s1">&#39;後手&#39;</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">reason</span> <span class="o">==</span> <span class="s1">&#39;%ILLEGAL_MOVE&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">kifu</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;まで</span><span class="si">{}</span><span class="s1">手で</span><span class="si">{}</span><span class="s1">の反則負け</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">move_number</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;先手&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span> <span class="o">==</span> <span class="n">cshogi</span><span class="o">.</span><span class="n">WHITE</span> <span class="k">else</span> <span class="s1">&#39;後手&#39;</span><span class="p">))</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Tadao Yamaoka.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
