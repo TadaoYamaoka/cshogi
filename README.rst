@@ -1,4 +1,4 @@
-cshogi: 高速なPythonの将棋ライブラリ
+cshogi: A Fast Shogi Library for Python
 ====================================
 .. image:: https://img.shields.io/pypi/v/cshogi.svg
     :target: https://pypi.python.org/pypi/cshogi
@@ -6,6 +6,8 @@ cshogi: 高速なPythonの将棋ライブラリ
 
 概要
 ----
+
+cshogi is a fast Python shogi library that provides board management, legal move generation, move verification, USI protocol, and support for machine learning formats. Below is an example of creating a board, generating legal moves at the starting position, displaying them, and making a move.
 
 cshogiは、盤面管理、合法手生成、指し手の検証、USIプロトコル、および機械学習向けフォーマットのサポートを備えた高速なPythonの将棋ライブラリです。
 以下は、盤を作成して、開始局面で合法手を生成して表示し、1手指す処理の例です。
@@ -186,6 +188,12 @@ pipのバージョン19.0以上が必要です。19.0未満の場合は、事前
 ::
 
     pip install --no-cache-dir cshogi
+
+ドキュメント
+-----------
+* `チュートリアル <https://colab.research.google.com/github/TadaoYamaoka/cshogi/blob/notebook/cshogi_tutorial.ipynb>`_
+* `リファレンス <https://tadaoyamaoka.github.io/cshogi/>`_
+
 
 謝辞
 ------
