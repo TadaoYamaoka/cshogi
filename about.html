@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About cshogi &mdash; cshogi  documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="#" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="installation.html" />
+    <link rel="prev" title="Welcome to cshogi’s documentation!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            cshogi
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Introduction:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">About cshogi</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#design-policy">Design Policy</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#handling-of-moves">Handling of Moves</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#legal-move-check">Legal Move Check</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#coordinate-system">Coordinate System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#handling-of-pieces">Handling of Pieces</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#handling-of-pieces-in-hand">Handling of Pieces in Hand</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">References:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="cshogi.html">cshogi package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">cshogi</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">About cshogi</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/about.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="about-cshogi">
+<h1>About cshogi<a class="headerlink" href="#about-cshogi" title="Permalink to this heading"></a></h1>
+<p>python-shogi is an extremely useful Shogi library that can be handled in Python, but its slowness can be a drawback depending on the application. It is described on the official website as well that the purpose is to handle it simply and abstractly rather than focusing on speed.</p>
+<p>However, the slowness becomes a bottleneck when trying to use it for machine learning purposes. Therefore, I decided to create a Shogi library that can operate as quickly as possible from Python.</p>
+<p>Inside python-shogi, the board is represented by a bitboard, but Python’s bit operations are very slow, becoming a bottleneck. Improvements in speed are expected by developing the bit operation part in C++, and making it callable from Python. For this reason, I decided to use Apery’s source code for the C++ part, and create it in a way that Apery can be called from Python.</p>
+<section id="design-policy">
+<h2>Design Policy<a class="headerlink" href="#design-policy" title="Permalink to this heading"></a></h2>
+<section id="handling-of-moves">
+<h3>Handling of Moves<a class="headerlink" href="#handling-of-moves" title="Permalink to this heading"></a></h3>
+<p>Moves are represented as numerical values. In python-shogi, moves are handled as the Move class, and convenient methods are provided, but they are not made into a class with an emphasis on speed. Instead, several helper methods are prepared:</p>
+<ul class="simple">
+<li><p>move_to(move)</p></li>
+<li><p>move_from(move)</p></li>
+<li><p>move_cap(move)</p></li>
+<li><p>move_drop_hand_piece()</p></li>
+<li><p>move_is_promotion(move)</p></li>
+<li><p>move_is_drop(move)</p></li>
+<li><p>move_to_usi(move)</p></li>
+<li><p>move_to_csa(move)</p></li>
+</ul>
+</section>
+<section id="legal-move-check">
+<h3>Legal Move Check<a class="headerlink" href="#legal-move-check" title="Permalink to this heading"></a></h3>
+<p>When applying a move with an emphasis on speed, no legal move check is performed. If an incorrect move is passed, the board data may become corrupted, and the program may terminate abnormally due to an access violation or other issues.</p>
+</section>
+<section id="coordinate-system">
+<h3>Coordinate System<a class="headerlink" href="#coordinate-system" title="Permalink to this heading"></a></h3>
+<p>The coordinate system complies with Apery. It is represented by numbers 0 to 80, but be careful as the corresponding coordinates are different from python-shogi. Please use constants like A1, A2, … rather than handling numbers directly. The alphabet represents the rank, and the number represents the file.</p>
+</section>
+<section id="handling-of-pieces">
+<h3>Handling of Pieces<a class="headerlink" href="#handling-of-pieces" title="Permalink to this heading"></a></h3>
+<p>The numerical values corresponding to the pieces also comply with Apery. Be careful as it differs from python-shogi. PIECE_TYPES_WITH_NONE, PIECES, PIECE_TYPES are defined as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">PIECE_TYPES_WITH_NONE</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">NONE</span><span class="p">,</span>
+        <span class="n">PAWN</span><span class="p">,</span>      <span class="n">LANCE</span><span class="p">,</span>      <span class="n">KNIGHT</span><span class="p">,</span>      <span class="n">SILVER</span><span class="p">,</span>
+        <span class="n">BISHOP</span><span class="p">,</span>       <span class="n">ROOK</span><span class="p">,</span>
+        <span class="n">GOLD</span><span class="p">,</span>
+        <span class="n">KING</span><span class="p">,</span>
+    <span class="n">PROM_PAWN</span><span class="p">,</span> <span class="n">PROM_LANCE</span><span class="p">,</span> <span class="n">PROM_KNIGHT</span><span class="p">,</span> <span class="n">PROM_SILVER</span><span class="p">,</span>
+    <span class="n">PROM_BISHOP</span><span class="p">,</span>  <span class="n">PROM_ROOK</span><span class="p">,</span>
+<span class="p">]</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span>
+
+<span class="n">PIECE_TYPES</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">PAWN</span><span class="p">,</span>      <span class="n">LANCE</span><span class="p">,</span>      <span class="n">KNIGHT</span><span class="p">,</span>      <span class="n">SILVER</span><span class="p">,</span>
+        <span class="n">BISHOP</span><span class="p">,</span>       <span class="n">ROOK</span><span class="p">,</span>
+        <span class="n">GOLD</span><span class="p">,</span>
+        <span class="n">KING</span><span class="p">,</span>
+    <span class="n">PROM_PAWN</span><span class="p">,</span> <span class="n">PROM_LANCE</span><span class="p">,</span> <span class="n">PROM_KNIGHT</span><span class="p">,</span> <span class="n">PROM_SILVER</span><span class="p">,</span>
+    <span class="n">PROM_BISHOP</span><span class="p">,</span>  <span class="n">PROM_ROOK</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">PIECES</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">NONE</span><span class="p">,</span>
+        <span class="n">BPAWN</span><span class="p">,</span>      <span class="n">BLANCE</span><span class="p">,</span>      <span class="n">BKNIGHT</span><span class="p">,</span>      <span class="n">BSILVER</span><span class="p">,</span>
+        <span class="n">BBISHOP</span><span class="p">,</span>       <span class="n">BROOK</span><span class="p">,</span>
+        <span class="n">BGOLD</span><span class="p">,</span>
+        <span class="n">BKING</span><span class="p">,</span>
+    <span class="n">BPROM_PAWN</span><span class="p">,</span> <span class="n">BPROM_LANCE</span><span class="p">,</span> <span class="n">BPROM_KNIGHT</span><span class="p">,</span> <span class="n">BPROM_SILVER</span><span class="p">,</span>
+<span class="n">BPROM_BISHOP</span><span class="p">,</span>  <span class="n">BPROM_ROOK</span><span class="p">,</span>       <span class="n">NOTUSE</span><span class="p">,</span>       <span class="n">NOTUSE</span><span class="p">,</span>
+        <span class="n">WPAWN</span><span class="p">,</span>      <span class="n">WLANCE</span><span class="p">,</span>      <span class="n">WKNIGHT</span><span class="p">,</span>      <span class="n">WSILVER</span><span class="p">,</span>
+        <span class="n">WBISHOP</span><span class="p">,</span>       <span class="n">WROOK</span><span class="p">,</span>
+        <span class="n">WGOLD</span><span class="p">,</span>
+        <span class="n">WKING</span><span class="p">,</span>
+    <span class="n">WPROM_PAWN</span><span class="p">,</span> <span class="n">WPROM_LANCE</span><span class="p">,</span> <span class="n">WPROM_KNIGHT</span><span class="p">,</span> <span class="n">WPROM_SILVER</span><span class="p">,</span>
+<span class="n">WPROM_BISHOP</span><span class="p">,</span> <span class="n">WPROM_ROOK</span><span class="p">,</span>
+<span class="p">]</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">31</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="handling-of-pieces-in-hand">
+<h3>Handling of Pieces in Hand<a class="headerlink" href="#handling-of-pieces-in-hand" title="Permalink to this heading"></a></h3>
+<p>The pieces in hand are defined as HAND_PIECES as follows. The number of pieces in hand returned by Board.pieces_in_hand() is in the order of these constants.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">HAND_PIECES</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">HPAWN</span><span class="p">,</span>     <span class="n">HLANCE</span><span class="p">,</span>     <span class="n">HKNIGHT</span><span class="p">,</span>     <span class="n">HSILVER</span><span class="p">,</span>
+        <span class="n">HGOLD</span><span class="p">,</span>
+        <span class="n">HBISHOP</span><span class="p">,</span>      <span class="n">HROOK</span><span class="p">,</span>
+<span class="p">]</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to cshogi’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="installation.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Tadao Yamaoka.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

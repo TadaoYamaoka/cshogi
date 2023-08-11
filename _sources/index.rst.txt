@@ -6,9 +6,19 @@
 Welcome to cshogi's documentation!
 ==================================
 
+cshogi is a fast Python shogi library that provides board management, legal move generation, move verification, USI protocol, and support for machine learning formats. Below is an example of creating a board, generating legal moves at the starting position, displaying them, and making a move.
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Introduction:
+
+   about
+   installation
+   quickstart
+
 .. toctree::
    :maxdepth: 4
-   :caption: Contents:
+   :caption: References:
 
    cshogi
 
