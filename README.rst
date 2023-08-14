@@ -189,6 +189,12 @@ pipのバージョン19.0以上が必要です。19.0未満の場合は、事前
 
     pip install --no-cache-dir cshogi
 
+cshogi.webパッケージを使用する場合は、以下のコマンドで追加の依存パッケージをインストールできます。
+::
+
+    pip install cshogi[web]
+
+
 ドキュメント
 -----------
 * `チュートリアル <https://colab.research.google.com/github/TadaoYamaoka/cshogi/blob/notebook/cshogi_tutorial.ipynb>`_

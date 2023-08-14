@@ -32,7 +32,7 @@ ext_modules = [
 
 setup(
     name='cshogi',
-    version='0.6.3',
+    version='0.6.4',
     packages=['cshogi', 'cshogi.usi', 'cshogi.gym_shogi', 'cshogi.gym_shogi.envs', 'cshogi.dlshogi', 'cshogi.web', 'cshogi.web.templates', 'cshogi.web.static'],
     package_data={'cshogi.web.templates': ['*'], 'cshogi.web.static': ['*']},
     ext_modules=ext_modules,
@@ -45,5 +45,8 @@ setup(
         'License :: OSI Approved :: GNU General Public License (GPL)',
         "Operating System :: OS Independent",
     ],
-    install_requires=['flask', 'numpy', 'portpicker'],
+    install_requires=['numpy'],
+    extras_require={
+        "web": ['flask', 'portpicker']
+    }
 )
