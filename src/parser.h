@@ -308,12 +308,13 @@ namespace parser {
                     auto itrColor = std::find(COLOR_SYMBOLS.begin(), COLOR_SYMBOLS.end(), line[1]);
                     if (itrColor != COLOR_SYMBOLS.end()) {
                         int index = 2;
-                        while (true) {
+                        while (index < line.size()) {
                             rank_index = std::stoi(line.substr(index, 1));
                             index += 1;
                             file_index = std::stoi(line.substr(index, 1));
                             index += 1;
                             piece = stringToPieceCSA.value((*itrColor) + line.substr(index, 2));
+                            index += 2;
                             if (rank_index == 0 && file_index == 0) {
                                 // piece in hand
                                 pieces_in_hand[piece] += 1;
