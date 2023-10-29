@@ -1,4 +1,4 @@
-﻿from cshogi import CSA, KIF, KI2
+from cshogi import CSA, KIF, KI2
 import os
 
 import argparse

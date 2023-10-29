@@ -308,11 +308,9 @@ def move_to_ki2(move: int, board: Board) -> str:
                 from_square2 = move_from(move2)
                 # 後手は180度回転
                 from_file2, from_rank2 = divmod(from_square2 if board.turn == cshogi.BLACK else 80 - from_square2, 9)
-                if from_file2 == to_file and from_rank2 > to_rank: # 直
-                    continue
                 if from_file2 > to_file: # 左
                     candidates_left += 1
-                else:
+                elif from_file2 < to_file: # 右
                     candidates_right += 1
 
                 if from_rank2 > to_rank: # 上
