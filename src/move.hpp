@@ -176,7 +176,7 @@ inline Move makeDropMove(const PieceType pt, const Square to) { return from2Move
 struct ExtMove {
     Move move;
 
-	operator Move() const { return move; }
+    operator Move() const { return move; }
 };
 
 // 汎用的な insertion sort. 要素数が少ない時、高速にソートできる。

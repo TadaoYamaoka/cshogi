@@ -109,49 +109,49 @@ HuffmanCodeToPieceHash HuffmanCodedPos::handCodeToPieceHash;
 // 手駒に成りフラグは不要だが、これも含めておくと盤上の駒のbit数-1になるので
 // 全体のbit数が固定化できるのでこれも含めておくことにする。
 const HuffmanCode PackedSfen::boardCodeTable[PieceNone] = {
-	{ Binary<         0>::value, 1 }, // Empty
-	{ Binary<         1>::value, 4 }, // BPawn
-	{ Binary<        11>::value, 6 }, // BLance
-	{ Binary<      1011>::value, 6 }, // BKnight
-	{ Binary<       111>::value, 6 }, // BSilver
-	{ Binary<     11111>::value, 8 }, // BBishop
-	{ Binary<    111111>::value, 8 }, // BRook
-	{ Binary<      1111>::value, 6 }, // BGold
-	{ Binary<         0>::value, 0 }, // BKing 玉の位置は別途、位置を符号化する。使用しないので numOfBit を 0 にしておく。
-	{ Binary<       101>::value, 4 }, // BProPawn
-	{ Binary<     10011>::value, 6 }, // BProLance
-	{ Binary<     11011>::value, 6 }, // BProKnight
-	{ Binary<     10111>::value, 6 }, // BProSilver
-	{ Binary<   1011111>::value, 8 }, // BHorse
-	{ Binary<   1111111>::value, 8 }, // BDragona
-	{ Binary<         0>::value, 0 }, // 使用しないので numOfBit を 0 にしておく。
-	{ Binary<         0>::value, 0 }, // 使用しないので numOfBit を 0 にしておく。
-	{ Binary<      1001>::value, 4 }, // WPawn
-	{ Binary<    100011>::value, 6 }, // WLance
-	{ Binary<    101011>::value, 6 }, // WKnight
-	{ Binary<    100111>::value, 6 }, // WSilver
-	{ Binary<  10011111>::value, 8 }, // WBishop
-	{ Binary<  10111111>::value, 8 }, // WRook
-	{ Binary<    101111>::value, 6 }, // WGold
-	{ Binary<         0>::value, 0 }, // WKing 玉の位置は別途、位置を符号化する。
-	{ Binary<      1101>::value, 4 }, // WProPawn
-	{ Binary<    110011>::value, 6 }, // WProLance
-	{ Binary<    111011>::value, 6 }, // WProKnight
-	{ Binary<    110111>::value, 6 }, // WProSilver
-	{ Binary<  11011111>::value, 8 }, // WHorse
-	{ Binary<  11111111>::value, 8 }, // WDragon
+    { Binary<         0>::value, 1 }, // Empty
+    { Binary<         1>::value, 4 }, // BPawn
+    { Binary<        11>::value, 6 }, // BLance
+    { Binary<      1011>::value, 6 }, // BKnight
+    { Binary<       111>::value, 6 }, // BSilver
+    { Binary<     11111>::value, 8 }, // BBishop
+    { Binary<    111111>::value, 8 }, // BRook
+    { Binary<      1111>::value, 6 }, // BGold
+    { Binary<         0>::value, 0 }, // BKing 玉の位置は別途、位置を符号化する。使用しないので numOfBit を 0 にしておく。
+    { Binary<       101>::value, 4 }, // BProPawn
+    { Binary<     10011>::value, 6 }, // BProLance
+    { Binary<     11011>::value, 6 }, // BProKnight
+    { Binary<     10111>::value, 6 }, // BProSilver
+    { Binary<   1011111>::value, 8 }, // BHorse
+    { Binary<   1111111>::value, 8 }, // BDragona
+    { Binary<         0>::value, 0 }, // 使用しないので numOfBit を 0 にしておく。
+    { Binary<         0>::value, 0 }, // 使用しないので numOfBit を 0 にしておく。
+    { Binary<      1001>::value, 4 }, // WPawn
+    { Binary<    100011>::value, 6 }, // WLance
+    { Binary<    101011>::value, 6 }, // WKnight
+    { Binary<    100111>::value, 6 }, // WSilver
+    { Binary<  10011111>::value, 8 }, // WBishop
+    { Binary<  10111111>::value, 8 }, // WRook
+    { Binary<    101111>::value, 6 }, // WGold
+    { Binary<         0>::value, 0 }, // WKing 玉の位置は別途、位置を符号化する。
+    { Binary<      1101>::value, 4 }, // WProPawn
+    { Binary<    110011>::value, 6 }, // WProLance
+    { Binary<    111011>::value, 6 }, // WProKnight
+    { Binary<    110111>::value, 6 }, // WProSilver
+    { Binary<  11011111>::value, 8 }, // WHorse
+    { Binary<  11111111>::value, 8 }, // WDragon
 };
 
 // 盤上の bit 数 - 1 で表現出来るようにする。持ち駒があると、盤上には Empty の 1 bit が増えるので、
 // これで局面の bit 数が固定化される。
 const HuffmanCode PackedSfen::handCodeTable[HandPieceNum][ColorNum] = {
-	{ { Binary<        0>::value, 3 },{ Binary<      100>::value, 3 } }, // HPawn
-	{ { Binary<        1>::value, 5 },{ Binary<    10001>::value, 5 } }, // HLance
-	{ { Binary<      101>::value, 5 },{ Binary<    10101>::value, 5 } }, // HKnight
-	{ { Binary<       11>::value, 5 },{ Binary<    10011>::value, 5 } }, // HSilver
-	{ { Binary<      111>::value, 5 },{ Binary<    10111>::value, 5 } }, // HGold
-	{ { Binary<     1111>::value, 7 },{ Binary<  1001111>::value, 7 } }, // HBishop
-	{ { Binary<    11111>::value, 7 },{ Binary<  1011111>::value, 7 } }, // HRook
+    { { Binary<        0>::value, 3 },{ Binary<      100>::value, 3 } }, // HPawn
+    { { Binary<        1>::value, 5 },{ Binary<    10001>::value, 5 } }, // HLance
+    { { Binary<      101>::value, 5 },{ Binary<    10101>::value, 5 } }, // HKnight
+    { { Binary<       11>::value, 5 },{ Binary<    10011>::value, 5 } }, // HSilver
+    { { Binary<      111>::value, 5 },{ Binary<    10111>::value, 5 } }, // HGold
+    { { Binary<     1111>::value, 7 },{ Binary<  1001111>::value, 7 } }, // HBishop
+    { { Binary<    11111>::value, 7 },{ Binary<  1011111>::value, 7 } }, // HRook
 };
 
 HuffmanCodeToPieceHash PackedSfen::boardCodeToPieceHash;
@@ -2760,113 +2760,113 @@ void Position::initZobrist() {
 
 // ある指し手を指した後のhash keyを返す。
 Key Position::getKeyAfter(const Move m) const {
-	Color Us = this->turn(); // 現局面の手番
-	Key k = getBoardKey() ^ zobTurn();
-	Key h = getHandKey();
+    Color Us = this->turn(); // 現局面の手番
+    Key k = getBoardKey() ^ zobTurn();
+    Key h = getHandKey();
 
-	// 移動先の升
-	Square to = m.to();
+    // 移動先の升
+    Square to = m.to();
 
-	if (m.isDrop())
-	{
-		// --- 駒打ち
-		PieceType pt = m.pieceTypeDropped();
+    if (m.isDrop())
+    {
+        // --- 駒打ち
+        PieceType pt = m.pieceTypeDropped();
 
-		// Zobrist keyの更新
-		h -= zobHand(pieceTypeToHandPiece(pt), Us);
-		k += zobrist(pt, to, Us);
-	}
-	else
-	{
-		// -- 駒の移動
-		Square from = m.from();
+        // Zobrist keyの更新
+        h -= zobHand(pieceTypeToHandPiece(pt), Us);
+        k += zobrist(pt, to, Us);
+    }
+    else
+    {
+        // -- 駒の移動
+        Square from = m.from();
 
-		// 移動させる駒
-		Piece moved_pc = piece(from);
+        // 移動させる駒
+        Piece moved_pc = piece(from);
 
-		// 移動先に駒の配置
-		// もし成る指し手であるなら、成った後の駒を配置する。
-		Piece moved_after_pc;
+        // 移動先に駒の配置
+        // もし成る指し手であるなら、成った後の駒を配置する。
+        Piece moved_after_pc;
 
-		if (m.isPromotion())
-		{
-			moved_after_pc = moved_pc + Piece::Promoted;
-		}
-		else {
-			moved_after_pc = moved_pc;
-		}
+        if (m.isPromotion())
+        {
+            moved_after_pc = moved_pc + Piece::Promoted;
+        }
+        else {
+            moved_after_pc = moved_pc;
+        }
 
-		// 移動先の升にある駒
-		Piece to_pc = piece(to);
-		if (to_pc != Piece::Empty)
-		{
-			PieceType pt = pieceToPieceType(to_pc);
+        // 移動先の升にある駒
+        Piece to_pc = piece(to);
+        if (to_pc != Piece::Empty)
+        {
+            PieceType pt = pieceToPieceType(to_pc);
 
-			// 捕獲された駒が盤上から消えるので局面のhash keyを更新する
-			k -= zobrist(pt, to, pieceToColor(to_pc));
-			h += zobHand(pieceTypeToHandPiece(pt), Us);
-		}
+            // 捕獲された駒が盤上から消えるので局面のhash keyを更新する
+            k -= zobrist(pt, to, pieceToColor(to_pc));
+            h += zobHand(pieceTypeToHandPiece(pt), Us);
+        }
 
-		// fromにあったmoved_pcがtoにmoved_after_pcとして移動した。
-		k -= zobrist(pieceToPieceType(moved_pc), from, Us);
-		k += zobrist(pieceToPieceType(moved_after_pc), to, Us);
-	}
+        // fromにあったmoved_pcがtoにmoved_after_pcとして移動した。
+        k -= zobrist(pieceToPieceType(moved_pc), from, Us);
+        k += zobrist(pieceToPieceType(moved_after_pc), to, Us);
+    }
 
-	return k + h;
+    return k + h;
 }
 
 // ある指し手を指した後のhash keyを返す。
 Key Position::getBoardKeyAfter(const Move m) const {
-	Color Us = this->turn(); // 現局面の手番
-	Key k = getBoardKey() ^ zobTurn();
+    Color Us = this->turn(); // 現局面の手番
+    Key k = getBoardKey() ^ zobTurn();
 
-	// 移動先の升
-	Square to = m.to();
+    // 移動先の升
+    Square to = m.to();
 
-	if (m.isDrop())
-	{
-		// --- 駒打ち
-		PieceType pt = m.pieceTypeDropped();
+    if (m.isDrop())
+    {
+        // --- 駒打ち
+        PieceType pt = m.pieceTypeDropped();
 
-		// Zobrist keyの更新
-		k += zobrist(pt, to, Us);
-	}
-	else
-	{
-		// -- 駒の移動
-		Square from = m.from();
+        // Zobrist keyの更新
+        k += zobrist(pt, to, Us);
+    }
+    else
+    {
+        // -- 駒の移動
+        Square from = m.from();
 
-		// 移動させる駒
-		Piece moved_pc = piece(from);
+        // 移動させる駒
+        Piece moved_pc = piece(from);
 
-		// 移動先に駒の配置
-		// もし成る指し手であるなら、成った後の駒を配置する。
-		Piece moved_after_pc;
+        // 移動先に駒の配置
+        // もし成る指し手であるなら、成った後の駒を配置する。
+        Piece moved_after_pc;
 
-		if (m.isPromotion())
-		{
-			moved_after_pc = moved_pc + Piece::Promoted;
-		}
-		else {
-			moved_after_pc = moved_pc;
-		}
+        if (m.isPromotion())
+        {
+            moved_after_pc = moved_pc + Piece::Promoted;
+        }
+        else {
+            moved_after_pc = moved_pc;
+        }
 
-		// 移動先の升にある駒
-		Piece to_pc = piece(to);
-		if (to_pc != Piece::Empty)
-		{
-			PieceType pt = pieceToPieceType(to_pc);
+        // 移動先の升にある駒
+        Piece to_pc = piece(to);
+        if (to_pc != Piece::Empty)
+        {
+            PieceType pt = pieceToPieceType(to_pc);
 
-			// 捕獲された駒が盤上から消えるので局面のhash keyを更新する
-			k -= zobrist(pt, to, pieceToColor(to_pc));
-		}
+            // 捕獲された駒が盤上から消えるので局面のhash keyを更新する
+            k -= zobrist(pt, to, pieceToColor(to_pc));
+        }
 
-		// fromにあったmoved_pcがtoにmoved_after_pcとして移動した。
-		k -= zobrist(pieceToPieceType(moved_pc), from, Us);
-		k += zobrist(pieceToPieceType(moved_after_pc), to, Us);
-	}
+        // fromにあったmoved_pcがtoにmoved_after_pcとして移動した。
+        k -= zobrist(pieceToPieceType(moved_pc), from, Us);
+        k += zobrist(pieceToPieceType(moved_after_pc), to, Us);
+    }
 
-	return k;
+    return k;
 }
 
 void Position::print(std::ostream& os) const {
@@ -2947,7 +2947,7 @@ std::string Position::toCSAPos() const {
 }
 
 void Position::toHuffmanCodedPos(u8* data) const {
-	std::fill(data, data + 32, 0);
+    std::fill(data, data + 32, 0);
     BitStream bs(data);
     // 手番 (1bit)
     bs.putBit(turn());
@@ -2978,34 +2978,34 @@ void Position::toHuffmanCodedPos(u8* data) const {
 }
 
 void Position::toPackedSfen(u8* data) const {
-	std::fill(data, data + 32, 0);
-	BitStream bs(data);
-	// 手番 (1bit)
-	bs.putBit(turn());
+    std::fill(data, data + 32, 0);
+    BitStream bs(data);
+    // 手番 (1bit)
+    bs.putBit(turn());
 
-	// 玉の位置 (7bit * 2)
-	bs.putBits(kingSquare(Black), 7);
-	bs.putBits(kingSquare(White), 7);
+    // 玉の位置 (7bit * 2)
+    bs.putBits(kingSquare(Black), 7);
+    bs.putBits(kingSquare(White), 7);
 
-	// 盤上の駒
-	for (Square sq = SQ11; sq < SquareNum; ++sq) {
-		Piece pc = piece(sq);
-		if (pieceToPieceType(pc) == King)
-			continue;
-		const auto hc = PackedSfen::boardCodeTable[pc];
-		bs.putBits(hc.code, hc.numOfBits);
-	}
+    // 盤上の駒
+    for (Square sq = SQ11; sq < SquareNum; ++sq) {
+        Piece pc = piece(sq);
+        if (pieceToPieceType(pc) == King)
+            continue;
+        const auto hc = PackedSfen::boardCodeTable[pc];
+        bs.putBits(hc.code, hc.numOfBits);
+    }
 
-	// 持ち駒
-	for (Color c = Black; c < ColorNum; ++c) {
-		const Hand h = hand(c);
-		for (HandPiece hp = HPawn; hp < HandPieceNum; ++hp) {
-			const auto hc = PackedSfen::handCodeTable[hp][c];
-			for (u32 n = 0; n < h.numOf(hp); ++n)
-				bs.putBits(hc.code, hc.numOfBits);
-		}
-	}
-	assert(bs.curr() == 0);
+    // 持ち駒
+    for (Color c = Black; c < ColorNum; ++c) {
+        const Hand h = hand(c);
+        for (HandPiece hp = HPawn; hp < HandPieceNum; ++hp) {
+            const auto hc = PackedSfen::handCodeTable[hp][c];
+            for (u32 n = 0; n < h.numOf(hp); ++n)
+                bs.putBits(hc.code, hc.numOfBits);
+        }
+    }
+    assert(bs.curr() == 0);
 }
 
 bool Position::isOK() const {
@@ -3176,7 +3176,7 @@ RepetitionType Position::isDraw(const int checkMaxPly) const {
 }
 
 namespace {
-	void printHandPiece(std::ostream& os, const Position& pos, const HandPiece hp, const Color c, const std::string& str) {
+    void printHandPiece(std::ostream& os, const Position& pos, const HandPiece hp, const Color c, const std::string& str) {
         if (pos.hand(c).numOf(hp)) {
             const char* sign = (c == Black ? "+" : "-");
             os << "P" << sign;
@@ -3377,68 +3377,68 @@ INCORRECT_HUFFMAN_CODE:
 
 // やねうら王のpacked sfenから読み込む
 bool Position::set_psfen(const char* psfen_data) {
-	clear();
+    clear();
 
-	PackedSfen tmp(psfen_data); // ローカルにコピー
-	BitStream bs(tmp.data);
+    PackedSfen tmp(psfen_data); // ローカルにコピー
+    BitStream bs(tmp.data);
 
-	// 手番
-	turn_ = static_cast<Color>(bs.getBit());
+    // 手番
+    turn_ = static_cast<Color>(bs.getBit());
 
-	// 玉の位置
-	Square sq0 = (Square)bs.getBits(7);
-	Square sq1 = (Square)bs.getBits(7);
-	setPiece(BKing, static_cast<Square>(sq0));
-	setPiece(WKing, static_cast<Square>(sq1));
+    // 玉の位置
+    Square sq0 = (Square)bs.getBits(7);
+    Square sq1 = (Square)bs.getBits(7);
+    setPiece(BKing, static_cast<Square>(sq0));
+    setPiece(WKing, static_cast<Square>(sq1));
 
-	// 盤上の駒
-	for (Square sq = SQ11; sq < SquareNum; ++sq) {
-		if (pieceToPieceType(piece(sq)) == King) // piece(sq) は BKing, WKing, Empty のどれか。
-			continue;
-		HuffmanCode hc = { 0, 0 };
-		while (hc.numOfBits <= 8) {
-			hc.code |= bs.getBit() << hc.numOfBits++;
-			if (PackedSfen::boardCodeToPieceHash.value(hc.key) != PieceNone) {
-				const Piece pc = PackedSfen::boardCodeToPieceHash.value(hc.key);
-				if (pc != Empty)
-					setPiece(PackedSfen::boardCodeToPieceHash.value(hc.key), sq);
-				break;
-			}
-		}
-		if (PackedSfen::boardCodeToPieceHash.value(hc.key) == PieceNone)
-			goto INCORRECT_HUFFMAN_CODE;
-	}
-	while (bs.data() != std::end(tmp.data)) {
-		HuffmanCode hc = { 0, 0 };
-		while (hc.numOfBits <= 8) {
-			hc.code |= bs.getBit() << hc.numOfBits++;
-			const Piece pc = PackedSfen::handCodeToPieceHash.value(hc.key);
-			if (pc != PieceNone) {
-				hand_[pieceToColor(pc)].plusOne(pieceTypeToHandPiece(pieceToPieceType(pc)));
-				break;
-			}
-		}
-		if (PackedSfen::handCodeToPieceHash.value(hc.key) == PieceNone)
-			goto INCORRECT_HUFFMAN_CODE;
-	}
+    // 盤上の駒
+    for (Square sq = SQ11; sq < SquareNum; ++sq) {
+        if (pieceToPieceType(piece(sq)) == King) // piece(sq) は BKing, WKing, Empty のどれか。
+            continue;
+        HuffmanCode hc = { 0, 0 };
+        while (hc.numOfBits <= 8) {
+            hc.code |= bs.getBit() << hc.numOfBits++;
+            if (PackedSfen::boardCodeToPieceHash.value(hc.key) != PieceNone) {
+                const Piece pc = PackedSfen::boardCodeToPieceHash.value(hc.key);
+                if (pc != Empty)
+                    setPiece(PackedSfen::boardCodeToPieceHash.value(hc.key), sq);
+                break;
+            }
+        }
+        if (PackedSfen::boardCodeToPieceHash.value(hc.key) == PieceNone)
+            goto INCORRECT_HUFFMAN_CODE;
+    }
+    while (bs.data() != std::end(tmp.data)) {
+        HuffmanCode hc = { 0, 0 };
+        while (hc.numOfBits <= 8) {
+            hc.code |= bs.getBit() << hc.numOfBits++;
+            const Piece pc = PackedSfen::handCodeToPieceHash.value(hc.key);
+            if (pc != PieceNone) {
+                hand_[pieceToColor(pc)].plusOne(pieceTypeToHandPiece(pieceToPieceType(pc)));
+                break;
+            }
+        }
+        if (PackedSfen::handCodeToPieceHash.value(hc.key) == PieceNone)
+            goto INCORRECT_HUFFMAN_CODE;
+    }
 
-	kingSquare_[Black] = bbOf(King, Black).constFirstOneFromSQ11();
-	kingSquare_[White] = bbOf(King, White).constFirstOneFromSQ11();
-	goldsBB_ = bbOf(Gold, ProPawn, ProLance, ProKnight, ProSilver);
+    kingSquare_[Black] = bbOf(King, Black).constFirstOneFromSQ11();
+    kingSquare_[White] = bbOf(King, White).constFirstOneFromSQ11();
+    goldsBB_ = bbOf(Gold, ProPawn, ProLance, ProKnight, ProSilver);
 
-	gamePly_ = 1; // ply の情報は持っていないので 1 にしておく。
+    gamePly_ = 1; // ply の情報は持っていないので 1 にしておく。
 
-	st_->boardKey = computeBoardKey();
-	st_->handKey = computeHandKey();
-	st_->hand = hand(turn());
+    st_->boardKey = computeBoardKey();
+    st_->handKey = computeHandKey();
+    st_->hand = hand(turn());
 
-	//setEvalList();
-	findCheckers();
+    //setEvalList();
+    findCheckers();
 
-	return true;
+    return true;
 INCORRECT_HUFFMAN_CODE:
-	std::cout << "incorrect Huffman code." << std::endl;
-	return false;
+    std::cout << "incorrect Huffman code." << std::endl;
+    return false;
 }
 
 // ランダムな局面を作成する。

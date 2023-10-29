@@ -156,11 +156,11 @@ struct HuffmanCodedPos {
             for (Color c = Black; c < ColorNum; ++c)
                 handCodeToPieceHash[handCodeTable[hp][c].key] = colorAndPieceTypeToPiece(c, handPieceToPieceType(hp));
     }
-	HuffmanCodedPos() {}
-	HuffmanCodedPos(const HuffmanCodedPos&) = default;
-	HuffmanCodedPos(const char* hcp_data) {
-		std::memcpy(data, hcp_data, sizeof(data));
-	}
+    HuffmanCodedPos() {}
+    HuffmanCodedPos(const HuffmanCodedPos&) = default;
+    HuffmanCodedPos(const char* hcp_data) {
+        std::memcpy(data, hcp_data, sizeof(data));
+    }
     void clear() { std::fill(std::begin(data), std::end(data), 0); }
 
     u8 data[32];
@@ -177,29 +177,29 @@ static_assert(sizeof(HuffmanCodedPosAndEval) == 38, "");
 
 // やねうら王のpacked sfen
 struct PackedSfen {
-	static const HuffmanCode boardCodeTable[PieceNone];
-	static const HuffmanCode handCodeTable[HandPieceNum][ColorNum];
-	static HuffmanCodeToPieceHash boardCodeToPieceHash;
-	static HuffmanCodeToPieceHash handCodeToPieceHash;
-	static void init() {
-		for (Piece pc = Empty; pc <= BDragon; ++pc)
-			if (pieceToPieceType(pc) != King) // 玉は位置で符号化するので、駒の種類では符号化しない。
-				boardCodeToPieceHash[boardCodeTable[pc].key] = pc;
-		for (Piece pc = WPawn; pc <= WDragon; ++pc)
-			if (pieceToPieceType(pc) != King) // 玉は位置で符号化するので、駒の種類では符号化しない。
-				boardCodeToPieceHash[boardCodeTable[pc].key] = pc;
-		for (HandPiece hp = HPawn; hp < HandPieceNum; ++hp)
-			for (Color c = Black; c < ColorNum; ++c)
-				handCodeToPieceHash[handCodeTable[hp][c].key] = colorAndPieceTypeToPiece(c, handPieceToPieceType(hp));
-	}
-	PackedSfen() {}
-	PackedSfen(const PackedSfen&) = default;
-	PackedSfen(const char* psfen_data) {
-		std::memcpy(data, psfen_data, sizeof(data));
-	}
-	void clear() { std::fill(std::begin(data), std::end(data), 0); }
+    static const HuffmanCode boardCodeTable[PieceNone];
+    static const HuffmanCode handCodeTable[HandPieceNum][ColorNum];
+    static HuffmanCodeToPieceHash boardCodeToPieceHash;
+    static HuffmanCodeToPieceHash handCodeToPieceHash;
+    static void init() {
+        for (Piece pc = Empty; pc <= BDragon; ++pc)
+            if (pieceToPieceType(pc) != King) // 玉は位置で符号化するので、駒の種類では符号化しない。
+                boardCodeToPieceHash[boardCodeTable[pc].key] = pc;
+        for (Piece pc = WPawn; pc <= WDragon; ++pc)
+            if (pieceToPieceType(pc) != King) // 玉は位置で符号化するので、駒の種類では符号化しない。
+                boardCodeToPieceHash[boardCodeTable[pc].key] = pc;
+        for (HandPiece hp = HPawn; hp < HandPieceNum; ++hp)
+            for (Color c = Black; c < ColorNum; ++c)
+                handCodeToPieceHash[handCodeTable[hp][c].key] = colorAndPieceTypeToPiece(c, handPieceToPieceType(hp));
+    }
+    PackedSfen() {}
+    PackedSfen(const PackedSfen&) = default;
+    PackedSfen(const char* psfen_data) {
+        std::memcpy(data, psfen_data, sizeof(data));
+    }
+    void clear() { std::fill(std::begin(data), std::end(data), 0); }
 
-	u8 data[32];
+    u8 data[32];
 };
 
 // PackedSfenと評価値が一体化した構造体
@@ -207,29 +207,29 @@ struct PackedSfen {
 // とりあえず、以下のメンバーはオプションによらずすべて書き出しておく。
 struct PackedSfenValue
 {
-	// 局面
-	PackedSfen sfen;
+    // 局面
+    PackedSfen sfen;
 
-	// Learner::search()から返ってきた評価値
-	s16 score;
+    // Learner::search()から返ってきた評価値
+    s16 score;
 
-	// PVの初手
-	u16 move;
+    // PVの初手
+    u16 move;
 
-	// 初期局面からの局面の手数。
-	u16 gamePly;
+    // 初期局面からの局面の手数。
+    u16 gamePly;
 
-	// この局面の手番側が、ゲームを最終的に勝っているなら1。負けているなら-1。
-	// 引き分けに至った場合は、0。
-	// 引き分けは、教師局面生成コマンドgensfenにおいて、
-	// LEARN_GENSFEN_DRAW_RESULTが有効なときにだけ書き出す。
-	s8 game_result;
+    // この局面の手番側が、ゲームを最終的に勝っているなら1。負けているなら-1。
+    // 引き分けに至った場合は、0。
+    // 引き分けは、教師局面生成コマンドgensfenにおいて、
+    // LEARN_GENSFEN_DRAW_RESULTが有効なときにだけ書き出す。
+    s8 game_result;
 
-	// 教師局面を書き出したファイルを他の人とやりとりするときに
-	// この構造体サイズが不定だと困るため、paddingしてどの環境でも必ず40bytesになるようにしておく。
-	u8 padding;
+    // 教師局面を書き出したファイルを他の人とやりとりするときに
+    // この構造体サイズが不定だと困るため、paddingしてどの環境でも必ず40bytesになるようにしておく。
+    u8 padding;
 
-	// 32 + 2 + 2 + 2 + 1 + 1 = 40bytes
+    // 32 + 2 + 2 + 2 + 1 + 1 = 40bytes
 };
 
 void initMate1Ply();
@@ -247,10 +247,10 @@ public:
     Position& operator = (const Position& pos);
     void set(const std::string& sfen);
     void set(const Piece pieces[SquareNum], const int pieces_in_hand[ColorNum][HandPieceNum]);
-	bool set_hcp(const char* hcp_data); // for python
-	bool set(const HuffmanCodedPos& hcp) { set_hcp((const char*)hcp.data); };
-	bool set_psfen(const char* psfen_data); // for python
-	bool set(const PackedSfen& psfen) { set_psfen((const char*)psfen.data); };
+    bool set_hcp(const char* hcp_data); // for python
+    bool set(const HuffmanCodedPos& hcp) { set_hcp((const char*)hcp.data); };
+    bool set_psfen(const char* psfen_data); // for python
+    bool set(const PackedSfen& psfen) { set_psfen((const char*)psfen.data); };
     void set(std::mt19937& mt);
 
     Bitboard bbOf(const PieceType pt) const                                            { return byTypeBB_[pt]; }
@@ -418,18 +418,18 @@ public:
     Key getBoardKey() const     { return st_->boardKey; }
     Key getHandKey() const      { return st_->handKey; }
     Key getKey() const          { return st_->key(); }
-	Key getKeyAfter(const Move m) const;
-	Key getBoardKeyAfter(const Move m) const;
+    Key getKeyAfter(const Move m) const;
+    Key getBoardKeyAfter(const Move m) const;
     Key getKeyExcludeTurn() const {
         static_assert(zobTurn_ == 1, "");
         return getKey() >> 1;
     }
-	void print(std::ostream& os) const;
+    void print(std::ostream& os) const;
     std::string toSFEN(const Ply ply) const;
     std::string toSFEN() const { return toSFEN(gamePly()); }
     std::string toCSAPos() const;
     void toHuffmanCodedPos(u8* data) const;
-	void toPackedSfen(u8* data) const;
+    void toPackedSfen(u8* data) const;
 
     RepetitionType isDraw(const int checkMaxPly = std::numeric_limits<int>::max()) const;
 

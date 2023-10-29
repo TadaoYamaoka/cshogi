@@ -30,5 +30,5 @@ int SquareDistance[SquareNum][SquareNum];
 SquareWithWall sqww_table[SquareNum + 1];
 
 namespace Effect8 {
-	Directions direc_table[SquareNum + 1][SquareNum + 1];
+    Directions direc_table[SquareNum + 1][SquareNum + 1];
 }
