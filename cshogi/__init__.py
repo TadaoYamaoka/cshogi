@@ -1,4 +1,4 @@
-﻿from ._cshogi import *
+from ._cshogi import *
 
 __all__ = [
     "A1",

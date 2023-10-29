@@ -5,5 +5,8 @@ indent_size = 4
 indent_style = space
 trim_trailing_whitespace = true
 
+[*.{py,pyx}]
+charset = utf-8
+
 [*.{cpp,h}]
 charset = utf-8-bom

@@ -1,4 +1,4 @@
-﻿from typing import Dict, List, Union, Optional, Callable
+from typing import Dict, List, Union, Optional, Callable
 import random
 import math
 from time import perf_counter

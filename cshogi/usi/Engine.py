@@ -1,4 +1,4 @@
-﻿from typing import Dict, List, Tuple, Union, Optional, Callable
+from typing import Dict, List, Tuple, Union, Optional, Callable
 import subprocess
 import os.path
 import locale

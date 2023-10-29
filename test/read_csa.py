@@ -1,4 +1,4 @@
-﻿import cshogi
+import cshogi
 import numpy as np
 import sys
 import glob

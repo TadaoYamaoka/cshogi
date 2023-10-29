@@ -1,4 +1,4 @@
-﻿from typing import Dict, List, Optional
+from typing import Dict, List, Optional
 import re
 from datetime import datetime
 

@@ -1,4 +1,4 @@
-﻿from cshogi import KIF
+from cshogi import KIF
 
 import argparse
 parser = argparse.ArgumentParser()

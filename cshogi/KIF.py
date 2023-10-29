@@ -1,4 +1,4 @@
-﻿# This file is part of the python-shogi library.
+# This file is part of the python-shogi library.
 # Copyright (C) 2015- Tasuku SUENAGA <tasuku-s-github@titech.ac>
 #
 # This program is free software: you can redistribute it and/or modify
