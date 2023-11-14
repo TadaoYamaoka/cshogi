@@ -19,6 +19,7 @@ class MyBuildExt(build_ext):
                 e.extra_compile_args.extend(
                     [
                         "/std:c11",
+                        "/arch:SSE42",
                         "/arch:AVX2",
                     ]
                 )
@@ -78,6 +79,7 @@ ext_modules = [
         language="c++",
     ),
 ]
+
 
 def build(setup_kwargs):
     setup_kwargs.update(
