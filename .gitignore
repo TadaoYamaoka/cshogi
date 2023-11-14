@@ -6,6 +6,8 @@
 *.user
 *.userosscache
 *.sln.docstates
+poetry.lock
+setup.py
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
