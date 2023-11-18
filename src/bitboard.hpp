@@ -26,7 +26,7 @@
 #include "square.hpp"
 #include "color.hpp"
 
-#if defined(__arm64__)
+#if defined(__arm64__) || defined(__aarch64__)
 #include "endianness.h"
 #endif
 

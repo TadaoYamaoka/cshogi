@@ -22,7 +22,7 @@
 #ifndef APERY_COMMON_HPP
 #define APERY_COMMON_HPP
 
-#if defined(__arm64__)
+#if defined(__arm64__) || defined(__aarch64__)
 #undef HAVE_SSE2
 #undef HAVE_SSE4
 #undef HAVE_SSE42
