@@ -26,40 +26,33 @@
 #include "square.hpp"
 #include "color.hpp"
 
-#if defined(__aarch64__)
+#if defined(__arm64__) || defined(__aarch64__)
 #include "endianness.h"
 #endif
 
 class Bitboard;
 extern const Bitboard SetMaskBB[SquareNum];
 
-class Bitboard
-{
+class Bitboard {
 public:
-#if defined(HAVE_SSE2) || defined(HAVE_SSE4)
-    Bitboard &operator=(const Bitboard &rhs)
-    {
+#if defined (HAVE_SSE2) || defined (HAVE_SSE4)
+    Bitboard& operator = (const Bitboard& rhs) {
         _mm_store_si128(&this->m_, rhs.m_);
         return *this;
     }
-    Bitboard(const Bitboard &bb)
-    {
+    Bitboard(const Bitboard& bb) {
         _mm_store_si128(&this->m_, bb.m_);
     }
 #endif
-    Bitboard()
-    {
-    }
-    Bitboard(const u64 v0, const u64 v1)
-    {
+    Bitboard() {}
+    Bitboard(const u64 v0, const u64 v1) {
         this->p_[0] = v0;
         this->p_[1] = v1;
     }
     u64 p(const int index) const { return p_[index]; }
     void set(const int index, const u64 val) { p_[index] = val; }
     u64 merge() const { return this->p(0) | this->p(1); }
-    explicit operator bool() const
-    {
+    explicit operator bool() const {
 #ifdef HAVE_SSE4
         return !(_mm_testz_si128(this->m_, _mm_set1_epi8(static_cast<char>(0xffu))));
 #else
@@ -68,17 +61,15 @@ public:
     }
     bool isAny() const { return static_cast<bool>(*this); }
     // これはコードが見難くなるけど仕方ない。
-    bool andIsAny(const Bitboard &bb) const
-    {
+    bool andIsAny(const Bitboard& bb) const {
 #ifdef HAVE_SSE4
         return !(_mm_testz_si128(this->m_, bb.m_));
 #else
         return (*this & bb).isAny();
 #endif
     }
-    Bitboard operator~() const
-    {
-#if defined(HAVE_SSE2) || defined(HAVE_SSE4)
+    Bitboard operator ~ () const {
+#if defined (HAVE_SSE2) || defined (HAVE_SSE4)
         Bitboard tmp;
         _mm_store_si128(&tmp.m_, _mm_andnot_si128(this->m_, _mm_set1_epi8(static_cast<char>(0xffu))));
         return tmp;
@@ -86,9 +77,8 @@ public:
         return Bitboard(~this->p(0), ~this->p(1));
 #endif
     }
-    Bitboard operator&=(const Bitboard &rhs)
-    {
-#if defined(HAVE_SSE2) || defined(HAVE_SSE4)
+    Bitboard operator &= (const Bitboard& rhs) {
+#if defined (HAVE_SSE2) || defined (HAVE_SSE4)
         _mm_store_si128(&this->m_, _mm_and_si128(this->m_, rhs.m_));
 #else
         this->p_[0] &= rhs.p(0);
@@ -96,9 +86,8 @@ public:
 #endif
         return *this;
     }
-    Bitboard operator|=(const Bitboard &rhs)
-    {
-#if defined(HAVE_SSE2) || defined(HAVE_SSE4)
+    Bitboard operator |= (const Bitboard& rhs) {
+#if defined (HAVE_SSE2) || defined (HAVE_SSE4)
         _mm_store_si128(&this->m_, _mm_or_si128(this->m_, rhs.m_));
 #else
         this->p_[0] |= rhs.p(0);
@@ -106,9 +95,8 @@ public:
 #endif
         return *this;
     }
-    Bitboard operator^=(const Bitboard &rhs)
-    {
-#if defined(HAVE_SSE2) || defined(HAVE_SSE4)
+    Bitboard operator ^= (const Bitboard& rhs) {
+#if defined (HAVE_SSE2) || defined (HAVE_SSE4)
         _mm_store_si128(&this->m_, _mm_xor_si128(this->m_, rhs.m_));
 #else
         this->p_[0] ^= rhs.p(0);
@@ -116,9 +104,8 @@ public:
 #endif
         return *this;
     }
-    Bitboard operator<<=(const int i)
-    {
-#if defined(HAVE_SSE2) || defined(HAVE_SSE4)
+    Bitboard operator <<= (const int i) {
+#if defined (HAVE_SSE2) || defined (HAVE_SSE4)
         _mm_store_si128(&this->m_, _mm_slli_epi64(this->m_, i));
 #else
         this->p_[0] <<= i;
@@ -126,9 +113,8 @@ public:
 #endif
         return *this;
     }
-    Bitboard operator>>=(const int i)
-    {
-#if defined(HAVE_SSE2) || defined(HAVE_SSE4)
+    Bitboard operator >>= (const int i) {
+#if defined (HAVE_SSE2) || defined (HAVE_SSE4)
         _mm_store_si128(&this->m_, _mm_srli_epi64(this->m_, i));
 #else
         this->p_[0] >>= i;
@@ -136,24 +122,22 @@ public:
 #endif
         return *this;
     }
-    Bitboard operator&(const Bitboard &rhs) const { return Bitboard(*this) &= rhs; }
-    Bitboard operator|(const Bitboard &rhs) const { return Bitboard(*this) |= rhs; }
-    Bitboard operator^(const Bitboard &rhs) const { return Bitboard(*this) ^= rhs; }
-    Bitboard operator<<(const int i) const { return Bitboard(*this) <<= i; }
-    Bitboard operator>>(const int i) const { return Bitboard(*this) >>= i; }
-    bool operator==(const Bitboard &rhs) const
-    {
+    Bitboard operator & (const Bitboard& rhs) const { return Bitboard(*this) &= rhs; }
+    Bitboard operator | (const Bitboard& rhs) const { return Bitboard(*this) |= rhs; }
+    Bitboard operator ^ (const Bitboard& rhs) const { return Bitboard(*this) ^= rhs; }
+    Bitboard operator << (const int i) const { return Bitboard(*this) <<= i; }
+    Bitboard operator >> (const int i) const { return Bitboard(*this) >>= i; }
+    bool operator == (const Bitboard& rhs) const {
 #ifdef HAVE_SSE4
         return (_mm_testc_si128(_mm_cmpeq_epi8(this->m_, rhs.m_), _mm_set1_epi8(static_cast<char>(0xffu))) ? true : false);
 #else
         return (this->p(0) == rhs.p(0)) && (this->p(1) == rhs.p(1));
 #endif
     }
-    bool operator!=(const Bitboard &rhs) const { return !(*this == rhs); }
+    bool operator != (const Bitboard& rhs) const { return !(*this == rhs); }
     // これはコードが見難くなるけど仕方ない。
-    Bitboard andEqualNot(const Bitboard &bb)
-    {
-#if defined(HAVE_SSE2) || defined(HAVE_SSE4)
+    Bitboard andEqualNot(const Bitboard& bb) {
+#if defined (HAVE_SSE2) || defined (HAVE_SSE4)
         _mm_store_si128(&this->m_, _mm_andnot_si128(bb.m_, this->m_));
 #else
         (*this) &= ~bb;
@@ -161,9 +145,8 @@ public:
         return *this;
     }
     // これはコードが見難くなるけど仕方ない。
-    Bitboard notThisAnd(const Bitboard &bb) const
-    {
-#if defined(HAVE_SSE2) || defined(HAVE_SSE4)
+    Bitboard notThisAnd(const Bitboard& bb) const {
+#if defined (HAVE_SSE2) || defined (HAVE_SSE4)
         Bitboard temp;
         _mm_store_si128(&temp.m_, _mm_andnot_si128(this->m_, bb.m_));
         return temp;
@@ -171,8 +154,7 @@ public:
         return ~(*this) & bb;
 #endif
     }
-    bool isSet(const Square sq) const
-    {
+    bool isSet(const Square sq) const {
         assert(isInSquare(sq));
         return andIsAny(SetMaskBB[sq]);
     }
@@ -183,8 +165,7 @@ public:
     // Bitboard の right 側だけの要素を調べて、最初に 1 であるマスの index を返す。
     // そのマスを 0 にする。
     // Bitboard の right 側が 0 でないことを前提にしている。
-    FORCE_INLINE Square firstOneRightFromSQ11()
-    {
+    FORCE_INLINE Square firstOneRightFromSQ11() {
         const Square sq = static_cast<Square>(firstOneFromLSB(this->p(0)));
         // LSB 側の最初の 1 の bit を 0 にする
         this->p_[0] &= this->p(0) - 1;
@@ -193,8 +174,7 @@ public:
     // Bitboard の left 側だけの要素を調べて、最初に 1 であるマスの index を返す。
     // そのマスを 0 にする。
     // Bitboard の left 側が 0 でないことを前提にしている。
-    FORCE_INLINE Square firstOneLeftFromSQ81()
-    {
+    FORCE_INLINE Square firstOneLeftFromSQ81() {
         const Square sq = static_cast<Square>(firstOneFromLSB(this->p(1)) + 63);
         // LSB 側の最初の 1 の bit を 0 にする
         this->p_[1] &= this->p(1) - 1;
@@ -205,8 +185,7 @@ public:
     // Bitboard が allZeroBB() でないことを前提にしている。
     // VC++ の _BitScanForward() は入力が 0 のときに 0 を返す仕様なので、
     // 最初に 0 でないか判定するのは少し損。
-    FORCE_INLINE Square firstOneFromSQ11()
-    {
+    FORCE_INLINE Square firstOneFromSQ11() {
         if (this->p(0))
             return firstOneRightFromSQ11();
         return firstOneLeftFromSQ81();
@@ -214,8 +193,7 @@ public:
     // 返す位置を 0 にしないバージョン。
     FORCE_INLINE Square constFirstOneRightFromSQ11() const { return static_cast<Square>(firstOneFromLSB(this->p(0))); }
     FORCE_INLINE Square constFirstOneLeftFromSQ81() const { return static_cast<Square>(firstOneFromLSB(this->p(1)) + 63); }
-    FORCE_INLINE Square constFirstOneFromSQ11() const
-    {
+    FORCE_INLINE Square constFirstOneFromSQ11() const {
         if (this->p(0))
             return constFirstOneRightFromSQ11();
         return constFirstOneLeftFromSQ81();
@@ -227,9 +205,8 @@ public:
     // bit が 1 つだけ立っているかどうかを判定する。
     // Crossover は、merge() すると 1 である bit が重なる可能性があるなら true
     template <bool Crossover = true>
-    bool isOneBit() const
-    {
-#if defined(HAVE_SSE42)
+    bool isOneBit() const {
+#if defined (HAVE_SSE42)
         return (this->popCount<Crossover>() == 1);
 #else
         if (!isAny())
@@ -241,9 +218,8 @@ public:
     }
     // byte単位で入れ替えたBitboardを返す。
     // 飛車の利きの右方向と角の利きの右上、右下方向を求める時に使う。
-    Bitboard byteReverse() const
-    {
-#if defined(HAVE_SSE4)
+    Bitboard byteReverse() const {
+#if defined (HAVE_SSE4)
         const __m128i shuffle = _mm_set_epi8(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
         Bitboard b0;
         b0.m_ = _mm_shuffle_epi8(m_, shuffle);
@@ -256,9 +232,8 @@ public:
 #endif
     }
     // SSE2のunpackを実行して返す。
-    static void unpack(const Bitboard &hiIn, const Bitboard &loIn, Bitboard &hiOut, Bitboard &loOut)
-    {
-#if defined(HAVE_SSE2) || defined(HAVE_SSE4)
+    static void unpack(const Bitboard& hiIn, const Bitboard& loIn, Bitboard& hiOut, Bitboard& loOut) {
+#if defined (HAVE_SSE2) || defined (HAVE_SSE4)
         hiOut.m_ = _mm_unpackhi_epi64(loIn.m_, hiIn.m_);
         loOut.m_ = _mm_unpacklo_epi64(loIn.m_, hiIn.m_);
 #else
@@ -271,9 +246,9 @@ public:
     }
     // 2組のBitboardを、それぞれ64bitのhi×2とlo×2と見たときに(unpackするとそうなる)
     // 128bit整数とみなして1引き算したBitboardを返す。
-    static void decrement(const Bitboard &hiIn, const Bitboard &loIn, Bitboard &hiOut, Bitboard &loOut)
+    static void decrement(const Bitboard& hiIn, const Bitboard& loIn, Bitboard& hiOut, Bitboard& loOut)
     {
-#if defined(HAVE_SSE42)
+#if defined (HAVE_SSE42)
         // loが0の時だけ1減算するときにhiからの桁借りが生じるので、
         // hi += (lo == 0) ? -1 : 0;
         // みたいな処理で良い。
@@ -292,11 +267,9 @@ public:
     }
 
     // for debug
-    void printBoard() const
-    {
+    void printBoard() const {
         std::cout << "   A  B  C  D  E  F  G  H  I\n";
-        for (Rank r = Rank1; r != Rank9Wall; r += RankDeltaS)
-        {
+        for (Rank r = Rank1; r != Rank9Wall; r += RankDeltaS) {
             std::cout << (9 - r);
             for (File f = File9; f != File1Wall; f += FileDeltaE)
                 std::cout << (this->isSet(makeSquare(f, r)) ? "  X" : "  .");
@@ -310,15 +283,14 @@ public:
     static int part(const Square sq) { return static_cast<int>(SQ79 < sq); }
 
 private:
-#if defined(HAVE_SSE2) || defined(HAVE_SSE4)
-    union
-    {
+#if defined (HAVE_SSE2) || defined (HAVE_SSE4)
+    union {
         u64 p_[2];
         __m128i m_;
     };
 #else
-    u64 p_[2]; // p_[0] : 先手から見て、1一から7九までを縦に並べたbit. 63bit使用. right と呼ぶ。
-               // p_[1] : 先手から見て、8一から1九までを縦に並べたbit. 18bit使用. left  と呼ぶ。
+    u64 p_[2];  // p_[0] : 先手から見て、1一から7九までを縦に並べたbit. 63bit使用. right と呼ぶ。
+                // p_[1] : 先手から見て、8一から1九までを縦に並べたbit. 18bit使用. left  と呼ぶ。
 #endif
 
     friend class Bitboard256;
@@ -328,45 +300,28 @@ private:
 // Qugiyの角の利きに使用する。
 // cf. https://www.apply.computer-shogi.org/wcsc31/appeal/Qugiy/appeal_210518.pdf
 // やねうら王の実装を参考にした
-class Bitboard256
-{
+class Bitboard256 {
 public:
     Bitboard256() {}
-#if defined(HAVE_AVX2)
-    Bitboard256 &operator=(const Bitboard256 &rhs)
-    {
-        _mm256_store_si256(&this->m_, rhs.m_);
-        return *this;
-    }
-    Bitboard256(const Bitboard256 &bb) { _mm256_store_si256(&this->m_, bb.m_); }
+#if defined (HAVE_AVX2)
+    Bitboard256& operator = (const Bitboard256& rhs) { _mm256_store_si256(&this->m_, rhs.m_); return *this; }
+    Bitboard256(const Bitboard256& bb) { _mm256_store_si256(&this->m_, bb.m_); }
 
     // 同じBitboardを2つに複製し、それをBitboard256とする。
-    Bitboard256(const Bitboard &b1) { m_ = _mm256_broadcastsi128_si256(b1.m_); }
+    Bitboard256(const Bitboard& b1) { m_ = _mm256_broadcastsi128_si256(b1.m_); }
 
     // 2つのBitboardを合わせたBitboard256を作る。
-    Bitboard256(const Bitboard &b1, const Bitboard &b2)
-    {
+    Bitboard256(const Bitboard& b1, const Bitboard& b2) {
         // m = _mm256_set_epi64x(b2.p[1],b2.p[0],b1.p[1],b1.p[0]);
-        m_ = _mm256_castsi128_si256(b1.m_);         // 256bitにcast(上位は0)。これはcompiler向けの命令。
+        m_ = _mm256_castsi128_si256(b1.m_);        // 256bitにcast(上位は0)。これはcompiler向けの命令。
         m_ = _mm256_inserti128_si256(m_, b2.m_, 1); // 上位128bitにb2.mを代入
     }
 #else
-    Bitboard256(const Bitboard &b1, const Bitboard &b2)
-    {
-        p_[0] = b1.p_[0];
-        p_[1] = b1.p_[1];
-        p_[2] = b2.p_[0];
-        p_[3] = b2.p_[1];
-    }
-    Bitboard256(const Bitboard &b1)
-    {
-        p_[0] = p_[2] = b1.p_[0];
-        p_[1] = p_[3] = b1.p_[1];
-    }
+    Bitboard256(const Bitboard& b1, const Bitboard& b2) { p_[0] = b1.p_[0]; p_[1] = b1.p_[1]; p_[2] = b2.p_[0]; p_[3] = b2.p_[1]; }
+    Bitboard256(const Bitboard& b1) { p_[0] = p_[2] = b1.p_[0]; p_[1] = p_[3] = b1.p_[1]; }
 #endif
-    Bitboard256 operator&=(const Bitboard256 &rhs)
-    {
-#if defined(HAVE_AVX2)
+    Bitboard256 operator &= (const Bitboard256& rhs) {
+#if defined (HAVE_AVX2)
         _mm256_store_si256(&this->m_, _mm256_and_si256(this->m_, rhs.m_));
 #else
         this->p_[0] &= rhs.p_[0];
@@ -376,9 +331,8 @@ public:
 #endif
         return *this;
     }
-    Bitboard256 operator|=(const Bitboard256 &rhs)
-    {
-#if defined(HAVE_AVX2)
+    Bitboard256 operator |= (const Bitboard256& rhs) {
+#if defined (HAVE_AVX2)
         _mm256_store_si256(&this->m_, _mm256_or_si256(this->m_, rhs.m_));
 #else
         this->p_[0] |= rhs.p_[0];
@@ -388,9 +342,8 @@ public:
 #endif
         return *this;
     }
-    Bitboard256 operator^=(const Bitboard256 &rhs)
-    {
-#if defined(HAVE_AVX2)
+    Bitboard256 operator ^= (const Bitboard256& rhs) {
+#if defined (HAVE_AVX2)
         _mm256_store_si256(&this->m_, _mm256_xor_si256(this->m_, rhs.m_));
 #else
         this->p_[0] ^= rhs.p_[0];
@@ -400,16 +353,16 @@ public:
 #endif
         return *this;
     }
-    Bitboard256 operator&(const Bitboard256 &rhs) const { return Bitboard256(*this) &= rhs; }
-    Bitboard256 operator|(const Bitboard256 &rhs) const { return Bitboard256(*this) |= rhs; }
-    Bitboard256 operator^(const Bitboard256 &rhs) const { return Bitboard256(*this) ^= rhs; }
+    Bitboard256 operator & (const Bitboard256& rhs) const { return Bitboard256(*this) &= rhs; }
+    Bitboard256 operator | (const Bitboard256& rhs) const { return Bitboard256(*this) |= rhs; }
+    Bitboard256 operator ^ (const Bitboard256& rhs) const { return Bitboard256(*this) ^= rhs; }
     // byte単位で入れ替えたBitboardを返す。
     // 角の利きの右上、右下方向を求める時に使う。
-    Bitboard256 byteReverse() const
-    {
-#if defined(HAVE_AVX2)
-        const __m256i shuffle = _mm256_set_epi8(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
-                                                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+    Bitboard256 byteReverse() const {
+#if defined (HAVE_AVX2)
+        const __m256i shuffle = _mm256_set_epi8
+        (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
         Bitboard256 b0;
         b0.m_ = _mm256_shuffle_epi8(m_, shuffle);
         return b0;
@@ -425,7 +378,7 @@ public:
     // 保持している2つの盤面を重ね合わせた(OR)Bitboardを返す。
     Bitboard merge() const
     {
-#if defined(HAVE_AVX2)
+#if defined (HAVE_AVX2)
         Bitboard b;
         b.m_ = _mm_or_si128(_mm256_castsi256_si128(m_), _mm256_extracti128_si256(m_, 1));
         return b;
@@ -437,9 +390,8 @@ public:
 #endif
     }
     // SSE2のunpackを実行して返す。
-    static void unpack(const Bitboard256 &hiIn, const Bitboard256 &loIn, Bitboard256 &hiOut, Bitboard256 &loOut)
-    {
-#if defined(HAVE_AVX2)
+    static void unpack(const Bitboard256& hiIn, const Bitboard256& loIn, Bitboard256& hiOut, Bitboard256& loOut) {
+#if defined (HAVE_AVX2)
         hiOut.m_ = _mm256_unpackhi_epi64(loIn.m_, hiIn.m_);
         loOut.m_ = _mm256_unpacklo_epi64(loIn.m_, hiIn.m_);
 #else
@@ -456,9 +408,9 @@ public:
     }
     // 2組のBitboard256を、それぞれ64bitのhi×2とlo×2と見たときに(unpackするとそうなる)
     // 128bit整数とみなして1引き算したBitboardを返す。
-    static void decrement(const Bitboard256 &hiIn, const Bitboard256 &loIn, Bitboard256 &hiOut, Bitboard256 &loOut)
+    static void decrement(const Bitboard256& hiIn, const Bitboard256& loIn, Bitboard256& hiOut, Bitboard256& loOut)
     {
-#if defined(HAVE_AVX2)
+#if defined (HAVE_AVX2)
 
         // loが0の時だけ1減算するときにhiからの桁借りが生じるので、
         // hi += (lo == 0) ? -1 : 0;
@@ -482,9 +434,8 @@ public:
     }
 
 private:
-#if defined(HAVE_SSE2) || defined(HAVE_SSE4)
-    union
-    {
+#if defined (HAVE_SSE2) || defined (HAVE_SSE4)
+    union {
         u64 p_[4];
         __m256i m_;
     };
@@ -502,15 +453,16 @@ inline Bitboard allZeroBB() { return Bitboard(0, 0); }
 // 指定した位置の属する file の bit を shift し、
 // index を求める為に使用する。
 const int Slide[SquareNum] = {
-    1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 ,
     10, 10, 10, 10, 10, 10, 10, 10, 10,
     19, 19, 19, 19, 19, 19, 19, 19, 19,
     28, 28, 28, 28, 28, 28, 28, 28, 28,
     37, 37, 37, 37, 37, 37, 37, 37, 37,
     46, 46, 46, 46, 46, 46, 46, 46, 46,
     55, 55, 55, 55, 55, 55, 55, 55, 55,
-    1, 1, 1, 1, 1, 1, 1, 1, 1,
-    10, 10, 10, 10, 10, 10, 10, 10, 10};
+    1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 ,
+    10, 10, 10, 10, 10, 10, 10, 10, 10
+};
 
 const Bitboard File1Mask = Bitboard(UINT64_C(0x1ff) << (9 * 0), 0);
 const Bitboard File2Mask = Bitboard(UINT64_C(0x1ff) << (9 * 1), 0);
@@ -537,11 +489,9 @@ extern const Bitboard RankMask[RankNum];
 extern const Bitboard InFrontMask[ColorNum][RankNum];
 
 inline Bitboard fileMask(const File f) { return FileMask[f]; }
-template <File F>
-inline Bitboard fileMask()
-{
+template <File F> inline Bitboard fileMask() {
     static_assert(FileBegin <= F && F < FileNum, "");
-    return (F == File1   ? File1Mask
+    return (F == File1 ? File1Mask
             : F == File2 ? File2Mask
             : F == File3 ? File3Mask
             : F == File4 ? File4Mask
@@ -549,15 +499,13 @@ inline Bitboard fileMask()
             : F == File6 ? File6Mask
             : F == File7 ? File7Mask
             : F == File8 ? File8Mask
-                         : /*F == File9 ?*/ File9Mask);
+            : /*F == File9 ?*/ File9Mask);
 }
 
 inline Bitboard rankMask(const Rank r) { return RankMask[r]; }
-template <Rank R>
-inline Bitboard rankMask()
-{
+template <Rank R> inline Bitboard rankMask() {
     static_assert(RankBegin <= R && R < RankNum, "");
-    return (R == Rank1   ? Rank1Mask
+    return (R == Rank1 ? Rank1Mask
             : R == Rank2 ? Rank2Mask
             : R == Rank3 ? Rank3Mask
             : R == Rank4 ? Rank4Mask
@@ -565,19 +513,17 @@ inline Bitboard rankMask()
             : R == Rank6 ? Rank6Mask
             : R == Rank7 ? Rank7Mask
             : R == Rank8 ? Rank8Mask
-                         : /*R == Rank9 ?*/ Rank9Mask);
+            : /*R == Rank9 ?*/ Rank9Mask);
 }
 
 // 直接テーブル引きすべきだと思う。
-inline Bitboard squareFileMask(const Square sq)
-{
+inline Bitboard squareFileMask(const Square sq) {
     const File f = makeFile(sq);
     return fileMask(f);
 }
 
 // 直接テーブル引きすべきだと思う。
-inline Bitboard squareRankMask(const Square sq)
-{
+inline Bitboard squareRankMask(const Square sq) {
     const Rank r = makeRank(sq);
     return rankMask(r);
 }
@@ -603,12 +549,10 @@ const Bitboard InFrontOfRank2White = InFrontOfRank3White | rankMask<Rank3>();
 const Bitboard InFrontOfRank1White = InFrontOfRank2White | rankMask<Rank2>();
 
 inline Bitboard inFrontMask(const Color c, const Rank r) { return InFrontMask[c][r]; }
-template <Color C, Rank R>
-inline Bitboard inFrontMask()
-{
+template <Color C, Rank R> inline Bitboard inFrontMask() {
     static_assert(C == Black || C == White, "");
     static_assert(RankBegin <= R && R < RankNum, "");
-    return (C == Black ? (R == Rank1   ? InFrontOfRank1Black
+    return (C == Black ? (R == Rank1 ? InFrontOfRank1Black
                           : R == Rank2 ? InFrontOfRank2Black
                           : R == Rank3 ? InFrontOfRank3Black
                           : R == Rank4 ? InFrontOfRank4Black
@@ -616,19 +560,19 @@ inline Bitboard inFrontMask()
                           : R == Rank6 ? InFrontOfRank6Black
                           : R == Rank7 ? InFrontOfRank7Black
                           : R == Rank8 ? InFrontOfRank8Black
-                                       : /*R == Rank9 ?*/ InFrontOfRank9Black)
-                       : (R == Rank1   ? InFrontOfRank1White
-                          : R == Rank2 ? InFrontOfRank2White
-                          : R == Rank3 ? InFrontOfRank3White
-                          : R == Rank4 ? InFrontOfRank4White
-                          : R == Rank5 ? InFrontOfRank5White
-                          : R == Rank6 ? InFrontOfRank6White
-                          : R == Rank7 ? InFrontOfRank7White
-                          : R == Rank8 ? InFrontOfRank8White
-                                       : /*R == Rank9 ?*/ InFrontOfRank9White));
+                          : /*R == Rank9 ?*/ InFrontOfRank9Black)
+            : (R == Rank1 ? InFrontOfRank1White
+               : R == Rank2 ? InFrontOfRank2White
+               : R == Rank3 ? InFrontOfRank3White
+               : R == Rank4 ? InFrontOfRank4White
+               : R == Rank5 ? InFrontOfRank5White
+               : R == Rank6 ? InFrontOfRank6White
+               : R == Rank7 ? InFrontOfRank7White
+               : R == Rank8 ? InFrontOfRank8White
+               : /*R == Rank9 ?*/ InFrontOfRank9White));
 }
 // 敵陣を表現するBitboard。
-const Bitboard EnemyField[ColorNum] = {rankMask<Rank1>() | rankMask<Rank2>() | rankMask<Rank3>(), rankMask<Rank7>() | rankMask<Rank8>() | rankMask<Rank9>()};
+const Bitboard EnemyField[ColorNum] = { rankMask<Rank1>() | rankMask<Rank2>() | rankMask<Rank3>() , rankMask<Rank7>() | rankMask<Rank8>() | rankMask<Rank9>() };
 inline const Bitboard enemyField(Color c) { return EnemyField[c]; }
 
 // メモリ節約をせず、無駄なメモリを持っている。
@@ -659,23 +603,20 @@ extern Bitboard HorseCheckTable[ColorNum][SquareNum];
 extern Bitboard Neighbor5x5Table[SquareNum]; // 25 近傍
 
 // todo: 香車の筋がどこにあるか先に分かっていれば、Bitboard の片方の変数だけを調べれば良くなる。
-inline Bitboard lanceAttack(const Color c, const Square sq, const Bitboard &occupied)
-{
+inline Bitboard lanceAttack(const Color c, const Square sq, const Bitboard& occupied) {
     const int part = Bitboard::part(sq);
     const int index = (occupied.p(part) >> Slide[sq]) & 127;
     return LanceAttack[c][sq][index];
 }
 // 飛車の縦だけの利き。香車の利きを使い、index を共通化することで高速化している。
-inline Bitboard rookAttackFile(const Square sq, const Bitboard &occupied)
-{
+inline Bitboard rookAttackFile(const Square sq, const Bitboard& occupied) {
     const int part = Bitboard::part(sq);
     const int index = (occupied.p(part) >> Slide[sq]) & 127;
     return LanceAttack[Black][sq][index] | LanceAttack[White][sq][index];
 }
 // 飛車の横だけの利き
 // cf. https://www.apply.computer-shogi.org/wcsc31/appeal/Qugiy/appeal_210518.pdf
-inline Bitboard rookAttackRank(const Square sq, const Bitboard &occupied)
-{
+inline Bitboard rookAttackRank(const Square sq, const Bitboard& occupied) {
     Bitboard hi, lo, t1, t0;
 
     const Bitboard mask_lo = RookAttackRankToMask[sq][0];
@@ -706,14 +647,12 @@ inline Bitboard rookAttackRank(const Square sq, const Bitboard &occupied)
     // hiの方には、右方向の利き、loは左方向の利きが得られている。
     return hi.byteReverse() | lo;
 }
-inline Bitboard rookAttack(const Square sq, const Bitboard &occupied)
-{
+inline Bitboard rookAttack(const Square sq, const Bitboard& occupied) {
     return rookAttackRank(sq, occupied) | rookAttackFile(sq, occupied);
 }
 // 角の利き
 // cf. https://www.apply.computer-shogi.org/wcsc31/appeal/Qugiy/appeal_210518.pdf
-inline Bitboard bishopAttack(const Square sq, const Bitboard &occupied)
-{
+inline Bitboard bishopAttack(const Square sq, const Bitboard& occupied) {
     const Bitboard256 mask_lo = BishopAttackToMask[sq][0];
     const Bitboard256 mask_hi = BishopAttackToMask[sq][1];
 
@@ -751,13 +690,12 @@ inline Bitboard pawnAttack(const Color c, const Square sq) { return PawnAttack[c
 // 1段目には歩は存在しないので、1bit シフトで別の筋に行くことはない。
 // ただし、from に歩以外の駒の Bitboard を入れると、別の筋のビットが立ってしまうことがあるので、
 // 別の筋のビットが立たないか、立っても問題ないかを確認して使用すること。
-template <Color US>
-inline Bitboard pawnAttack(const Bitboard &from) { return (US == Black ? (from >> 1) : (from << 1)); }
-inline Bitboard pawnAttack(Color c, const Bitboard &from) { return (c == Black ? (from >> 1) : (from << 1)); }
+template <Color US> inline Bitboard pawnAttack(const Bitboard& from) { return (US == Black ? (from >> 1) : (from << 1)); }
+inline Bitboard pawnAttack(Color c, const Bitboard& from) { return (c == Black ? (from >> 1) : (from << 1)); }
 inline Bitboard kingAttack(const Square sq) { return KingAttack[sq]; }
-inline Bitboard dragonAttack(const Square sq, const Bitboard &occupied) { return rookAttack(sq, occupied) | kingAttack(sq); }
-inline Bitboard horseAttack(const Square sq, const Bitboard &occupied) { return bishopAttack(sq, occupied) | kingAttack(sq); }
-inline Bitboard queenAttack(const Square sq, const Bitboard &occupied) { return rookAttack(sq, occupied) | bishopAttack(sq, occupied); }
+inline Bitboard dragonAttack(const Square sq, const Bitboard& occupied) { return rookAttack(sq, occupied) | kingAttack(sq); }
+inline Bitboard horseAttack(const Square sq, const Bitboard& occupied) { return bishopAttack(sq, occupied) | kingAttack(sq); }
+inline Bitboard queenAttack(const Square sq, const Bitboard& occupied) { return rookAttack(sq, occupied) | bishopAttack(sq, occupied); }
 
 // sq1, sq2 の間(sq1, sq2 は含まない)のビットが立った Bitboard
 inline Bitboard betweenBB(const Square sq1, const Square sq2) { return BetweenBB[sq1][sq2]; }
@@ -788,31 +726,24 @@ inline Bitboard goldAndSilverAttacks(const Color c, const Square sq) { return go
 // これはマクロの制約。
 // 同じ処理のコードが 2 箇所で生成されるため、コードサイズが膨れ上がる。
 // その為、あまり多用すべきでないかも知れない。
-#define FOREACH_BB(bb, sq, xxx)              \
-    do                                       \
-    {                                        \
-        while (bb.p(0))                      \
-        {                                    \
-            sq = bb.firstOneRightFromSQ11(); \
-            xxx;                             \
-        }                                    \
-        while (bb.p(1))                      \
-        {                                    \
-            sq = bb.firstOneLeftFromSQ81();  \
-            xxx;                             \
-        }                                    \
+#define FOREACH_BB(bb, sq, xxx)                 \
+    do {                                        \
+        while (bb.p(0)) {                       \
+            sq = bb.firstOneRightFromSQ11();    \
+            xxx;                                \
+        }                                       \
+        while (bb.p(1)) {                       \
+            sq = bb.firstOneLeftFromSQ81();     \
+            xxx;                                \
+        }                                       \
     } while (false)
 
-template <typename T>
-FORCE_INLINE void foreachBB(Bitboard &bb, Square &sq, T t)
-{
-    while (bb.p(0))
-    {
+template <typename T> FORCE_INLINE void foreachBB(Bitboard& bb, Square& sq, T t) {
+    while (bb.p(0)) {
         sq = bb.firstOneRightFromSQ11();
         t(0);
     }
-    while (bb.p(1))
-    {
+    while (bb.p(1)) {
         sq = bb.firstOneLeftFromSQ81();
         t(1);
     }
