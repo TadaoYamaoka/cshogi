@@ -1,7 +1,7 @@
 name: Build and publish
 on:
   push:
-    branches: [master]
+    branches: [master, dev]
   release:
     types: [published]
 jobs:
@@ -9,7 +9,10 @@ jobs:
     runs-on: windows-2019
     strategy:
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11"]
+        python-major-version: [3]
+        python-minor-version: [6, 7, 8, 9, 10, 11, 12]
+    env:
+      python-version: ${{ format('{0}.{1}', matrix.python-major-version, matrix.python-minor-version) }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -20,9 +23,13 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ env.python-version }}
           cache: "poetry"
           cache-dependency-path: "pyproject.toml"
+      - name: Upgrade Poetry
+        if: ${{ matrix.python-minor-version >= 10 }}
+        run: |
+          pip install --upgrade poetry
       - name: Install dependencies
         run: |
           poetry install --no-root
