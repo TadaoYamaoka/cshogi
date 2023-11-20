@@ -1,7 +1,5 @@
 name: Build and publish
 on:
-  push:
-    branches: [master, dev]
   release:
     types: [published]
 jobs:
