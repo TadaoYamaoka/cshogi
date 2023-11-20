@@ -31,9 +31,15 @@ jobs:
       - name: Install dependencies
         run: |
           poetry install --no-root
-      - name: Build
+      - name: Build 3_10
+        if: ${{ matrix.python-minor-version == 10 }}
         run: |
           poetry build -v
+          poetry install --only-root
+      - name: Build
+        if: ${{ matrix.python-minor-version != 10 }}
+        run: |
+          poetry build -v -f wheel
           poetry install --only-root
       - name: Check
         run: poetry run python -c "import cshogi"
@@ -69,8 +75,6 @@ jobs:
           poetry install --no-root
       - name: Build
         run: |
-          poetry build -f sdist
-          tar zvxf ./dist/*.tar.gz -C ./dist
           cp $(find ./dist -name setup.py) .
           export PYTHON_BIN="/opt/python/${{ matrix.python-version }}/bin"
           docker run --rm -v $(pwd):/work \
@@ -108,8 +112,6 @@ jobs:
           poetry install --no-root
       - name: Build
         run: |
-          poetry build -f sdist
-          tar zvxf ./dist/*.tar.gz -C ./dist
           cp $(find ./dist -name setup.py) .
           export PYTHON_BIN="/opt/python/${{ matrix.python-version }}/bin"
           docker run --rm -v $(pwd):/work \
@@ -147,8 +149,6 @@ jobs:
           poetry install --no-root
       - name: Build
         run: |
-          poetry build -f sdist
-          tar zvxf ./dist/*.tar.gz -C ./dist
           cp $(find ./dist -name setup.py) .
           export PYTHON_BIN="/opt/python/${{ matrix.python-version }}/bin"
           docker run --rm -v $(pwd):/work \
