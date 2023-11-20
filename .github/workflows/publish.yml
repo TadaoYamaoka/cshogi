@@ -75,6 +75,8 @@ jobs:
           poetry install --no-root
       - name: Build
         run: |
+          poetry build -f sdist
+          tar zvxf ./dist/*.tar.gz -C ./dist
           cp $(find ./dist -name setup.py) .
           export PYTHON_BIN="/opt/python/${{ matrix.python-version }}/bin"
           docker run --rm -v $(pwd):/work \
@@ -112,6 +114,8 @@ jobs:
           poetry install --no-root
       - name: Build
         run: |
+          poetry build -f sdist
+          tar zvxf ./dist/*.tar.gz -C ./dist
           cp $(find ./dist -name setup.py) .
           export PYTHON_BIN="/opt/python/${{ matrix.python-version }}/bin"
           docker run --rm -v $(pwd):/work \
@@ -149,6 +153,8 @@ jobs:
           poetry install --no-root
       - name: Build
         run: |
+          poetry build -f sdist
+          tar zvxf ./dist/*.tar.gz -C ./dist
           cp $(find ./dist -name setup.py) .
           export PYTHON_BIN="/opt/python/${{ matrix.python-version }}/bin"
           docker run --rm -v $(pwd):/work \
