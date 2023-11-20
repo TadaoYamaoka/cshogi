@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         python-major-version: [3]
-        python-minor-version: [6, 7, 8, 9, 10, 11, 12]
+        python-minor-version: [7, 8, 9, 10, 11, 12]
     env:
       python-version: ${{ format('{0}.{1}', matrix.python-major-version, matrix.python-minor-version) }}
     steps:
