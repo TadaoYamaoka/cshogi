@@ -42,7 +42,7 @@ jobs:
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: twine upload dist/*
+        run: poetry run twine upload dist/*
   deploy-manylinux2010:
     runs-on: ubuntu-20.04
     env:
@@ -84,8 +84,7 @@ jobs:
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: |
-          twine upload dist/wheelhouse/*
+        run: poetry run twine upload dist/wheelhouse/*
   deploy-manylinux_2_24:
     runs-on: ubuntu-20.04
     strategy:
@@ -124,8 +123,7 @@ jobs:
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: |
-          twine upload dist/wheelhouse/*
+        run: poetry run twine upload dist/wheelhouse/*
   deploy-manylinux_2_28:
     runs-on: ubuntu-20.04
     strategy:
@@ -164,5 +162,4 @@ jobs:
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: |
-          twine upload dist/wheelhouse/*
+        run: poetry run twine upload dist/wheelhouse/*
