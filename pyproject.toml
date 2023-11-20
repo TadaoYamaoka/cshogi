@@ -4,9 +4,10 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "cshogi"
-version = "0.7.3"
+version = "0.7.4"
 license = "GPL-v3"
 authors = ["Tadao Yamaoka <tadaoyamaoka@gmail.com>"]
+maintainers = ["Tadao Yamaoka <tadaoyamaoka@gmail.com>"]
 description = "A fast Python shogi library"
 repository = "https://github.com/TadaoYamaoka/cshogi"
 homepage = "https://github.com/TadaoYamaoka/cshogi"
