@@ -427,10 +427,10 @@ namespace parser {
                     continue;
                 if (pieces_in_hand[p] >= 1) {
                     pih_len += 1;
-                    sfen.append(PieceToCharUSITable[(size_t)p]);
                     if (pieces_in_hand[p] > 1) {
                         sfen.append(std::to_string(pieces_in_hand[p]));
                     }
+                    sfen.append(PieceToCharUSITable[(size_t)p]);
                 }
             }
             if (pih_len == 0)
