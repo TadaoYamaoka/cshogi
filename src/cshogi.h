@@ -217,6 +217,7 @@ public:
     void toHuffmanCodedPos(char* data) const { pos.toHuffmanCodedPos((u8*)data); }
     void toPackedSfen(char* data) const { pos.toPackedSfen((u8*)data); }
     int piece(const int sq) const { return (int)pos.piece((Square)sq); }
+    int kingSquare(const int c) { return (int)pos.kingSquare((Color)c); }
     bool inCheck() const { return pos.inCheck(); }
     int mateMoveIn1Ply() { return pos.mateMoveIn1Ply().value(); }
     int mateMove(int ply) {
@@ -460,6 +461,9 @@ private:
 
 int __piece_to_piece_type(const int p) { return (int)pieceToPieceType((Piece)p); }
 int __hand_piece_to_piece_type(const int hp) { return (int)handPieceToPieceType((HandPiece)hp); }
+
+int __make_file(const int sq) { return (int)makeFile((Square)(sq)); }
+int __make_rank(const int sq) { return (int)makeRank((Square)(sq)); }
 
 // 移動先
 int __move_to(const int move) { return (move >> 0) & 0x7f; }

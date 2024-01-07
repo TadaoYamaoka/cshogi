@@ -288,6 +288,7 @@ cdef extern from "cshogi.h":
         void toHuffmanCodedPos(char* data)
         void toPackedSfen(char* data)
         int piece(const int sq)
+        int kingSquare(const int c)
         bool inCheck()
         int mateMoveIn1Ply()
         int mateMove(int ply)
@@ -310,6 +311,8 @@ cdef extern from "cshogi.h":
 
     int __piece_to_piece_type(const int p)
     int __hand_piece_to_piece_type(const int hp)
+    int __make_file(const int sq)
+    int __make_rank(const int sq)
 
 
 cdef class Board:
@@ -789,6 +792,16 @@ cdef class Board:
         """
         return __piece_to_piece_type(self.__board.piece(sq))
 
+    def king_square(self, int c):
+        """Returns the square index of the king for a given color.
+
+        :param c: The color of the king, either BLACK or WHITE.
+        :type c: int
+        :return: The square index of the king for the specified color.
+        :rtype: int
+        """
+        return self.__board.kingSquare(c)
+
     def is_check(self):
         """Determines if the king is in check.
 
@@ -1091,6 +1104,28 @@ def hand_piece_to_piece_type(int hp):
     :rtype: int
     """
     return __hand_piece_to_piece_type(hp)
+
+
+def make_file(int sq):
+    """Determine the file (column) of a square.
+
+    :param sq: The square index.
+    :type sq: int
+    :return: The file (column) of the given square.
+    :rtype: int
+    """
+    return __make_file(sq)
+
+
+def make_rank(int sq):
+    """Determine the rank (row) of a square.
+
+    :param sq: The square index.
+    :type sq: int
+    :return: The rank (row) of the given square.
+    :rtype: int
+    """
+    return __make_rank(sq)
 
 
 cdef extern from "cshogi.h":
