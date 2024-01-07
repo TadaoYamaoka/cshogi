@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "cshogi"
-version = "0.7.6"
+version = "0.7.7"
 license = "GPL-v3"
 authors = ["Tadao Yamaoka <tadaoyamaoka@gmail.com>"]
 maintainers = ["Tadao Yamaoka <tadaoyamaoka@gmail.com>"]
