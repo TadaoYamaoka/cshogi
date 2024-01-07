@@ -1,4 +1,4 @@
-from libcpp.string cimport string
+﻿from libcpp.string cimport string
 from libcpp.vector cimport vector
 from libcpp cimport bool
 
@@ -768,7 +768,7 @@ cdef class Board:
         """Converts the current board to PackedSfen (psfen) format.
 
         :param psfen: An array to store the psfen data.
-        :type hcp: np.ndarray
+        :type psfen: np.ndarray
         """
         return self.__board.toPackedSfen(psfen.data)
 
@@ -1468,7 +1468,7 @@ cdef class Parser:
     @property
     def var_info(self):
         """Gets a dictionary containing various information about the game.
-        
+
         :return: A dictionary containing various information about the game.
         :rtype: dict
         """

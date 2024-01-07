@@ -3031,6 +3031,7 @@ void Position::toPackedSfen(u8* data) const {
             continue;
         const auto hc = PackedSfen::boardCodeTable[pc];
         bs.putBits(hc.code, hc.numOfBits);
+        hp_count[pieceTypeToHandPiece(pieceToPieceType(pc))] -= 1;
     }
 
     // 持ち駒
@@ -3040,6 +3041,7 @@ void Position::toPackedSfen(u8* data) const {
             const auto hc = PackedSfen::handCodeTable[hp][c];
             for (u32 n = 0; n < h.numOf(hp); ++n)
                 bs.putBits(hc.code, hc.numOfBits);
+            hp_count[hp] -= h.numOf(hp);
         }
     }
 
