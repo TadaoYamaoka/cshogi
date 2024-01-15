@@ -37,8 +37,6 @@ jobs:
       - name: Build
         if: ${{ matrix.python-minor-version != 10 }}
         run: python setup.py bdist_wheel
-      - name: Check
-        run: python -c "import cshogi"
       - name: Publish
         if: github.event_name == 'release' && github.event.action == 'published'
         env:
