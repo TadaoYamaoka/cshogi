@@ -14,70 +14,55 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
-      - name: Install Poetry
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install poetry
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.python-version }}
-          cache: "poetry"
-          cache-dependency-path: "pyproject.toml"
-      - name: Upgrade Poetry
-        if: ${{ matrix.python-minor-version >= 10 }}
+      - name: Install setuptools
         run: |
-          pip install --upgrade poetry
-      - name: Install dependencies
-        run: |
-          poetry install --no-root
+          python -m pip install --upgrade pip
+          pip install setuptools wheel twine Cython
+      - name: Install Numpy 1.19.5
+        if: ${{ matrix.python-minor-version < 10 }}
+        run: pip install numpy==1.19.5
+      - name: Install Numpy 1.21.5
+        if: ${{ matrix.python-minor-version == 10 }}
+        run: pip install numpy==1.21.5
+      - name: Install Numpy
+        if: ${{ matrix.python-minor-version > 10 }}
+        run: pip install numpy
       - name: Build 3_10
         if: ${{ matrix.python-minor-version == 10 }}
-        run: |
-          poetry build -v
-          poetry install --only-root
+        run: python setup.py sdist bdist_wheel
       - name: Build
         if: ${{ matrix.python-minor-version != 10 }}
-        run: |
-          poetry build -v -f wheel
-          poetry install --only-root
+        run: python setup.py bdist_wheel
       - name: Check
-        run: poetry run python -c "import cshogi"
+        run: python -c "import cshogi"
       - name: Publish
         if: github.event_name == 'release' && github.event.action == 'published'
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: poetry run twine upload dist/*
+        run: twine upload dist/*
   deploy-manylinux2010:
     runs-on: ubuntu-20.04
-    env:
-      CC: g++
-      CXX: g++
     strategy:
       matrix:
         python-version: ["cp36-cp36m", "cp37-cp37m", "cp38-cp38", "cp39-cp39"]
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
-      - name: Install Poetry
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install poetry
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-          cache: "poetry"
-          cache-dependency-path: "pyproject.toml"
-      - name: Install dependencies
+      - name: Install Twine
         run: |
-          poetry install --no-root
+          python -m pip install --upgrade pip
+          pip install twine
       - name: Build
         run: |
-          poetry build -f sdist
-          tar zvxf ./dist/*.tar.gz -C ./dist
-          cp $(find ./dist -name setup.py) .
           export PYTHON_BIN="/opt/python/${{ matrix.python-version }}/bin"
           docker run --rm -v $(pwd):/work \
             -w /work quay.io/pypa/manylinux2010_x86_64 \
@@ -90,7 +75,7 @@ jobs:
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: poetry run twine upload dist/wheelhouse/*
+        run: twine upload dist/wheelhouse/*
   deploy-manylinux_2_24:
     runs-on: ubuntu-20.04
     strategy:
@@ -99,24 +84,16 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
-      - name: Install Poetry
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install poetry
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-          cache: "poetry"
-          cache-dependency-path: "pyproject.toml"
-      - name: Install dependencies
+      - name: Install Twine
         run: |
-          poetry install --no-root
+          python -m pip install --upgrade pip
+          pip install twine
       - name: Build
         run: |
-          poetry build -f sdist
-          tar zvxf ./dist/*.tar.gz -C ./dist
-          cp $(find ./dist -name setup.py) .
           export PYTHON_BIN="/opt/python/${{ matrix.python-version }}/bin"
           docker run --rm -v $(pwd):/work \
             -w /work quay.io/pypa/manylinux_2_24_x86_64 \
@@ -129,7 +106,7 @@ jobs:
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: poetry run twine upload dist/wheelhouse/*
+        run: twine upload dist/wheelhouse/*
   deploy-manylinux_2_28:
     runs-on: ubuntu-20.04
     strategy:
@@ -138,24 +115,16 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
-      - name: Install Poetry
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install poetry
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-          cache: "poetry"
-          cache-dependency-path: "pyproject.toml"
-      - name: Install dependencies
+      - name: Install Twine
         run: |
-          poetry install --no-root
+          python -m pip install --upgrade pip
+          pip install twine
       - name: Build
         run: |
-          poetry build -f sdist
-          tar zvxf ./dist/*.tar.gz -C ./dist
-          cp $(find ./dist -name setup.py) .
           export PYTHON_BIN="/opt/python/${{ matrix.python-version }}/bin"
           docker run --rm -v $(pwd):/work \
             -w /work quay.io/pypa/manylinux_2_28_x86_64 \
@@ -168,4 +137,4 @@ jobs:
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: poetry run twine upload dist/wheelhouse/*
+        run: twine upload dist/wheelhouse/*
