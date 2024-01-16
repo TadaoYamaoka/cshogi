@@ -84,7 +84,7 @@ public:
         history.clear();
         pos.set(sfen);
     }
-    bool set_position(std::string& position) {
+    void set_position(const std::string& position) {
         history.clear();
         std::istringstream ssPosCmd(position);
         std::string token;
@@ -101,29 +101,27 @@ public:
                 sfen += token + " ";
         }
         else
-            return false;
+            throw std::runtime_error("incorrect position string");
 
         pos.set(sfen);
 
         while (ssPosCmd >> token) {
             const Move move = usiToMove(pos, token);
-            if (!move) return false;
+            if (!move) throw std::runtime_error("incorrect move string : " + token);
             push(move.value());
         }
-
-        return true;
     }
     void set_pieces(const int pieces[], const int pieces_in_hand[][7]) {
         history.clear();
         pos.set((const Piece*)pieces, pieces_in_hand);
     }
-    bool set_hcp(char* hcp) {
+    void set_hcp(char* hcp) {
         history.clear();
-        return pos.set_hcp(hcp);
+        pos.set_hcp(hcp);
     }
-    bool set_psfen(char* psfen) {
+    void set_psfen(char* psfen) {
         history.clear();
-        return pos.set_psfen(psfen);
+        pos.set_psfen(psfen);
     }
 
     void reset() {

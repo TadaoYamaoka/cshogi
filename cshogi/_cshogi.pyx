@@ -1,4 +1,4 @@
-﻿from libcpp.string cimport string
+from libcpp.string cimport string
 from libcpp.vector cimport vector
 from libcpp cimport bool
 
@@ -261,10 +261,10 @@ cdef extern from "cshogi.h":
         __Board(const string& sfen) except +
         __Board(const __Board& board) except +
         void set(const string& sfen)
-        bool set_position(const string& position)
+        void set_position(const string& position) except +
         void set_pieces(const int pieces[], const int pieces_in_hand[][7])
-        bool set_hcp(char* hcp)
-        bool set_psfen(char* psfen)
+        void set_hcp(char* hcp) except +
+        void set_psfen(char* psfen) except +
         void reset()
         string dump()
         void push(const int move)
@@ -385,8 +385,7 @@ cdef class Board:
 
         :param position: String representing the position to be set.
         :type position: str
-        :return: True if the position was successfully set, False otherwise.
-        :rtype: bool
+        :raises RuntimeError: If the position string is incorrect.
 
         :Example:
 
@@ -394,10 +393,10 @@ cdef class Board:
 
             board.set_position("startpos moves 2g2f")
 
-            board.set_position("lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1 moves 2g2f")
+            board.set_position("sfen lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1")
         """
         cdef string position_b = position.encode('ascii')
-        return self.__board.set_position(position_b)
+        self.__board.set_position(position_b)
 
     def set_pieces(self, list pieces, tuple pieces_in_hand):
         """Sets the pieces on the board and pieces in hand.
@@ -442,8 +441,7 @@ cdef class Board:
 
         :param hcp: The HuffmanCodedPos data to set the board.
         :type hcp: np.ndarray
-        :return: Returns True if successful, False otherwise.
-        :rtype: bool
+        :raises RuntimeError: If the hcp is incorrect.
 
         :Example:
 
@@ -453,15 +451,14 @@ cdef class Board:
             board.set_hcp(np.asarray(hcp[0]))
 
         """
-        return self.__board.set_hcp(hcp.data)
+        self.__board.set_hcp(hcp.data)
 
     def set_psfen(self, np.ndarray psfen):
         """Sets the board using PackedSfen (psfen) format, a compression format used in YaneuraOu.
 
         :param hcp: The PackedSfen data to set the board.
-        :type hcp: np.ndarray
-        :return: Returns True if successful, False otherwise.
-        :rtype: bool
+        :type psfen: np.ndarray
+        :raises RuntimeError: If the psfen is incorrect.
 
         :Example:
 
@@ -471,7 +468,7 @@ cdef class Board:
             board.set_psfen(np.asarray(psfen[0]))
 
         """
-        return self.__board.set_psfen(psfen.data)
+        self.__board.set_psfen(psfen.data)
 
     def reset(self):
         """Resets the board to its initial state."""

@@ -31,3 +31,26 @@ TEST(TestBoard, to_psfen_issue17) {
     board.set_psfen((char*)psfen.data);
     EXPECT_EQ("lnsgkgsnl/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL w - 1", board.toSFEN());
 }
+
+TEST(TestBoard, to_psfen_issue48) {
+    initTable();
+
+    auto board = __Board();
+    EXPECT_THROW(
+        board.set_position("sfen sfen"),
+        std::runtime_error
+    );
+    EXPECT_NO_THROW(
+        board.set_position("startpos")
+    );
+    EXPECT_NO_THROW(
+        board.set_position("sfen lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1")
+    );
+    EXPECT_THROW(
+        board.set_position("startpos moves abc"),
+        std::runtime_error
+    );
+    EXPECT_NO_THROW(
+        board.set_position("startpos moves 2g2f")
+    );
+}

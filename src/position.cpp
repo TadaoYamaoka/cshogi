@@ -3322,7 +3322,7 @@ void Position::set(const std::string& sfen) {
 
     return;
 INCORRECT:
-    std::cout << "incorrect SFEN string : " << sfen << std::endl;
+    throw std::runtime_error("incorrect SFEN string");
 }
 
 void Position::set(const Piece pieces[SquareNum], const int pieces_in_hand[ColorNum][HandPieceNum]) {
@@ -3357,7 +3357,7 @@ void Position::set(const Piece pieces[SquareNum], const int pieces_in_hand[Color
     findCheckers();
 }
 
-bool Position::set_hcp(const char* hcp_data) {
+void Position::set_hcp(const char* hcp_data) {
     clear();
 
     HuffmanCodedPos tmp(hcp_data); // ローカルにコピー
@@ -3417,14 +3417,13 @@ bool Position::set_hcp(const char* hcp_data) {
 
     findCheckers();
 
-    return true;
+    return;
 INCORRECT_HUFFMAN_CODE:
-    std::cout << "incorrect Huffman code." << std::endl;
-    return false;
+    throw std::runtime_error("incorrect Huffman code");
 }
 
 // やねうら王のpacked sfenから読み込む
-bool Position::set_psfen(const char* psfen_data) {
+void Position::set_psfen(const char* psfen_data) {
     clear();
 
     PackedSfen tmp(psfen_data); // ローカルにコピー
@@ -3485,10 +3484,9 @@ bool Position::set_psfen(const char* psfen_data) {
     //setEvalList();
     findCheckers();
 
-    return true;
+    return;
 INCORRECT_HUFFMAN_CODE:
-    std::cout << "incorrect Huffman code." << std::endl;
-    return false;
+    throw std::runtime_error("incorrect Huffman code");
 }
 
 // ランダムな局面を作成する。

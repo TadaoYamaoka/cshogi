@@ -253,10 +253,10 @@ public:
     Position& operator = (const Position& pos);
     void set(const std::string& sfen);
     void set(const Piece pieces[SquareNum], const int pieces_in_hand[ColorNum][HandPieceNum]);
-    bool set_hcp(const char* hcp_data); // for python
-    bool set(const HuffmanCodedPos& hcp) { set_hcp((const char*)hcp.data); };
-    bool set_psfen(const char* psfen_data); // for python
-    bool set(const PackedSfen& psfen) { set_psfen((const char*)psfen.data); };
+    void set_hcp(const char* hcp_data); // for python
+    void set(const HuffmanCodedPos& hcp) { set_hcp((const char*)hcp.data); };
+    void set_psfen(const char* psfen_data); // for python
+    void set(const PackedSfen& psfen) { set_psfen((const char*)psfen.data); };
     void set(std::mt19937& mt);
 
     Bitboard bbOf(const PieceType pt) const                                            { return byTypeBB_[pt]; }
