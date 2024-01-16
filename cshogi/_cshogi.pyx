@@ -459,7 +459,7 @@ cdef class Board:
     def set_psfen(self, np.ndarray psfen):
         """Sets the board using PackedSfen (psfen) format, a compression format used in YaneuraOu.
 
-        :param hcp: The PackedSfen data to set the board.
+        :param psfen: The PackedSfen data to set the board.
         :type psfen: np.ndarray
         :raises RuntimeError: If the psfen is incorrect.
 
