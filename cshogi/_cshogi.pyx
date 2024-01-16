@@ -346,6 +346,7 @@ cdef class Board:
         :type sfen: str, optional
         :param board: A string representing the board in SFEN format, optional.
         :type board: Board, optional
+        :raises RuntimeError: If the sfen string is incorrect.
         """
         cdef string sfen_b
         if sfen:
@@ -370,6 +371,8 @@ cdef class Board:
         """Sets the board state using a given SFEN string.
 
         :param sfen: String representing the board state in SFEN.
+        :type sfen: str
+        :raises RuntimeError: If the sfen string is incorrect.
 
         :Example:
 
