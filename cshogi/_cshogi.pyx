@@ -239,7 +239,7 @@ def to_usi(int move):
     :param move: A move represented as an integer.
     :type move: int
     :return: The USI representation of the move.
-    :rtype: str
+    :rtype: bytes
     """
     return __to_usi(move)
 
@@ -250,7 +250,7 @@ def to_csa(int move):
     :param move: A move represented as an integer.
     :type move: int
     :return: The CSA representation of the move.
-    :rtype: str
+    :rtype: bytes
     """
     return __to_csa(move)
 
