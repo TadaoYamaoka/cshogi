@@ -209,9 +209,13 @@ class Parser:
                     if len(moves) - len(comments) > 1:
                         comments.extend([None]*(len(moves) - len(comments) - 1))
                     if line[:2] == "**":
-                        comments.append(line[2:])
+                        comment = line[2:]
                     else:
-                        comments.append(line[1:])
+                        comment = line[1:]
+                    if len(comments) == len(moves):
+                        comments[-1] += "\n" + comment
+                    else:
+                        comments.append(comment)
                 else:
                     header_comments.append(line[1:])
             elif '：' in line:
