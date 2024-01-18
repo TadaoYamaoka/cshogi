@@ -103,7 +103,7 @@ extras_require = {
 
 setup_kwargs = {
     "name": "cshogi",
-    "version": "0.8.1",
+    "version": "0.8.2",
     "description": "A fast Python shogi library",
     "long_description": None,
     "author": "Tadao Yamaoka",
