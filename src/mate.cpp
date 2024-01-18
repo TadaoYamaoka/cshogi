@@ -244,7 +244,7 @@ bool mateMoveInEvenPly(Position& pos, const int depth)
                 return false;
             }
         }
-        else if (depth == 2) {
+        else if (depth == 2 && !givesCheck) {
             // 1手詰めかどうか
             if (!pos.mateMoveIn1Ply()) {
                 // 1手詰めでない場合

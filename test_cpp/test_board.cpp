@@ -63,3 +63,12 @@ TEST(TestBoard, mateMove_issue45) {
     const auto move = board.mateMove(7);
     EXPECT_EQ(Move::moveNone(), Move(move));
 }
+
+TEST(TestBoard, mateMove_issue46) {
+    initTable();
+
+    auto board = __Board("pk7/9/G8/2LKP4/9/9/9/9/9 b Bn 1");
+
+    const auto move = board.mateMove(3);
+    EXPECT_EQ("B*6c", Move(move).toUSI());
+}
