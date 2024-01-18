@@ -408,6 +408,7 @@ public:
     template <bool MUSTNOTDROP, bool FROMMUSTNOTBEKING>
     bool pseudoLegalMoveIsLegal(const Move move, const Bitboard& pinned) const;
     bool pseudoLegalMoveIsEvasion(const Move move, const Bitboard& pinned) const;
+    bool checkMoveIsEvasion(const Move move) const;
     template <bool Searching = true> bool moveIsPseudoLegal(const Move move) const;
     bool moveIsLegal(const Move move) const;
 

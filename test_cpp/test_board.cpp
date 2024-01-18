@@ -54,3 +54,14 @@ TEST(TestBoard, to_psfen_issue48) {
         board.set_position("startpos moves 2g2f")
     );
 }
+
+TEST(TestBoard, to_psfen_issue45) {
+    initTable();
+
+    auto board = __Board("lr6l/4g4/p3p4/1pp5p/P2S1p3/2P1N2+bP/1PGP1Pk1R/2N3pp1/4K3L w b2g3s2nl4p 152");
+
+    MoveList<LegalAll> ml(board.pos);
+
+    const auto move = board.mateMove(7);
+    EXPECT_EQ(Move::moveNone(), Move(move));
+}
