@@ -244,7 +244,13 @@ bool mateMoveInEvenPly(Position& pos, const int depth)
                 return false;
             }
         }
-        else if (depth == 2 && !givesCheck) {
+        else if (depth == 2) {
+            if (givesCheck) {
+                // この指し手で逆王手になるなら、不詰めとして扱う
+                pos.undoMove(ml.move);
+                return false;
+            }
+
             // 1手詰めかどうか
             if (!pos.mateMoveIn1Ply()) {
                 // 1手詰めでない場合
