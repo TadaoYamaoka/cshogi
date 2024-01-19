@@ -331,6 +331,7 @@ bool Position::checkMoveIsEvasion(const Move move) const {
             // 玉と、王手した駒との間に移動するか、王手した駒を取る以外は駄目。
             return false;
     }
+    return true;
 }
 
 // Searching: true なら探索時に内部で生成した手の合法手判定を行う。
