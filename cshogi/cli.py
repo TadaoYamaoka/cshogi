@@ -173,7 +173,12 @@ def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, n
     if opening:
         opening_list = []
         with open(opening) as f:
-            opening_list = [line.strip()[15:].split(' ') for line in f]
+            for line in f:
+                moves = line.strip()[15:]
+                if moves:
+                    opening_list.append(moves.split(' '))
+                else:
+                    opening_list.append([])
         # インデックス指定
         if opening_index is not None:
             opening_list = [opening_list[opening_index]]
