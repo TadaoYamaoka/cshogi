@@ -1,8 +1,9 @@
 cshogi: A Fast Shogi Library for Python
-====================================
+=======================================
 .. image:: https://img.shields.io/pypi/v/cshogi.svg
     :target: https://pypi.python.org/pypi/cshogi
     :alt: PyPI package
+
 
 概要
 ----
