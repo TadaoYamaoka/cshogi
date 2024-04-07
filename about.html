@@ -1,21 +1,23 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>About cshogi &mdash; cshogi  documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="_static/jquery.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="author" title="About these documents" href="#" />
     <link rel="index" title="Index" href="genindex.html" />
@@ -89,14 +91,14 @@
            <div itemprop="articleBody">
              
   <section id="about-cshogi">
-<h1>About cshogi<a class="headerlink" href="#about-cshogi" title="Permalink to this heading"></a></h1>
+<h1>About cshogi<a class="headerlink" href="#about-cshogi" title="Link to this heading"></a></h1>
 <p>python-shogi is an extremely useful Shogi library that can be handled in Python, but its slowness can be a drawback depending on the application. It is described on the official website as well that the purpose is to handle it simply and abstractly rather than focusing on speed.</p>
 <p>However, the slowness becomes a bottleneck when trying to use it for machine learning purposes. Therefore, I decided to create a Shogi library that can operate as quickly as possible from Python.</p>
 <p>Inside python-shogi, the board is represented by a bitboard, but Python’s bit operations are very slow, becoming a bottleneck. Improvements in speed are expected by developing the bit operation part in C++, and making it callable from Python. For this reason, I decided to use Apery’s source code for the C++ part, and create it in a way that Apery can be called from Python.</p>
 <section id="design-policy">
-<h2>Design Policy<a class="headerlink" href="#design-policy" title="Permalink to this heading"></a></h2>
+<h2>Design Policy<a class="headerlink" href="#design-policy" title="Link to this heading"></a></h2>
 <section id="handling-of-moves">
-<h3>Handling of Moves<a class="headerlink" href="#handling-of-moves" title="Permalink to this heading"></a></h3>
+<h3>Handling of Moves<a class="headerlink" href="#handling-of-moves" title="Link to this heading"></a></h3>
 <p>Moves are represented as numerical values. In python-shogi, moves are handled as the Move class, and convenient methods are provided, but they are not made into a class with an emphasis on speed. Instead, several helper methods are prepared:</p>
 <ul class="simple">
 <li><p>move_to(move)</p></li>
@@ -110,15 +112,15 @@
 </ul>
 </section>
 <section id="legal-move-check">
-<h3>Legal Move Check<a class="headerlink" href="#legal-move-check" title="Permalink to this heading"></a></h3>
+<h3>Legal Move Check<a class="headerlink" href="#legal-move-check" title="Link to this heading"></a></h3>
 <p>When applying a move with an emphasis on speed, no legal move check is performed. If an incorrect move is passed, the board data may become corrupted, and the program may terminate abnormally due to an access violation or other issues.</p>
 </section>
 <section id="coordinate-system">
-<h3>Coordinate System<a class="headerlink" href="#coordinate-system" title="Permalink to this heading"></a></h3>
+<h3>Coordinate System<a class="headerlink" href="#coordinate-system" title="Link to this heading"></a></h3>
 <p>The coordinate system complies with Apery. It is represented by numbers 0 to 80, but be careful as the corresponding coordinates are different from python-shogi. Please use constants like A1, A2, … rather than handling numbers directly. The alphabet represents the rank, and the number represents the file.</p>
 </section>
 <section id="handling-of-pieces">
-<h3>Handling of Pieces<a class="headerlink" href="#handling-of-pieces" title="Permalink to this heading"></a></h3>
+<h3>Handling of Pieces<a class="headerlink" href="#handling-of-pieces" title="Link to this heading"></a></h3>
 <p>The numerical values corresponding to the pieces also comply with Apery. Be careful as it differs from python-shogi. PIECE_TYPES_WITH_NONE, PIECES, PIECE_TYPES are defined as follows:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">PIECE_TYPES_WITH_NONE</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">NONE</span><span class="p">,</span>
@@ -158,7 +160,7 @@
 </div>
 </section>
 <section id="handling-of-pieces-in-hand">
-<h3>Handling of Pieces in Hand<a class="headerlink" href="#handling-of-pieces-in-hand" title="Permalink to this heading"></a></h3>
+<h3>Handling of Pieces in Hand<a class="headerlink" href="#handling-of-pieces-in-hand" title="Link to this heading"></a></h3>
 <p>The pieces in hand are defined as HAND_PIECES as follows. The number of pieces in hand returned by Board.pieces_in_hand() is in the order of these constants.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">HAND_PIECES</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">HPAWN</span><span class="p">,</span>     <span class="n">HLANCE</span><span class="p">,</span>     <span class="n">HKNIGHT</span><span class="p">,</span>     <span class="n">HSILVER</span><span class="p">,</span>

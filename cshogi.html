@@ -1,21 +1,23 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>cshogi package &mdash; cshogi  documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="_static/jquery.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="author" title="About these documents" href="about.html" />
     <link rel="index" title="Index" href="genindex.html" />
@@ -77,6 +79,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.Board.move_from_move16"><code class="docutils literal notranslate"><span class="pre">Board.move_from_move16()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.Board.move_from_psv"><code class="docutils literal notranslate"><span class="pre">Board.move_from_psv()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.Board.move_from_usi"><code class="docutils literal notranslate"><span class="pre">Board.move_from_usi()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.Board.move_is_draw"><code class="docutils literal notranslate"><span class="pre">Board.move_is_draw()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.Board.move_number"><code class="docutils literal notranslate"><span class="pre">Board.move_number</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.Board.peek"><code class="docutils literal notranslate"><span class="pre">Board.peek()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.Board.piece"><code class="docutils literal notranslate"><span class="pre">Board.piece()</span></code></a></li>
@@ -293,12 +296,12 @@
            <div itemprop="articleBody">
              
   <section id="cshogi-package">
-<h1>cshogi package<a class="headerlink" href="#cshogi-package" title="Permalink to this heading"></a></h1>
+<h1>cshogi package<a class="headerlink" href="#cshogi-package" title="Link to this heading"></a></h1>
 <section id="module-cshogi">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-cshogi" title="Permalink to this heading"></a></h2>
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-cshogi" title="Link to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="cshogi.Board">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">Board</span></span><a class="headerlink" href="#cshogi.Board" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">Board</span></span><a class="headerlink" href="#cshogi.Board" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Board class to represent a Shogi board.</p>
 <dl class="field-list simple">
@@ -323,7 +326,7 @@
 </div>
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.book_key">
-<span class="sig-name descname"><span class="pre">book_key</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.book_key" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">book_key</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.book_key" title="Link to this definition"></a></dt>
 <dd><p>Gets the key for the opening book.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -337,7 +340,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.book_key_after">
-<span class="sig-name descname"><span class="pre">book_key_after</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.book_key_after" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">book_key_after</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">move</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.book_key_after" title="Link to this definition"></a></dt>
 <dd><p>Gets the key for the opening book after a specific move.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -357,7 +360,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.copy">
-<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.copy" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.copy" title="Link to this definition"></a></dt>
 <dd><p>Creates a copy of the current board.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -368,7 +371,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.csa_pos">
-<span class="sig-name descname"><span class="pre">csa_pos</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.csa_pos" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">csa_pos</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.csa_pos" title="Link to this definition"></a></dt>
 <dd><p>Returns the current board position in Computer Shogi Association (CSA) format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -382,7 +385,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.drop_move">
-<span class="sig-name descname"><span class="pre">drop_move</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.drop_move" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">drop_move</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">to_square</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop_piece_type</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.drop_move" title="Link to this definition"></a></dt>
 <dd><p>Make a drop move on the board.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -402,7 +405,7 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.Board.history">
-<span class="sig-name descname"><span class="pre">history</span></span><a class="headerlink" href="#cshogi.Board.history" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">history</span></span><a class="headerlink" href="#cshogi.Board.history" title="Link to this definition"></a></dt>
 <dd><p>Gets the history of moves in the game.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -416,7 +419,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.is_check">
-<span class="sig-name descname"><span class="pre">is_check</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.is_check" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">is_check</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.is_check" title="Link to this definition"></a></dt>
 <dd><p>Determines if the king is in check.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -430,7 +433,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.is_draw">
-<span class="sig-name descname"><span class="pre">is_draw</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.is_draw" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">is_draw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ply</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.is_draw" title="Link to this definition"></a></dt>
 <dd><p>Determines whether the current game state represents a draw or another special condition.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -449,14 +452,14 @@
 </p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Enum</p>
+<dd class="field-odd"><p>int</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.is_game_over">
-<span class="sig-name descname"><span class="pre">is_game_over</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.is_game_over" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">is_game_over</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.is_game_over" title="Link to this definition"></a></dt>
 <dd><p>Check if the game is over.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -467,7 +470,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.is_legal">
-<span class="sig-name descname"><span class="pre">is_legal</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.is_legal" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">is_legal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.is_legal" title="Link to this definition"></a></dt>
 <dd><p>Checks if a move is legal.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -484,7 +487,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.is_mate">
-<span class="sig-name descname"><span class="pre">is_mate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.is_mate" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">is_mate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ply</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.is_mate" title="Link to this definition"></a></dt>
 <dd><p>Checks if a mate condition is met in a given number of ply.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -501,7 +504,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.is_nyugyoku">
-<span class="sig-name descname"><span class="pre">is_nyugyoku</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.is_nyugyoku" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">is_nyugyoku</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.is_nyugyoku" title="Link to this definition"></a></dt>
 <dd><p>Check for a win according to the Nyūgyoku declaration rule (27-point rule).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -515,7 +518,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.is_ok">
-<span class="sig-name descname"><span class="pre">is_ok</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.is_ok" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">is_ok</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.is_ok" title="Link to this definition"></a></dt>
 <dd><p>Check if the board is in a valid state.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -529,7 +532,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.is_pseudo_legal">
-<span class="sig-name descname"><span class="pre">is_pseudo_legal</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.is_pseudo_legal" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">is_pseudo_legal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.is_pseudo_legal" title="Link to this definition"></a></dt>
 <dd><p>Checks if a move is pseudo-legal.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -546,7 +549,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.king_square">
-<span class="sig-name descname"><span class="pre">king_square</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.king_square" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">king_square</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">c</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.king_square" title="Link to this definition"></a></dt>
 <dd><p>Returns the square index of the king for a given color.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -563,7 +566,7 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.Board.legal_moves">
-<span class="sig-name descname"><span class="pre">legal_moves</span></span><a class="headerlink" href="#cshogi.Board.legal_moves" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">legal_moves</span></span><a class="headerlink" href="#cshogi.Board.legal_moves" title="Link to this definition"></a></dt>
 <dd><p>Generates a list of legal moves from the current board position.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -577,7 +580,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.mate_move">
-<span class="sig-name descname"><span class="pre">mate_move</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.mate_move" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">mate_move</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ply</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.mate_move" title="Link to this definition"></a></dt>
 <dd><p>Finds a mating move in a given number of ply.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -594,7 +597,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.mate_move_in_1ply">
-<span class="sig-name descname"><span class="pre">mate_move_in_1ply</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.mate_move_in_1ply" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">mate_move_in_1ply</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.mate_move_in_1ply" title="Link to this definition"></a></dt>
 <dd><p>Finds a mating move in one ply.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -608,7 +611,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.move">
-<span class="sig-name descname"><span class="pre">move</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.move" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">move</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">from_square</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_square</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">promotion</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.move" title="Link to this definition"></a></dt>
 <dd><p>Make a move on the board.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -629,7 +632,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.move_from_csa">
-<span class="sig-name descname"><span class="pre">move_from_csa</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.move_from_csa" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">move_from_csa</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csa</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.move_from_csa" title="Link to this definition"></a></dt>
 <dd><p>Make a move on the board using a CSA-formatted string.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -646,7 +649,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.move_from_move16">
-<span class="sig-name descname"><span class="pre">move_from_move16</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.move_from_move16" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">move_from_move16</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move16</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.move_from_move16" title="Link to this definition"></a></dt>
 <dd><p>Make a move on the board using a 16-bit move code.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -663,7 +666,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.move_from_psv">
-<span class="sig-name descname"><span class="pre">move_from_psv</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.move_from_psv" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">move_from_psv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move16</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.move_from_psv" title="Link to this definition"></a></dt>
 <dd><p>Make a move on the board using a PSV-formatted move code.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -680,7 +683,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.move_from_usi">
-<span class="sig-name descname"><span class="pre">move_from_usi</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.move_from_usi" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">move_from_usi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">usi</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.move_from_usi" title="Link to this definition"></a></dt>
 <dd><p>Make a move on the board using a USI-formatted string.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -695,9 +698,38 @@
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.Board.move_is_draw">
+<span class="sig-name descname"><span class="pre">move_is_draw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ply</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.move_is_draw" title="Link to this definition"></a></dt>
+<dd><p>Check if a given move results in a draw.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>move</strong> (<em>int</em>) – The move to check.</p></li>
+<li><p><strong>ply</strong> (<em>int</em><em> or </em><em>None</em>) – Optional parameter to check up to a specific ply. Defaults to maximum int value.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>A status that could be one of the following:</p>
+<ul class="simple">
+<li><p>REPETITION_DRAW: In case of a repeated position.</p></li>
+<li><p>REPETITION_WIN: In case of a win due to consecutive checks.</p></li>
+<li><p>REPETITION_LOSE: In case of a loss due to consecutive checks.</p></li>
+<li><p>REPETITION_SUPERIOR: In case of a superior position.</p></li>
+<li><p>REPETITION_INFERIOR: In case of an inferior position.</p></li>
+<li><p>NOT_REPETITION: If none of the above conditions apply.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.Board.move_number">
-<span class="sig-name descname"><span class="pre">move_number</span></span><a class="headerlink" href="#cshogi.Board.move_number" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">move_number</span></span><a class="headerlink" href="#cshogi.Board.move_number" title="Link to this definition"></a></dt>
 <dd><p>Gets the current move number.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -708,7 +740,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.peek">
-<span class="sig-name descname"><span class="pre">peek</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.peek" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">peek</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.peek" title="Link to this definition"></a></dt>
 <dd><p>Peek at the last move on the board.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -722,7 +754,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.piece">
-<span class="sig-name descname"><span class="pre">piece</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.piece" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">piece</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sq</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.piece" title="Link to this definition"></a></dt>
 <dd><p>Returns the piece at a given square.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -739,7 +771,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.piece_planes">
-<span class="sig-name descname"><span class="pre">piece_planes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.piece_planes" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">piece_planes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.piece_planes" title="Link to this definition"></a></dt>
 <dd><p>Generate piece planes representing the current state of the board. The result is stored in the given ndarray.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -750,7 +782,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.piece_planes_rotate">
-<span class="sig-name descname"><span class="pre">piece_planes_rotate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.piece_planes_rotate" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">piece_planes_rotate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.piece_planes_rotate" title="Link to this definition"></a></dt>
 <dd><p>Generate 180-degree rotated piece planes representing the current state of the board. The result is stored in the given ndarray.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -761,7 +793,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.piece_type">
-<span class="sig-name descname"><span class="pre">piece_type</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.piece_type" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">piece_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sq</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.piece_type" title="Link to this definition"></a></dt>
 <dd><p>Returns the type of piece at a given square.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -778,7 +810,7 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.Board.pieces">
-<span class="sig-name descname"><span class="pre">pieces</span></span><a class="headerlink" href="#cshogi.Board.pieces" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">pieces</span></span><a class="headerlink" href="#cshogi.Board.pieces" title="Link to this definition"></a></dt>
 <dd><p>Gets the pieces on the board.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -792,7 +824,7 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.Board.pieces_in_hand">
-<span class="sig-name descname"><span class="pre">pieces_in_hand</span></span><a class="headerlink" href="#cshogi.Board.pieces_in_hand" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">pieces_in_hand</span></span><a class="headerlink" href="#cshogi.Board.pieces_in_hand" title="Link to this definition"></a></dt>
 <dd><p>Gets the pieces in hand for both BLACK and WHITE players.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -806,7 +838,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.pop">
-<span class="sig-name descname"><span class="pre">pop</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.pop" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">pop</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.pop" title="Link to this definition"></a></dt>
 <dd><p>Pop the last move from the board.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -820,13 +852,13 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.pop_pass">
-<span class="sig-name descname"><span class="pre">pop_pass</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.pop_pass" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">pop_pass</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.pop_pass" title="Link to this definition"></a></dt>
 <dd><p>Pop the last pass move from the board.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.pseudo_legal_move_is_legal">
-<span class="sig-name descname"><span class="pre">pseudo_legal_move_is_legal</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.pseudo_legal_move_is_legal" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">pseudo_legal_move_is_legal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.pseudo_legal_move_is_legal" title="Link to this definition"></a></dt>
 <dd><p>Checks if a pseudo-legal move is legal.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -843,7 +875,7 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.Board.pseudo_legal_moves">
-<span class="sig-name descname"><span class="pre">pseudo_legal_moves</span></span><a class="headerlink" href="#cshogi.Board.pseudo_legal_moves" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">pseudo_legal_moves</span></span><a class="headerlink" href="#cshogi.Board.pseudo_legal_moves" title="Link to this definition"></a></dt>
 <dd><p>Generates a list of pseudo-legal moves from the current board position.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -857,7 +889,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.push">
-<span class="sig-name descname"><span class="pre">push</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.push" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">push</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.push" title="Link to this definition"></a></dt>
 <dd><p>Push a move to the board.</p>
 <p>The move is represented as an integer, where each bit has the following meaning:</p>
 <ul class="simple">
@@ -876,7 +908,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.push_csa">
-<span class="sig-name descname"><span class="pre">push_csa</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.push_csa" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">push_csa</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csa</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.push_csa" title="Link to this definition"></a></dt>
 <dd><p>Push a move to the board in Computer Shogi Association (CSA) format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -893,7 +925,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.push_move16">
-<span class="sig-name descname"><span class="pre">push_move16</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.push_move16" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">push_move16</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move16</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.push_move16" title="Link to this definition"></a></dt>
 <dd><p>Push a 16-bit move to the board.</p>
 <p>The <cite>move16</cite> is the lower 16 bits of the ingeter move format.</p>
 <dl class="field-list simple">
@@ -911,7 +943,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.push_pass">
-<span class="sig-name descname"><span class="pre">push_pass</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.push_pass" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">push_pass</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.push_pass" title="Link to this definition"></a></dt>
 <dd><p>Push a pass move to the board.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -925,7 +957,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.push_psv">
-<span class="sig-name descname"><span class="pre">push_psv</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.push_psv" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">push_psv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move16</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.push_psv" title="Link to this definition"></a></dt>
 <dd><p>Push a move to the board in PSV format, which is used in YaneuraOu.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -942,7 +974,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.push_usi">
-<span class="sig-name descname"><span class="pre">push_usi</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.push_usi" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">push_usi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">usi</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.push_usi" title="Link to this definition"></a></dt>
 <dd><p>Push a move to the board in Universal Shogi Interface (USI) format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -959,13 +991,13 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.reset">
-<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.reset" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.reset" title="Link to this definition"></a></dt>
 <dd><p>Resets the board to its initial state.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.set_hcp">
-<span class="sig-name descname"><span class="pre">set_hcp</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.set_hcp" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">set_hcp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hcp</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.set_hcp" title="Link to this definition"></a></dt>
 <dd><p>Sets the board using HuffmanCodedPos (hcp) format, a compression format used in Apery.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -985,7 +1017,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.set_pieces">
-<span class="sig-name descname"><span class="pre">set_pieces</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.set_pieces" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">set_pieces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pieces</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pieces_in_hand</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.set_pieces" title="Link to this definition"></a></dt>
 <dd><p>Sets the pieces on the board and pieces in hand.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1018,7 +1050,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.set_position">
-<span class="sig-name descname"><span class="pre">set_position</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.set_position" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">set_position</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.set_position" title="Link to this definition"></a></dt>
 <dd><p>Sets the position on the board using a given string.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1039,7 +1071,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.set_psfen">
-<span class="sig-name descname"><span class="pre">set_psfen</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.set_psfen" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">set_psfen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">psfen</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.set_psfen" title="Link to this definition"></a></dt>
 <dd><p>Sets the board using PackedSfen (psfen) format, a compression format used in YaneuraOu.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1059,7 +1091,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.set_sfen">
-<span class="sig-name descname"><span class="pre">set_sfen</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.set_sfen" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">set_sfen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sfen</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.set_sfen" title="Link to this definition"></a></dt>
 <dd><p>Sets the board state using a given SFEN string.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1078,7 +1110,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.sfen">
-<span class="sig-name descname"><span class="pre">sfen</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.sfen" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">sfen</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.sfen" title="Link to this definition"></a></dt>
 <dd><p>Returns the current board position in Shogi Forsyth-Edwards Notation (SFEN) format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -1092,7 +1124,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.to_bod">
-<span class="sig-name descname"><span class="pre">to_bod</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.to_bod" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">to_bod</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.to_bod" title="Link to this definition"></a></dt>
 <dd><p>Convert the current state of the board to a Board Diagram (BOD) format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -1106,7 +1138,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.to_hcp">
-<span class="sig-name descname"><span class="pre">to_hcp</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.to_hcp" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">to_hcp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hcp</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.to_hcp" title="Link to this definition"></a></dt>
 <dd><p>Converts the current board to HuffmanCodedPos (hcp) format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1117,7 +1149,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.to_psfen">
-<span class="sig-name descname"><span class="pre">to_psfen</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.to_psfen" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">to_psfen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">psfen</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.to_psfen" title="Link to this definition"></a></dt>
 <dd><p>Converts the current board to PackedSfen (psfen) format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1128,7 +1160,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.to_svg">
-<span class="sig-name descname"><span class="pre">to_svg</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.to_svg" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">to_svg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lastmove</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.to_svg" title="Link to this definition"></a></dt>
 <dd><p>Generate an SVG representation of the current board state.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1148,7 +1180,7 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.Board.turn">
-<span class="sig-name descname"><span class="pre">turn</span></span><a class="headerlink" href="#cshogi.Board.turn" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">turn</span></span><a class="headerlink" href="#cshogi.Board.turn" title="Link to this definition"></a></dt>
 <dd><p>Gets the current turn.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -1159,7 +1191,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.zobrist_hash">
-<span class="sig-name descname"><span class="pre">zobrist_hash</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.zobrist_hash" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">zobrist_hash</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.zobrist_hash" title="Link to this definition"></a></dt>
 <dd><p>Calculates the Zobrist hash key for the current board position.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -1175,7 +1207,7 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="cshogi.DfPn">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">DfPn</span></span><a class="headerlink" href="#cshogi.DfPn" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">DfPn</span></span><a class="headerlink" href="#cshogi.DfPn" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Class to perform mate search using the df-pn algorithm.</p>
 <dl class="field-list simple">
@@ -1189,7 +1221,7 @@
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.DfPn.get_move">
-<span class="sig-name descname"><span class="pre">get_move</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.DfPn.get_move" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_move</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">board</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.DfPn.get_move" title="Link to this definition"></a></dt>
 <dd><p>Gets the mating move found by the search.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1206,7 +1238,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.DfPn.get_pv">
-<span class="sig-name descname"><span class="pre">get_pv</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.DfPn.get_pv" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_pv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">board</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.DfPn.get_pv" title="Link to this definition"></a></dt>
 <dd><p>Gets the principal variation (PV) of the mating sequence found by the search.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1223,7 +1255,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.DfPn.search">
-<span class="sig-name descname"><span class="pre">search</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.DfPn.search" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">search</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">board</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.DfPn.search" title="Link to this definition"></a></dt>
 <dd><p>Perform a checkmate search on the given board.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1240,7 +1272,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.DfPn.search_andnode">
-<span class="sig-name descname"><span class="pre">search_andnode</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.DfPn.search_andnode" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">search_andnode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">board</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.DfPn.search_andnode" title="Link to this definition"></a></dt>
 <dd><p>Perform a checkmate search at the AND node.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1257,7 +1289,7 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.DfPn.searched_node">
-<span class="sig-name descname"><span class="pre">searched_node</span></span><a class="headerlink" href="#cshogi.DfPn.searched_node" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">searched_node</span></span><a class="headerlink" href="#cshogi.DfPn.searched_node" title="Link to this definition"></a></dt>
 <dd><p>Gets the number of nodes searched.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -1271,7 +1303,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.DfPn.set_draw_ply">
-<span class="sig-name descname"><span class="pre">set_draw_ply</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.DfPn.set_draw_ply" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">set_draw_ply</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">draw_ply</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.DfPn.set_draw_ply" title="Link to this definition"></a></dt>
 <dd><p>Sets the number of plies for a draw.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1282,7 +1314,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.DfPn.set_max_depth">
-<span class="sig-name descname"><span class="pre">set_max_depth</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.DfPn.set_max_depth" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">set_max_depth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_depth</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.DfPn.set_max_depth" title="Link to this definition"></a></dt>
 <dd><p>Sets the maximum search depth.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1293,7 +1325,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.DfPn.set_max_search_node">
-<span class="sig-name descname"><span class="pre">set_max_search_node</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.DfPn.set_max_search_node" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">set_max_search_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_search_node</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.DfPn.set_max_search_node" title="Link to this definition"></a></dt>
 <dd><p>Sets the maximum number of search nodes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1304,7 +1336,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.DfPn.stop">
-<span class="sig-name descname"><span class="pre">stop</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.DfPn.stop" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">stop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stop</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.DfPn.stop" title="Link to this definition"></a></dt>
 <dd><p>Stop the search.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1317,27 +1349,27 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="cshogi.LegalMoveList">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">LegalMoveList</span></span><a class="headerlink" href="#cshogi.LegalMoveList" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">LegalMoveList</span></span><a class="headerlink" href="#cshogi.LegalMoveList" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>An iterator class to generate legal moves.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="cshogi.PseudoLegalMoveList">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">PseudoLegalMoveList</span></span><a class="headerlink" href="#cshogi.PseudoLegalMoveList" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">PseudoLegalMoveList</span></span><a class="headerlink" href="#cshogi.PseudoLegalMoveList" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>An iterator class to generate pseudo-legal moves.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="cshogi.SvgWrapper">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">SvgWrapper</span></span><a class="headerlink" href="#cshogi.SvgWrapper" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">SvgWrapper</span></span><a class="headerlink" href="#cshogi.SvgWrapper" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.hand_piece_to_piece_type">
-<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">hand_piece_to_piece_type</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.hand_piece_to_piece_type" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">hand_piece_to_piece_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hp</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.hand_piece_to_piece_type" title="Link to this definition"></a></dt>
 <dd><p>Convert a hand piece identifier to its corresponding piece type.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1354,7 +1386,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.move16">
-<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move16</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move16" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move16</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move16" title="Link to this definition"></a></dt>
 <dd><p>Convert a move to a 16-bit representation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1371,7 +1403,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.move16_from_psv">
-<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move16_from_psv</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move16_from_psv" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move16_from_psv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move16</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move16_from_psv" title="Link to this definition"></a></dt>
 <dd><p>Convert a 16-bit move representation from a move in PSV format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1388,7 +1420,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.move16_to_psv">
-<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move16_to_psv</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move16_to_psv" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move16_to_psv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move16</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move16_to_psv" title="Link to this definition"></a></dt>
 <dd><p>Convert a 16-bit move representation to a move in PSV format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1405,7 +1437,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.move_cap">
-<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move_cap</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move_cap" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move_cap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move_cap" title="Link to this definition"></a></dt>
 <dd><p>Extract the captured piece of a move.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1422,7 +1454,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.move_drop_hand_piece">
-<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move_drop_hand_piece</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move_drop_hand_piece" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move_drop_hand_piece</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move_drop_hand_piece" title="Link to this definition"></a></dt>
 <dd><p>Extract the hand piece of a drop move.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1439,7 +1471,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.move_from">
-<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move_from</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move_from" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move_from</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move_from" title="Link to this definition"></a></dt>
 <dd><p>Extract the source square of a move.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1456,7 +1488,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.move_from_piece_type">
-<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move_from_piece_type</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move_from_piece_type" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move_from_piece_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move_from_piece_type" title="Link to this definition"></a></dt>
 <dd><p>Extract the piece type moved from a move.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1473,7 +1505,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.move_is_drop">
-<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move_is_drop</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move_is_drop" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move_is_drop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move_is_drop" title="Link to this definition"></a></dt>
 <dd><p>Checks if a move is a drop move.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1490,7 +1522,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.move_is_promotion">
-<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move_is_promotion</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move_is_promotion" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move_is_promotion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move_is_promotion" title="Link to this definition"></a></dt>
 <dd><p>Checks if a move is a promotion move.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1507,7 +1539,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.move_rotate">
-<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move_rotate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move_rotate" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move_rotate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move_rotate" title="Link to this definition"></a></dt>
 <dd><p>Convert a move to a move rotated by 180 degrees.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1524,7 +1556,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.move_to">
-<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move_to</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move_to" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move_to</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move_to" title="Link to this definition"></a></dt>
 <dd><p>Extract the destination square of a move.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1541,7 +1573,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.move_to_csa">
-<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move_to_csa</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move_to_csa" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move_to_csa</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move_to_csa" title="Link to this definition"></a></dt>
 <dd><p>Convert a move to the Computer Shogi Association (CSA) format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1558,7 +1590,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.move_to_usi">
-<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move_to_usi</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move_to_usi" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">move_to_usi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.move_to_usi" title="Link to this definition"></a></dt>
 <dd><p>Convert a move to the Universal Shogi Interface (USI) format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1575,7 +1607,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.opponent">
-<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">opponent</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.opponent" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">opponent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">color</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.opponent" title="Link to this definition"></a></dt>
 <dd><p>Gets the opponent’s color.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1592,7 +1624,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.piece_to_piece_type">
-<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">piece_to_piece_type</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.piece_to_piece_type" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">piece_to_piece_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.piece_to_piece_type" title="Link to this definition"></a></dt>
 <dd><p>Convert a piece identifier to its corresponding piece type.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1609,7 +1641,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.to_csa">
-<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">to_csa</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.to_csa" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">to_csa</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.to_csa" title="Link to this definition"></a></dt>
 <dd><p>Convert a move to the Computer Shogi Association (CSA) format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1626,7 +1658,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.to_usi">
-<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">to_usi</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.to_usi" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">to_usi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.to_usi" title="Link to this definition"></a></dt>
 <dd><p>Convert a move to the Universal Shogi Interface (USI) format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1643,13 +1675,13 @@
 
 </section>
 <section id="submodules">
-<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
 </section>
 <section id="module-cshogi.CSA">
-<span id="cshogi-csa-module"></span><h2>cshogi.CSA module<a class="headerlink" href="#module-cshogi.CSA" title="Permalink to this heading"></a></h2>
+<span id="cshogi-csa-module"></span><h2>cshogi.CSA module<a class="headerlink" href="#module-cshogi.CSA" title="Link to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="cshogi.CSA.Exporter">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.CSA.</span></span><span class="sig-name descname"><span class="pre">Exporter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/CSA.html#Exporter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.CSA.Exporter" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.CSA.</span></span><span class="sig-name descname"><span class="pre">Exporter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/CSA.html#Exporter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.CSA.Exporter" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A class to handle the exporting of a game to CSA format.</p>
 <dl class="field-list simple">
@@ -1663,13 +1695,13 @@
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.CSA.Exporter.close">
-<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/CSA.html#Exporter.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.CSA.Exporter.close" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/CSA.html#Exporter.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.CSA.Exporter.close" title="Link to this definition"></a></dt>
 <dd><p>Close the file.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.CSA.Exporter.endgame">
-<span class="sig-name descname"><span class="pre">endgame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">endgame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/CSA.html#Exporter.endgame"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.CSA.Exporter.endgame" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">endgame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">endgame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/CSA.html#Exporter.endgame"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.CSA.Exporter.endgame" title="Link to this definition"></a></dt>
 <dd><p>Write the endgame result to the file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1683,7 +1715,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.CSA.Exporter.info">
-<span class="sig-name descname"><span class="pre">info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">init_board</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var_info</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/CSA.html#Exporter.info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.CSA.Exporter.info" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">init_board</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var_info</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/CSA.html#Exporter.info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.CSA.Exporter.info" title="Link to this definition"></a></dt>
 <dd><p>Write game information to the file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1700,7 +1732,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.CSA.Exporter.move">
-<span class="sig-name descname"><span class="pre">move</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'\n'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/CSA.html#Exporter.move"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.CSA.Exporter.move" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">move</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'\n'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/CSA.html#Exporter.move"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.CSA.Exporter.move" title="Link to this definition"></a></dt>
 <dd><p>Write a move to the file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1716,7 +1748,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.CSA.Exporter.open">
-<span class="sig-name descname"><span class="pre">open</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/CSA.html#Exporter.open"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.CSA.Exporter.open" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">open</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/CSA.html#Exporter.open"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.CSA.Exporter.open" title="Link to this definition"></a></dt>
 <dd><p>Open the file for writing.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1733,12 +1765,12 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="cshogi.CSA.Parser">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.CSA.</span></span><span class="sig-name descname"><span class="pre">Parser</span></span><a class="headerlink" href="#cshogi.CSA.Parser" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.CSA.</span></span><span class="sig-name descname"><span class="pre">Parser</span></span><a class="headerlink" href="#cshogi.CSA.Parser" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A class to parse Shogi game records in the CSA standard file format.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.CSA.Parser.comment">
-<span class="sig-name descname"><span class="pre">comment</span></span><a class="headerlink" href="#cshogi.CSA.Parser.comment" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">comment</span></span><a class="headerlink" href="#cshogi.CSA.Parser.comment" title="Link to this definition"></a></dt>
 <dd><p>Gets the general comment about the game.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -1752,7 +1784,7 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.CSA.Parser.comments">
-<span class="sig-name descname"><span class="pre">comments</span></span><a class="headerlink" href="#cshogi.CSA.Parser.comments" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">comments</span></span><a class="headerlink" href="#cshogi.CSA.Parser.comments" title="Link to this definition"></a></dt>
 <dd><p>Gets the list of comments for each move of the game.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -1766,7 +1798,7 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.CSA.Parser.endgame">
-<span class="sig-name descname"><span class="pre">endgame</span></span><a class="headerlink" href="#cshogi.CSA.Parser.endgame" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">endgame</span></span><a class="headerlink" href="#cshogi.CSA.Parser.endgame" title="Link to this definition"></a></dt>
 <dd><p>Gets the endgame result of the game.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -1780,7 +1812,7 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.CSA.Parser.moves">
-<span class="sig-name descname"><span class="pre">moves</span></span><a class="headerlink" href="#cshogi.CSA.Parser.moves" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">moves</span></span><a class="headerlink" href="#cshogi.CSA.Parser.moves" title="Link to this definition"></a></dt>
 <dd><p>Gets the list of moves in the game.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -1794,7 +1826,7 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.CSA.Parser.names">
-<span class="sig-name descname"><span class="pre">names</span></span><a class="headerlink" href="#cshogi.CSA.Parser.names" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">names</span></span><a class="headerlink" href="#cshogi.CSA.Parser.names" title="Link to this definition"></a></dt>
 <dd><p>Gets the names of the players.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -1808,7 +1840,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.CSA.Parser.parse_csa_file">
-<span class="sig-name descname"><span class="pre">parse_csa_file</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.CSA.Parser.parse_csa_file" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">parse_csa_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.CSA.Parser.parse_csa_file" title="Link to this definition"></a></dt>
 <dd><p>Parse a CSA standard Shogi game record from a file path.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1819,7 +1851,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.CSA.Parser.parse_csa_str">
-<span class="sig-name descname"><span class="pre">parse_csa_str</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.CSA.Parser.parse_csa_str" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">parse_csa_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csa_str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.CSA.Parser.parse_csa_str" title="Link to this definition"></a></dt>
 <dd><p>Parse a CSA standard Shogi game record from a string.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1830,7 +1862,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.CSA.Parser.parse_file">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_file</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.CSA.Parser.parse_file" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.CSA.Parser.parse_file" title="Link to this definition"></a></dt>
 <dd><p>Parse CSA standard Shogi game records from a file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1850,7 +1882,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.CSA.Parser.parse_str">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_str</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.CSA.Parser.parse_str" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csa_str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.CSA.Parser.parse_str" title="Link to this definition"></a></dt>
 <dd><p>Parse CSA standard Shogi game records from a string.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1867,7 +1899,7 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.CSA.Parser.ratings">
-<span class="sig-name descname"><span class="pre">ratings</span></span><a class="headerlink" href="#cshogi.CSA.Parser.ratings" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">ratings</span></span><a class="headerlink" href="#cshogi.CSA.Parser.ratings" title="Link to this definition"></a></dt>
 <dd><p>Gets the ratings of the players.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -1881,7 +1913,7 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.CSA.Parser.scores">
-<span class="sig-name descname"><span class="pre">scores</span></span><a class="headerlink" href="#cshogi.CSA.Parser.scores" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">scores</span></span><a class="headerlink" href="#cshogi.CSA.Parser.scores" title="Link to this definition"></a></dt>
 <dd><p>Gets the list of scores for each move of the game.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -1895,7 +1927,7 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.CSA.Parser.sfen">
-<span class="sig-name descname"><span class="pre">sfen</span></span><a class="headerlink" href="#cshogi.CSA.Parser.sfen" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">sfen</span></span><a class="headerlink" href="#cshogi.CSA.Parser.sfen" title="Link to this definition"></a></dt>
 <dd><p>Gets the SFEN representation of the initial position.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -1909,7 +1941,7 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.CSA.Parser.times">
-<span class="sig-name descname"><span class="pre">times</span></span><a class="headerlink" href="#cshogi.CSA.Parser.times" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">times</span></span><a class="headerlink" href="#cshogi.CSA.Parser.times" title="Link to this definition"></a></dt>
 <dd><p>Gets the list of times for each move in the game.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -1923,7 +1955,7 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.CSA.Parser.var_info">
-<span class="sig-name descname"><span class="pre">var_info</span></span><a class="headerlink" href="#cshogi.CSA.Parser.var_info" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">var_info</span></span><a class="headerlink" href="#cshogi.CSA.Parser.var_info" title="Link to this definition"></a></dt>
 <dd><p>Gets a dictionary containing various information about the game.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -1937,7 +1969,7 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.CSA.Parser.version">
-<span class="sig-name descname"><span class="pre">version</span></span><a class="headerlink" href="#cshogi.CSA.Parser.version" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">version</span></span><a class="headerlink" href="#cshogi.CSA.Parser.version" title="Link to this definition"></a></dt>
 <dd><p>Gets the version of the CSA standard game record file format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -1951,7 +1983,7 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.CSA.Parser.win">
-<span class="sig-name descname"><span class="pre">win</span></span><a class="headerlink" href="#cshogi.CSA.Parser.win" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">win</span></span><a class="headerlink" href="#cshogi.CSA.Parser.win" title="Link to this definition"></a></dt>
 <dd><p>Gets the result of the game.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -1967,10 +1999,10 @@
 
 </section>
 <section id="module-cshogi.KI2">
-<span id="cshogi-ki2-module"></span><h2>cshogi.KI2 module<a class="headerlink" href="#module-cshogi.KI2" title="Permalink to this heading"></a></h2>
+<span id="cshogi-ki2-module"></span><h2>cshogi.KI2 module<a class="headerlink" href="#module-cshogi.KI2" title="Link to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="cshogi.KI2.Exporter">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.KI2.</span></span><span class="sig-name descname"><span class="pre">Exporter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KI2.html#Exporter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KI2.Exporter" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.KI2.</span></span><span class="sig-name descname"><span class="pre">Exporter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KI2.html#Exporter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KI2.Exporter" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A class to handle the exporting of a game to KI2 format.</p>
 <dl class="field-list simple">
@@ -1980,13 +2012,13 @@
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.KI2.Exporter.close">
-<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KI2.html#Exporter.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KI2.Exporter.close" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KI2.html#Exporter.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KI2.Exporter.close" title="Link to this definition"></a></dt>
 <dd><p>Close the file.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.KI2.Exporter.end">
-<span class="sig-name descname"><span class="pre">end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reason</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KI2.html#Exporter.end"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KI2.Exporter.end" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reason</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KI2.html#Exporter.end"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KI2.Exporter.end" title="Link to this definition"></a></dt>
 <dd><p>Write the game’s ending condition.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1997,7 +2029,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.KI2.Exporter.header">
-<span class="sig-name descname"><span class="pre">header</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">starttime</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KI2.html#Exporter.header"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KI2.Exporter.header" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">header</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">starttime</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KI2.html#Exporter.header"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KI2.Exporter.header" title="Link to this definition"></a></dt>
 <dd><p>Write the game’s header information, including date and player names.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2011,7 +2043,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.KI2.Exporter.move">
-<span class="sig-name descname"><span class="pre">move</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KI2.html#Exporter.move"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KI2.Exporter.move" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">move</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KI2.html#Exporter.move"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KI2.Exporter.move" title="Link to this definition"></a></dt>
 <dd><p>Write a move to the file in KI2 format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2025,7 +2057,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.KI2.Exporter.open">
-<span class="sig-name descname"><span class="pre">open</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KI2.html#Exporter.open"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KI2.Exporter.open" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">open</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KI2.html#Exporter.open"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KI2.Exporter.open" title="Link to this definition"></a></dt>
 <dd><p>Open a file for writing the KI2 formatted game.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2038,27 +2070,27 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="cshogi.KI2.Parser">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.KI2.</span></span><span class="sig-name descname"><span class="pre">Parser</span></span><a class="reference internal" href="_modules/cshogi/KI2.html#Parser"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KI2.Parser" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.KI2.</span></span><span class="sig-name descname"><span class="pre">Parser</span></span><a class="reference internal" href="_modules/cshogi/KI2.html#Parser"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KI2.Parser" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A class for parsing Japanese Shogi notation in KI2 format.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.KI2.Parser.HANDYCAP_SFENS">
-<span class="sig-name descname"><span class="pre">HANDYCAP_SFENS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'その他':</span> <span class="pre">None,</span> <span class="pre">'三枚落ち':</span> <span class="pre">'lnsgkgsn1/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'二枚落ち':</span> <span class="pre">'lnsgkgsnl/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'五枚落ち':</span> <span class="pre">'2sgkgsn1/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'八枚落ち':</span> <span class="pre">'3gkg3/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'六枚落ち':</span> <span class="pre">'2sgkgs2/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'十枚落ち':</span> <span class="pre">'4k4/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'右香落ち':</span> <span class="pre">'1nsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'四枚落ち':</span> <span class="pre">'1nsgkgsn1/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'左五枚落ち':</span> <span class="pre">'1nsgkgs2/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'平手':</span> <span class="pre">'lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">b</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'角落ち':</span> <span class="pre">'lnsgkgsnl/1r7/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'飛車落ち':</span> <span class="pre">'lnsgkgsnl/7b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'飛香落ち':</span> <span class="pre">'lnsgkgsn1/7b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'香落ち':</span> <span class="pre">'lnsgkgsn1/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1'}</span></em><a class="headerlink" href="#cshogi.KI2.Parser.HANDYCAP_SFENS" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">HANDYCAP_SFENS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'その他':</span> <span class="pre">None,</span> <span class="pre">'三枚落ち':</span> <span class="pre">'lnsgkgsn1/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'二枚落ち':</span> <span class="pre">'lnsgkgsnl/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'五枚落ち':</span> <span class="pre">'2sgkgsn1/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'八枚落ち':</span> <span class="pre">'3gkg3/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'六枚落ち':</span> <span class="pre">'2sgkgs2/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'十枚落ち':</span> <span class="pre">'4k4/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'右香落ち':</span> <span class="pre">'1nsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'四枚落ち':</span> <span class="pre">'1nsgkgsn1/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'左五枚落ち':</span> <span class="pre">'1nsgkgs2/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'平手':</span> <span class="pre">'lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">b</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'角落ち':</span> <span class="pre">'lnsgkgsnl/1r7/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'飛車落ち':</span> <span class="pre">'lnsgkgsnl/7b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'飛香落ち':</span> <span class="pre">'lnsgkgsn1/7b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'香落ち':</span> <span class="pre">'lnsgkgsn1/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1'}</span></em><a class="headerlink" href="#cshogi.KI2.Parser.HANDYCAP_SFENS" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.KI2.Parser.MOVE_RE">
-<span class="sig-name descname"><span class="pre">MOVE_RE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('(▲|△)(([１２３４５６７８９])([零一二三四五六七八九])|同\u3000?)([歩香桂銀金角飛玉と杏圭全馬龍])(左|直|右)?(上|寄|引)?(打|成|不成)?\\s*')</span></em><a class="headerlink" href="#cshogi.KI2.Parser.MOVE_RE" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">MOVE_RE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('(▲|△)(([１２３４５６７８９])([零一二三四五六七八九])|同\u3000?)([歩香桂銀金角飛玉と杏圭全馬龍])(左|直|右)?(上|寄|引)?(打|成|不成)?\\s*')</span></em><a class="headerlink" href="#cshogi.KI2.Parser.MOVE_RE" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.KI2.Parser.RESULT_RE">
-<span class="sig-name descname"><span class="pre">RESULT_RE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('まで(\\d+)手で((先|下|後|上)手の(勝ち|入玉勝ち|反則勝ち|反則負け)|千日手|持将棋|中断)')</span></em><a class="headerlink" href="#cshogi.KI2.Parser.RESULT_RE" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">RESULT_RE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('まで(\\d+)手で((先|下|後|上)手の(勝ち|入玉勝ち|反則勝ち|反則負け)|千日手|持将棋|中断)')</span></em><a class="headerlink" href="#cshogi.KI2.Parser.RESULT_RE" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.KI2.Parser.parse_file">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KI2.html#Parser.parse_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KI2.Parser.parse_file" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KI2.html#Parser.parse_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KI2.Parser.parse_file" title="Link to this definition"></a></dt>
 <dd><p>Parses a KI2 format Shogi game notation file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2078,7 +2110,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.KI2.Parser.parse_move_str">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_move_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">board</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KI2.html#Parser.parse_move_str"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KI2.Parser.parse_move_str" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_move_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">board</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KI2.html#Parser.parse_move_str"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KI2.Parser.parse_move_str" title="Link to this definition"></a></dt>
 <dd><p>Parses a string of moves and applies them to a given board.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2095,7 +2127,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.KI2.Parser.parse_pieces_in_hand">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_pieces_in_hand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KI2.html#Parser.parse_pieces_in_hand"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KI2.Parser.parse_pieces_in_hand" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_pieces_in_hand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KI2.html#Parser.parse_pieces_in_hand"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KI2.Parser.parse_pieces_in_hand" title="Link to this definition"></a></dt>
 <dd><p>Parses pieces in hand from a given string.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2115,7 +2147,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.KI2.Parser.parse_str">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kif_str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KI2.html#Parser.parse_str"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KI2.Parser.parse_str" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kif_str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KI2.html#Parser.parse_str"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KI2.Parser.parse_str" title="Link to this definition"></a></dt>
 <dd><p>Parses a KI2 formatted string into a Parser object.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2137,7 +2169,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.KI2.move_to_ki2">
-<span class="sig-prename descclassname"><span class="pre">cshogi.KI2.</span></span><span class="sig-name descname"><span class="pre">move_to_ki2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">board</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KI2.html#move_to_ki2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KI2.move_to_ki2" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.KI2.</span></span><span class="sig-name descname"><span class="pre">move_to_ki2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">board</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KI2.html#move_to_ki2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KI2.move_to_ki2" title="Link to this definition"></a></dt>
 <dd><p>Convert a given move to Japanese KI2 notation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2157,10 +2189,10 @@
 
 </section>
 <section id="module-cshogi.KIF">
-<span id="cshogi-kif-module"></span><h2>cshogi.KIF module<a class="headerlink" href="#module-cshogi.KIF" title="Permalink to this heading"></a></h2>
+<span id="cshogi-kif-module"></span><h2>cshogi.KIF module<a class="headerlink" href="#module-cshogi.KIF" title="Link to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="cshogi.KIF.Exporter">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.KIF.</span></span><span class="sig-name descname"><span class="pre">Exporter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#Exporter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.Exporter" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.KIF.</span></span><span class="sig-name descname"><span class="pre">Exporter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#Exporter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.Exporter" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A class to handle the exporting of a game to KIF format.</p>
 <dl class="field-list simple">
@@ -2170,13 +2202,13 @@
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.KIF.Exporter.close">
-<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#Exporter.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.Exporter.close" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#Exporter.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.Exporter.close" title="Link to this definition"></a></dt>
 <dd><p>Close the file.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.KIF.Exporter.end">
-<span class="sig-name descname"><span class="pre">end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reason</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sec_sum</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#Exporter.end"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.Exporter.end" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reason</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sec_sum</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#Exporter.end"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.Exporter.end" title="Link to this definition"></a></dt>
 <dd><p>Record the end of the game.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2191,7 +2223,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.KIF.Exporter.header">
-<span class="sig-name descname"><span class="pre">header</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">starttime</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handicap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#Exporter.header"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.Exporter.header" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">header</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">starttime</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handicap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#Exporter.header"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.Exporter.header" title="Link to this definition"></a></dt>
 <dd><p>Write the header information to the file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2206,7 +2238,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.KIF.Exporter.info">
-<span class="sig-name descname"><span class="pre">info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">info</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#Exporter.info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.Exporter.info" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">info</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#Exporter.info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.Exporter.info" title="Link to this definition"></a></dt>
 <dd><p>Record additional information related to the game.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2217,7 +2249,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.KIF.Exporter.move">
-<span class="sig-name descname"><span class="pre">move</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sec_sum</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#Exporter.move"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.Exporter.move" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">move</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sec_sum</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#Exporter.move"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.Exporter.move" title="Link to this definition"></a></dt>
 <dd><p>Record a move in the game.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2232,7 +2264,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.KIF.Exporter.open">
-<span class="sig-name descname"><span class="pre">open</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#Exporter.open"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.Exporter.open" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">open</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#Exporter.open"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.Exporter.open" title="Link to this definition"></a></dt>
 <dd><p>Open a file for writing the KIF formatted game.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2245,27 +2277,27 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="cshogi.KIF.Parser">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.KIF.</span></span><span class="sig-name descname"><span class="pre">Parser</span></span><a class="reference internal" href="_modules/cshogi/KIF.html#Parser"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.Parser" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.KIF.</span></span><span class="sig-name descname"><span class="pre">Parser</span></span><a class="reference internal" href="_modules/cshogi/KIF.html#Parser"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.Parser" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A class for parsing Japanese Shogi notation in KIF format.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.KIF.Parser.HANDYCAP_SFENS">
-<span class="sig-name descname"><span class="pre">HANDYCAP_SFENS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'その他':</span> <span class="pre">None,</span> <span class="pre">'三枚落ち':</span> <span class="pre">'lnsgkgsn1/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'二枚落ち':</span> <span class="pre">'lnsgkgsnl/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'五枚落ち':</span> <span class="pre">'2sgkgsn1/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'八枚落ち':</span> <span class="pre">'3gkg3/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'六枚落ち':</span> <span class="pre">'2sgkgs2/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'十枚落ち':</span> <span class="pre">'4k4/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'右香落ち':</span> <span class="pre">'1nsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'四枚落ち':</span> <span class="pre">'1nsgkgsn1/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'左五枚落ち':</span> <span class="pre">'1nsgkgs2/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'平手':</span> <span class="pre">'lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">b</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'角落ち':</span> <span class="pre">'lnsgkgsnl/1r7/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'飛車落ち':</span> <span class="pre">'lnsgkgsnl/7b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'飛香落ち':</span> <span class="pre">'lnsgkgsn1/7b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'香落ち':</span> <span class="pre">'lnsgkgsn1/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1'}</span></em><a class="headerlink" href="#cshogi.KIF.Parser.HANDYCAP_SFENS" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">HANDYCAP_SFENS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'その他':</span> <span class="pre">None,</span> <span class="pre">'三枚落ち':</span> <span class="pre">'lnsgkgsn1/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'二枚落ち':</span> <span class="pre">'lnsgkgsnl/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'五枚落ち':</span> <span class="pre">'2sgkgsn1/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'八枚落ち':</span> <span class="pre">'3gkg3/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'六枚落ち':</span> <span class="pre">'2sgkgs2/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'十枚落ち':</span> <span class="pre">'4k4/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'右香落ち':</span> <span class="pre">'1nsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'四枚落ち':</span> <span class="pre">'1nsgkgsn1/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'左五枚落ち':</span> <span class="pre">'1nsgkgs2/9/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'平手':</span> <span class="pre">'lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">b</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'角落ち':</span> <span class="pre">'lnsgkgsnl/1r7/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'飛車落ち':</span> <span class="pre">'lnsgkgsnl/7b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'飛香落ち':</span> <span class="pre">'lnsgkgsn1/7b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1',</span> <span class="pre">'香落ち':</span> <span class="pre">'lnsgkgsn1/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL</span> <span class="pre">w</span> <span class="pre">-</span> <span class="pre">1'}</span></em><a class="headerlink" href="#cshogi.KIF.Parser.HANDYCAP_SFENS" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.KIF.Parser.MOVE_RE">
-<span class="sig-name descname"><span class="pre">MOVE_RE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('\\A</span> <span class="pre">*[0-9]+\\s+(中断|投了|持将棋|千日手|詰み|切れ負け|反則勝ち|反則負け|(([１２３４５６７８９])([零一二三四五六七八九])|同\u3000)([歩香桂銀金角飛玉と杏圭全馬龍])(打|(成?)\\(([0-9])([0-9])\\)))\\s*(\\(</span> <span class="pre">*([:0-9]+)/([:0-9]+)\\))?.*\\Z')</span></em><a class="headerlink" href="#cshogi.KIF.Parser.MOVE_RE" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">MOVE_RE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('\\A</span> <span class="pre">*[0-9]+\\s+(中断|投了|持将棋|千日手|詰み|切れ負け|反則勝ち|反則負け|(([１２３４５６７８９])([零一二三四五六七八九])|同\u3000)([歩香桂銀金角飛玉と杏圭全馬龍])(打|(成?)\\(([0-9])([0-9])\\)))\\s*(\\(</span> <span class="pre">*([:0-9]+)/([:0-9]+)\\))?.*\\Z')</span></em><a class="headerlink" href="#cshogi.KIF.Parser.MOVE_RE" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.KIF.Parser.RESULT_RE">
-<span class="sig-name descname"><span class="pre">RESULT_RE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('\u3000*まで、?(\\d+)手で((先|下|後|上)手の(勝ち|入玉勝ち|反則勝ち|反則負け)|千日手|持将棋|中断)')</span></em><a class="headerlink" href="#cshogi.KIF.Parser.RESULT_RE" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">RESULT_RE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('\u3000*まで、?(\\d+)手で((先|下|後|上)手の(勝ち|入玉勝ち|反則勝ち|反則負け)|千日手|持将棋|中断)')</span></em><a class="headerlink" href="#cshogi.KIF.Parser.RESULT_RE" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.KIF.Parser.parse_file">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#Parser.parse_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.Parser.parse_file" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#Parser.parse_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.Parser.parse_file" title="Link to this definition"></a></dt>
 <dd><p>Parses a KI2 format Shogi game notation file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2285,7 +2317,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.KIF.Parser.parse_move_str">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_move_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">board</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#Parser.parse_move_str"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.Parser.parse_move_str" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_move_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">board</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#Parser.parse_move_str"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.Parser.parse_move_str" title="Link to this definition"></a></dt>
 <dd><p>Parses a string of moves and applies them to a given board.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2302,7 +2334,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.KIF.Parser.parse_pieces_in_hand">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_pieces_in_hand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#Parser.parse_pieces_in_hand"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.Parser.parse_pieces_in_hand" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_pieces_in_hand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#Parser.parse_pieces_in_hand"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.Parser.parse_pieces_in_hand" title="Link to this definition"></a></dt>
 <dd><p>Parses pieces in hand from a given string.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2319,7 +2351,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.KIF.Parser.parse_str">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kif_str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#Parser.parse_str"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.Parser.parse_str" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kif_str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#Parser.parse_str"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.Parser.parse_str" title="Link to this definition"></a></dt>
 <dd><p>Parses a KIF formatted string into a Parser object.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2338,13 +2370,13 @@
 
 <dl class="py exception">
 <dt class="sig sig-object py" id="cshogi.KIF.ParserException">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.KIF.</span></span><span class="sig-name descname"><span class="pre">ParserException</span></span><a class="reference internal" href="_modules/cshogi/KIF.html#ParserException"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.ParserException" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.KIF.</span></span><span class="sig-name descname"><span class="pre">ParserException</span></span><a class="reference internal" href="_modules/cshogi/KIF.html#ParserException"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.ParserException" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.KIF.board_to_bod">
-<span class="sig-prename descclassname"><span class="pre">cshogi.KIF.</span></span><span class="sig-name descname"><span class="pre">board_to_bod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">board</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#board_to_bod"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.board_to_bod" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.KIF.</span></span><span class="sig-name descname"><span class="pre">board_to_bod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">board</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#board_to_bod"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.board_to_bod" title="Link to this definition"></a></dt>
 <dd><p>Convert a given board to a Board Diagram (BOD) representation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2361,7 +2393,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.KIF.move_to_bod">
-<span class="sig-prename descclassname"><span class="pre">cshogi.KIF.</span></span><span class="sig-name descname"><span class="pre">move_to_bod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">board</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#move_to_bod"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.move_to_bod" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.KIF.</span></span><span class="sig-name descname"><span class="pre">move_to_bod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">board</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#move_to_bod"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.move_to_bod" title="Link to this definition"></a></dt>
 <dd><p>Convert a given move to a Board Diagram (BOD) representation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2381,7 +2413,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.KIF.move_to_kif">
-<span class="sig-prename descclassname"><span class="pre">cshogi.KIF.</span></span><span class="sig-name descname"><span class="pre">move_to_kif</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prev_move</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#move_to_kif"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.move_to_kif" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.KIF.</span></span><span class="sig-name descname"><span class="pre">move_to_kif</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prev_move</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#move_to_kif"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.move_to_kif" title="Link to this definition"></a></dt>
 <dd><p>Convert a given move to Japanese KIF notation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2402,15 +2434,15 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.KIF.sec_to_time">
-<span class="sig-prename descclassname"><span class="pre">cshogi.KIF.</span></span><span class="sig-name descname"><span class="pre">sec_to_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sec</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#sec_to_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.sec_to_time" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.KIF.</span></span><span class="sig-name descname"><span class="pre">sec_to_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sec</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/KIF.html#sec_to_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.KIF.sec_to_time" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </section>
 <section id="module-cshogi.PGN">
-<span id="cshogi-pgn-module"></span><h2>cshogi.PGN module<a class="headerlink" href="#module-cshogi.PGN" title="Permalink to this heading"></a></h2>
+<span id="cshogi-pgn-module"></span><h2>cshogi.PGN module<a class="headerlink" href="#module-cshogi.PGN" title="Link to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="cshogi.PGN.Exporter">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.PGN.</span></span><span class="sig-name descname"><span class="pre">Exporter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/PGN.html#Exporter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.PGN.Exporter" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.PGN.</span></span><span class="sig-name descname"><span class="pre">Exporter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/PGN.html#Exporter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.PGN.Exporter" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A class to handle the exporting of a game to PGN (Portable Game Notation) format.</p>
 <dl class="field-list simple">
@@ -2423,13 +2455,13 @@
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.PGN.Exporter.close">
-<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/PGN.html#Exporter.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.PGN.Exporter.close" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/PGN.html#Exporter.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.PGN.Exporter.close" title="Link to this definition"></a></dt>
 <dd><p>Close the file.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.PGN.Exporter.movetext">
-<span class="sig-name descname"><span class="pre">movetext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">moves</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/PGN.html#Exporter.movetext"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.PGN.Exporter.movetext" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">movetext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">moves</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/PGN.html#Exporter.movetext"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.PGN.Exporter.movetext" title="Link to this definition"></a></dt>
 <dd><p>Write the move text section of the PGN format, containing the actual moves of the game.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2440,7 +2472,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.PGN.Exporter.open">
-<span class="sig-name descname"><span class="pre">open</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/PGN.html#Exporter.open"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.PGN.Exporter.open" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">open</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/PGN.html#Exporter.open"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.PGN.Exporter.open" title="Link to this definition"></a></dt>
 <dd><p>Open a file for writing the PGN formatted game.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2454,7 +2486,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.PGN.Exporter.tag_pair">
-<span class="sig-name descname"><span class="pre">tag_pair</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'?'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'?'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">starttime</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/PGN.html#Exporter.tag_pair"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.PGN.Exporter.tag_pair" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">tag_pair</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'?'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'?'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">starttime</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/PGN.html#Exporter.tag_pair"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.PGN.Exporter.tag_pair" title="Link to this definition"></a></dt>
 <dd><p>Write the tag pairs section of the PGN format, containing metadata about the game.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2474,15 +2506,15 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.PGN.move_to_san">
-<span class="sig-prename descclassname"><span class="pre">cshogi.PGN.</span></span><span class="sig-name descname"><span class="pre">move_to_san</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/PGN.html#move_to_san"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.PGN.move_to_san" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.PGN.</span></span><span class="sig-name descname"><span class="pre">move_to_san</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/PGN.html#move_to_san"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.PGN.move_to_san" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </section>
 <section id="module-cshogi.cli">
-<span id="cshogi-cli-module"></span><h2>cshogi.cli module<a class="headerlink" href="#module-cshogi.cli" title="Permalink to this heading"></a></h2>
+<span id="cshogi-cli-module"></span><h2>cshogi.cli module<a class="headerlink" href="#module-cshogi.cli" title="Link to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.cli.main">
-<span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">engine1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">games</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resign</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mate_win</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">byoyomi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">draw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ponder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_swap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opening</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opening_moves</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">24</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opening_seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opening_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multi_csa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pgn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_pgn_moves</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_display</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_summary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.main" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">engine1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">games</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resign</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mate_win</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">byoyomi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">draw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ponder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_swap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opening</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opening_moves</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">24</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opening_seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opening_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multi_csa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pgn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_pgn_moves</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_display</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_summary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.main" title="Link to this definition"></a></dt>
 <dd><p>Executes a series of games between two USI engines.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2527,25 +2559,25 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.cli.to_score">
-<span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">to_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#to_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.to_score" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">to_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#to_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.to_score" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.cli.usi_info_to_csa_comment">
-<span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">usi_info_to_csa_comment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">board</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#usi_info_to_csa_comment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.usi_info_to_csa_comment" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">usi_info_to_csa_comment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">board</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#usi_info_to_csa_comment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.usi_info_to_csa_comment" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.cli.usi_info_to_score">
-<span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">usi_info_to_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">info</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#usi_info_to_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.usi_info_to_score" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">usi_info_to_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">info</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#usi_info_to_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.usi_info_to_score" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </section>
 <section id="module-cshogi.elo">
-<span id="cshogi-elo-module"></span><h2>cshogi.elo module<a class="headerlink" href="#module-cshogi.elo" title="Permalink to this heading"></a></h2>
+<span id="cshogi-elo-module"></span><h2>cshogi.elo module<a class="headerlink" href="#module-cshogi.elo" title="Link to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="cshogi.elo.Elo">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.elo.</span></span><span class="sig-name descname"><span class="pre">Elo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wins</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">losses</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">draws</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/elo.html#Elo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.elo.Elo" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.elo.</span></span><span class="sig-name descname"><span class="pre">Elo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wins</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">losses</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">draws</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/elo.html#Elo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.elo.Elo" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A class for calculating Elo ratings based on wins, losses, and draws.</p>
 <dl class="field-list simple">
@@ -2559,7 +2591,7 @@
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.elo.Elo.diff">
-<span class="sig-name descname"><span class="pre">diff</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/elo.html#Elo.diff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.elo.Elo.diff" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">diff</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/elo.html#Elo.diff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.elo.Elo.diff" title="Link to this definition"></a></dt>
 <dd><p>Calculates the Elo difference.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -2573,7 +2605,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.elo.Elo.draw_ratio">
-<span class="sig-name descname"><span class="pre">draw_ratio</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/elo.html#Elo.draw_ratio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.elo.Elo.draw_ratio" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">draw_ratio</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/elo.html#Elo.draw_ratio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.elo.Elo.draw_ratio" title="Link to this definition"></a></dt>
 <dd><p>Calculates the draw ratio.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -2587,7 +2619,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.elo.Elo.error_margin">
-<span class="sig-name descname"><span class="pre">error_margin</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/elo.html#Elo.error_margin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.elo.Elo.error_margin" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">error_margin</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/elo.html#Elo.error_margin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.elo.Elo.error_margin" title="Link to this definition"></a></dt>
 <dd><p>Calculates the error margin.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -2601,7 +2633,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.elo.Elo.los">
-<span class="sig-name descname"><span class="pre">los</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/elo.html#Elo.los"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.elo.Elo.los" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">los</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/elo.html#Elo.los"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.elo.Elo.los" title="Link to this definition"></a></dt>
 <dd><p>Calculates the likelihood of superiority.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -2615,7 +2647,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.elo.Elo.point_ratio">
-<span class="sig-name descname"><span class="pre">point_ratio</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/elo.html#Elo.point_ratio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.elo.Elo.point_ratio" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">point_ratio</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/elo.html#Elo.point_ratio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.elo.Elo.point_ratio" title="Link to this definition"></a></dt>
 <dd><p>Calculates the point ratio.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -2631,22 +2663,22 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.elo.elo_diff">
-<span class="sig-prename descclassname"><span class="pre">cshogi.elo.</span></span><span class="sig-name descname"><span class="pre">elo_diff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/elo.html#elo_diff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.elo.elo_diff" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.elo.</span></span><span class="sig-name descname"><span class="pre">elo_diff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/elo.html#elo_diff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.elo.elo_diff" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.elo.erf_inv">
-<span class="sig-prename descclassname"><span class="pre">cshogi.elo.</span></span><span class="sig-name descname"><span class="pre">erf_inv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/elo.html#erf_inv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.elo.erf_inv" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.elo.</span></span><span class="sig-name descname"><span class="pre">erf_inv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/elo.html#erf_inv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.elo.erf_inv" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.elo.phi_inv">
-<span class="sig-prename descclassname"><span class="pre">cshogi.elo.</span></span><span class="sig-name descname"><span class="pre">phi_inv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/elo.html#phi_inv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.elo.phi_inv" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.elo.</span></span><span class="sig-name descname"><span class="pre">phi_inv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/elo.html#phi_inv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.elo.phi_inv" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </section>
 <section id="subpackages">
-<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this heading"></a></h2>
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="cshogi.dlshogi.html">cshogi.dlshogi package</a><ul>

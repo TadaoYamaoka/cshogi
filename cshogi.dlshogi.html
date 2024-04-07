@@ -1,21 +1,23 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>cshogi.dlshogi package &mdash; cshogi  documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="_static/jquery.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="author" title="About these documents" href="about.html" />
     <link rel="index" title="Index" href="genindex.html" />
@@ -100,12 +102,12 @@
            <div itemprop="articleBody">
              
   <section id="cshogi-dlshogi-package">
-<h1>cshogi.dlshogi package<a class="headerlink" href="#cshogi-dlshogi-package" title="Permalink to this heading"></a></h1>
+<h1>cshogi.dlshogi package<a class="headerlink" href="#cshogi-dlshogi-package" title="Link to this heading"></a></h1>
 <section id="module-cshogi.dlshogi">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-cshogi.dlshogi" title="Permalink to this heading"></a></h2>
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-cshogi.dlshogi" title="Link to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.dlshogi.make_input_features">
-<span class="sig-prename descclassname"><span class="pre">cshogi.dlshogi.</span></span><span class="sig-name descname"><span class="pre">make_input_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">board</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/dlshogi.html#make_input_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.dlshogi.make_input_features" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.dlshogi.</span></span><span class="sig-name descname"><span class="pre">make_input_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">board</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/dlshogi.html#make_input_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.dlshogi.make_input_features" title="Link to this definition"></a></dt>
 <dd><p>Make input features from the given board for use in the dlshogi model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -120,7 +122,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.dlshogi.make_move_label">
-<span class="sig-prename descclassname"><span class="pre">cshogi.dlshogi.</span></span><span class="sig-name descname"><span class="pre">make_move_label</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.dlshogi.make_move_label" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.dlshogi.</span></span><span class="sig-name descname"><span class="pre">make_move_label</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.dlshogi.make_move_label" title="Link to this definition"></a></dt>
 <dd><p>Make a move label for the given move and color in the context of the dlshogi model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
