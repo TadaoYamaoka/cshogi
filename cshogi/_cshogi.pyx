@@ -1,4 +1,4 @@
-from libcpp.string cimport string
+﻿from libcpp.string cimport string
 from libcpp.vector cimport vector
 from libcpp cimport bool
 
@@ -273,6 +273,7 @@ cdef extern from "cshogi.h":
         vector[int] get_history()
         bool is_game_over()
         int isDraw(const int checkMaxPly)
+        int moveIsDraw(const int move, const int checkMaxPly)
         int move(const int from_square, const int to_square, const bool promotion)
         int drop_move(const int to_square, const int drop_piece_type)
         int move_from_usi(const string& usi)
@@ -609,7 +610,7 @@ cdef class Board:
             - REPETITION_INFERIOR: In case of an inferior position.
             - NOT_REPETITION: If none of the above conditions apply.
 
-        :rtype: Enum
+        :rtype: int
         """
         cdef int _ply
         if ply:
@@ -617,6 +618,31 @@ cdef class Board:
         else:
             _ply = 2147483647
         return self.__board.isDraw(_ply)
+
+    def move_is_draw(self, int move, ply=None):
+        """Check if a given move results in a draw.
+
+        :param move: The move to check.
+        :type move: int
+        :param ply: Optional parameter to check up to a specific ply. Defaults to maximum int value.
+        :type ply: int or None
+        :return: A status that could be one of the following:
+
+            - REPETITION_DRAW: In case of a repeated position.
+            - REPETITION_WIN: In case of a win due to consecutive checks.
+            - REPETITION_LOSE: In case of a loss due to consecutive checks.
+            - REPETITION_SUPERIOR: In case of a superior position.
+            - REPETITION_INFERIOR: In case of an inferior position.
+            - NOT_REPETITION: If none of the above conditions apply.
+
+        :rtype: int
+        """
+        cdef int _ply
+        if ply:
+            _ply = ply
+        else:
+            _ply = 2147483647
+        return self.__board.moveIsDraw(move, _ply)
 
     def move(self, int from_square, int to_square, bool promotion):
         """Make a move on the board.

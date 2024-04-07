@@ -107,7 +107,7 @@ HuffmanCodeToPieceHash HuffmanCodedPos::handCodeToPieceHash;
 //     歩      4bit*18駒   = 72bit
 //     香      6bit* 4駒   = 24bit
 //     桂      6bit* 4駒   = 24bit
-//     銀      6bit* 4駒   = 24bit            
+//     銀      6bit* 4駒   = 24bit
 //     金      6bit* 4駒   = 24bit
 //     角      8bit* 2駒   = 16bit
 //     飛      8bit* 2駒   = 16bit
@@ -3247,6 +3247,35 @@ RepetitionType Position::isDraw(const int checkMaxPly) const {
             else if (stp->boardKey == st_->boardKey) {
                 if (st_->hand.isEqualOrSuperior(stp->hand)) return RepetitionSuperior;
                 if (stp->hand.isEqualOrSuperior(st_->hand)) return RepetitionInferior;
+            }
+            i += 2;
+        } while (i <= e);
+    }
+    return NotRepetition;
+}
+
+RepetitionType Position::moveIsDraw(const Move move, const int checkMaxPly) const {
+    const int Start = 4;
+    int i = Start;
+    const int e = std::min(st_->pliesFromNull, checkMaxPly - 1) + 1;
+
+    // 4手掛けないと千日手には絶対にならない。
+    if (i <= e) {
+        // 現在の局面と、少なくとも 4 手戻らないと同じ局面にならない。
+        // ここでまず 1 手戻る。
+        StateInfo* stp = st_->previous;
+        Key key = getKeyAfter(move);
+
+        do {
+            // 更に 2 手戻る。
+            stp = stp->previous->previous;
+            if (stp->key() == key) {
+                if (i <= st_->continuousCheck[turn()])
+                    return RepetitionWin;
+                else if (i <= st_->continuousCheck[oppositeColor(turn())])
+                    return RepetitionLose;
+                else
+                    return RepetitionDraw;
             }
             i += 2;
         } while (i <= e);

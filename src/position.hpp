@@ -439,6 +439,7 @@ public:
     void toPackedSfen(u8* data) const;
 
     RepetitionType isDraw(const int checkMaxPly = std::numeric_limits<int>::max()) const;
+    RepetitionType moveIsDraw(const Move move, const int checkMaxPly = std::numeric_limits<int>::max()) const;
 
     void setStartPosPly(const Ply ply) { gamePly_ = ply; }
 

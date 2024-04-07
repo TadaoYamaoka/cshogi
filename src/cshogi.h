@@ -178,6 +178,7 @@ public:
     }
 
     int isDraw(const int checkMaxPly) const { return (int)pos.isDraw(checkMaxPly); }
+    int moveIsDraw(const int move, const int checkMaxPly) const { return (int)pos.moveIsDraw(Move(move), checkMaxPly); }
 
     int move(const int from_square, const int to_square, const bool promotion) const {
         if (promotion)
