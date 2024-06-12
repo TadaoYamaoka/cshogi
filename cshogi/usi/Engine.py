@@ -21,7 +21,7 @@ class InfoListener:
         print(info_listener.pv)
         print(info_listener.info)
     """
-    re_info = re.compile(r'^info (.* |)score (cp|mate) ([+\-0-9]+) (.* |)pv ([^ ]+)(.*)$')
+    re_info = re.compile(r'^info (.* |)pv (\S+)(.*)$')
     re_bestmove = re.compile(r'bestmove ([^ ]+).*$')
 
     def __init__(self, mate_score: int = 100000, listner: Optional[Callable] = None):
@@ -32,20 +32,26 @@ class InfoListener:
 
     @staticmethod
     def _split_info(m: re.Match) -> Dict:
-        items = (m[1] + m[4]).split(' ')
+        items = m[1].strip().split(' ')
         info_dict = {}
-        for name, value in zip(items[::2], items[1::2]):
-            info_dict[name] = int(value)
-        if m[2] == 'cp':
-            info_dict['score'] = 'cp'
-            info_dict['cp'] = int(m[3])
-        else:
-            info_dict['score'] = 'mate'
-            if m[3] == '+' or m[3] == '-':
-                info_dict['mate'] = m[3]
-            else:
-                info_dict['mate'] = int(m[3])
-        info_dict['pv'] = (m[5] + m[6]).split(' ')
+        while items:
+            name = items.pop(0)
+            if name == 'pv':
+                info_dict['pv'] = items
+                break
+            elif name == 'string':
+                info_dict['string'] = m[1][7:]
+                break
+            elif name == 'score':
+                name = items.pop(0)
+                info_dict['score'] = name
+
+            try:
+                info_dict[name] = int(items.pop(0))
+            except ValueError:
+                info_dict[name] = items.pop(0)
+
+        info_dict['pv'] = (m[2] + m[3]).split(' ')
         return info_dict
 
     def __call__(self, line: str):
@@ -53,7 +59,7 @@ class InfoListener:
             self.__listner(line)
         m = InfoListener.re_info.match(line)
         if m:
-            self.__info[m[5]] = m
+            self.__info[m[2]] = m
         self._last_line = line
 
     def listen(self) -> 'InfoListener':
@@ -89,6 +95,9 @@ class InfoListener:
 
         :return: A dictionary containing detailed information of the best move.
         """
+        if self.bestmove not in self.__info.keys():
+            return None
+
         return InfoListener._split_info(self.__info[self.bestmove])
 
     @property
@@ -97,19 +106,21 @@ class InfoListener:
 
         :return: The score for the best move.
         """
-        m = self.__info[self.bestmove]
-        if m[2] == 'cp':
-            return int(m[3])
+        if self.bestmove not in self.__info.keys():
+            return None
+
+        info = InfoListener._split_info(self.__info[self.bestmove])
+        if 'cp' in info.keys():
+            return int(info['cp'])
         else:
-            if m[3] == '+':
-                return self.__mate_score
-            elif m[3] == '-':
-                return -self.__mate_score
+            if 'mate' in info.keys():
+                mate = info['mate']
             else:
-                if int(m[3]) > 0:
-                    return self.__mate_score
-                else:
-                    return -self.__mate_score
+                return None
+            if mate == '+' or mate > 0:
+                return self.__mate_score
+            elif mate == '-' or mate <= 0:
+                return -self.__mate_score
                 
     @property
     def pv(self) -> List[str]:
@@ -117,8 +128,11 @@ class InfoListener:
 
         :return: A list containing the Principal Variation.
         """
+        if self.bestmove not in self.__info.keys():
+            return None
+
         m = self.__info[self.bestmove]
-        return (m[5] + m[6]).split(' ')
+        return (m[2] + m[3]).split(' ')
 
 
 class MultiPVListener:
