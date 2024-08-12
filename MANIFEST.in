@@ -1,1 +1,2 @@
 include src/*.hpp
+include src/*.h
