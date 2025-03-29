@@ -41,11 +41,20 @@ enum MOVE_DIRECTION {
     MOVE_DIRECTION_NUM
 };
 
+// 入玉特徴量
+constexpr u32 MAX_NYUGYOKU_OPP_FIELD = 10; // 敵陣三段目以内の駒(10枚までの残り枚数)
+constexpr u32 MAX_NYUGYOKU_SCORE = 20; // 点数(先手28点、後手27点までの残り枚数)
+constexpr u32 MAX_FEATURES2_NYUGYOKU_NUM = 1/*入玉*/ + MAX_NYUGYOKU_OPP_FIELD + MAX_NYUGYOKU_SCORE;
+bool use_nyugyoku_features = false;
+void __dlshogi_use_nyugyoku_features(bool use) {
+    use_nyugyoku_features = use;
+}
+
 int __dlshogi_get_features1_num() {
     return 2 * MAX_FEATURES1_NUM;
 }
 int __dlshogi_get_features2_num() {
-    return MAX_FEATURES2_NUM;
+    return MAX_FEATURES2_NUM + (use_nyugyoku_features ? (int)ColorNum * MAX_FEATURES2_NYUGYOKU_NUM : 0);
 }
 
 
@@ -383,16 +392,54 @@ public:
                     (*features1)[c2][PIECETYPE_NUM + PIECETYPE_NUM + k][sq2] = 1;
                 }
             }
-            // hand
+
+            // 持ち駒
             const Hand hand = pos.hand(c);
-            int p = 0;
-            for (HandPiece hp = HPawn; hp < HandPieceNum; ++hp) {
-                u32 num = hand.numOf(hp);
-                if (num >= MAX_PIECES_IN_HAND[hp]) {
-                    num = MAX_PIECES_IN_HAND[hp];
+            const u32 numHPawn = hand.numOf(HPawn);
+            std::fill_n((*features2_hand)[c2][0], (int)SquareNum * std::min(numHPawn, (u32)MAX_HPAWN_NUM), 1);
+            const u32 numHLance = hand.numOf(HLance);
+            std::fill_n((*features2_hand)[c2][MAX_HPAWN_NUM], (int)SquareNum * numHLance, 1);
+            const u32 numHKnight = hand.numOf(HKnight);
+            std::fill_n((*features2_hand)[c2][MAX_HPAWN_NUM + MAX_HLANCE_NUM], (int)SquareNum * numHKnight, 1);
+            const u32 numHSilver = hand.numOf(HSilver);
+            std::fill_n((*features2_hand)[c2][MAX_HPAWN_NUM + MAX_HLANCE_NUM + MAX_HKNIGHT_NUM], (int)SquareNum * numHSilver, 1);
+            const u32 numHGold = hand.numOf(HGold);
+            std::fill_n((*features2_hand)[c2][MAX_HPAWN_NUM + MAX_HLANCE_NUM + MAX_HKNIGHT_NUM + MAX_HSILVER_NUM], (int)SquareNum * numHGold, 1);
+            const u32 numHBishop = hand.numOf(HBishop);
+            std::fill_n((*features2_hand)[c2][MAX_HPAWN_NUM + MAX_HLANCE_NUM + MAX_HKNIGHT_NUM + MAX_HSILVER_NUM + MAX_HGOLD_NUM], (int)SquareNum * numHBishop, 1);
+            const u32 numHRook = hand.numOf(HRook);
+            std::fill_n((*features2_hand)[c2][MAX_HPAWN_NUM + MAX_HLANCE_NUM + MAX_HKNIGHT_NUM + MAX_HSILVER_NUM + MAX_HGOLD_NUM + MAX_HBISHOP_NUM], (int)SquareNum * numHRook, 1);
+
+            // 入玉宣言
+            if (use_nyugyoku_features) {
+                // 敵陣のマスク
+                const Bitboard opponentsField = (c == Black ? inFrontMask<Black, Rank4>() : inFrontMask<White, Rank6>());
+
+                // 玉が敵陣三段目以内に入っている
+                int kingCount = 0;
+                if (pos.bbOf(King, c).andIsAny(opponentsField)) {
+                    std::fill_n((*features2)[MAX_FEATURES2_HAND_NUM + 1 + (int)c2 * MAX_FEATURES2_NYUGYOKU_NUM], SquareNum, 1);
+                    kingCount = 1;
                 }
-                std::fill_n((*features2_hand)[c2][p], (int)SquareNum * num, 1);
-                p += MAX_PIECES_IN_HAND[hp];
+
+                // 敵陣三段目以内の駒(10枚までの残り枚数)
+                const int ownPiecesCount = (pos.bbOf(c) & opponentsField).popCount() - kingCount;
+                const int restOppFieldNum = 10 - ownPiecesCount;
+                if (restOppFieldNum < MAX_NYUGYOKU_OPP_FIELD) {
+                    std::fill_n((*features2)[MAX_FEATURES2_HAND_NUM + 1 + (int)c2 * MAX_FEATURES2_NYUGYOKU_NUM + 1 + std::max(0, restOppFieldNum)], SquareNum, 1);
+                }
+
+                // 点数(先手28点、後手27点までの残り枚数)
+                const int ownBigPiecesCount = (pos.bbOf(Rook, Dragon, Bishop, Horse) & opponentsField & pos.bbOf(c)).popCount();
+                const int ownSmallPiecesCount = ownPiecesCount - ownBigPiecesCount;
+                const int val = ownSmallPiecesCount
+                    + numHPawn + numHLance + numHKnight
+                    + numHSilver + numHGold
+                    + (ownBigPiecesCount + numHBishop + numHRook) * 5;
+                const int restPoint = (c == Black ? 28 : 27) - val;
+                if (restPoint < MAX_NYUGYOKU_SCORE) {
+                    std::fill_n((*features2)[MAX_FEATURES2_HAND_NUM + 1 + (int)c2 * MAX_FEATURES2_NYUGYOKU_NUM + 1 + MAX_NYUGYOKU_OPP_FIELD + std::max(0, restPoint)], SquareNum, 1);
+                }
             }
         }
 

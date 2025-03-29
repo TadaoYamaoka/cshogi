@@ -1186,6 +1186,7 @@ cdef extern from "cshogi.h":
     int __dlshogi_get_features1_num()
     int __dlshogi_get_features2_num()
     int __dlshogi_make_move_label(const int move, const int color)
+    void __dlshogi_use_nyugyoku_features(bool use)
 
 
 cdef class LegalMoveList:
@@ -1400,6 +1401,16 @@ def _dlshogi_make_move_label(int move, int color):
     :return: An integer label generated for the move and color.
     """
     return __dlshogi_make_move_label(move, color)
+
+
+def _dlshogi_use_nyugyoku_features(bool use):
+    """Set whether to use the Nyūgyoku features in the dlshogi model.
+
+    :param use: A boolean indicating whether to use the Nyūgyoku features.
+    """
+    __dlshogi_use_nyugyoku_features(use)
+    global _dlshogi_FEATURES2_NUM
+    _dlshogi_FEATURES2_NUM = __dlshogi_get_features2_num()
 
 
 cdef extern from "parser.h" namespace "parser":
