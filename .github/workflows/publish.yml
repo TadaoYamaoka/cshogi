@@ -44,7 +44,7 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: twine upload dist/*
   deploy-manylinux2010:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         python-version: ["cp36-cp36m", "cp37-cp37m", "cp38-cp38", "cp39-cp39"]
@@ -75,7 +75,7 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: twine upload dist/wheelhouse/*
   deploy-manylinux_2_24:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         python-version: ["cp310-cp310", "cp311-cp311"]
@@ -106,7 +106,7 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: twine upload dist/wheelhouse/*
   deploy-manylinux_2_28:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         python-version: ["cp312-cp312"]
