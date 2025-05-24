@@ -169,14 +169,28 @@ FORCE_INLINE bool moveGivesNeighborCheck(const Position& pos, const Move& move)
     const Square ksq = pos.kingSquare(them);
 
     const Square to = move.to();
+    const PieceType pt = move.pieceTypeTo();
 
-    // 敵玉の8近傍
-    if (pos.attacksFrom<King>(ksq).isSet(to))
-        return true;
-
-    // 桂馬による王手
-    if (move.pieceTypeTo() == Knight)
-        return true;
+    switch (pt) {
+    case Pawn:
+    case Lance:
+        return pawnAttack(them, ksq).isSet(to);
+    case Knight:
+        return knightAttack(them, ksq).isSet(to);
+    case Silver:
+        return silverAttack(them, ksq).isSet(to);
+    case Bishop:
+        return bishopAttack(ksq, allOneBB()).isSet(to);
+    case Rook:
+        return rookAttack(ksq, allOneBB()).isSet(to);
+    case Horse:
+    case Dragon:
+        return kingAttack(ksq).isSet(to);
+    case King:
+        return false;
+    default:
+        return goldAttack(them, ksq).isSet(to);
+    }
 
     return false;
 }
