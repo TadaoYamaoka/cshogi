@@ -9,7 +9,7 @@ class MyBuildExt(build_ext):
             for e in self.extensions:
                 e.extra_compile_args.extend(
                     [
-                        "-std=c++11",
+                        "-std=c++17",
                         "-msse4.2",
                         "-mavx2",
                         "-Wno-enum-constexpr-conversion",
@@ -19,7 +19,7 @@ class MyBuildExt(build_ext):
             for e in self.extensions:
                 e.extra_compile_args.extend(
                     [
-                        "/std:c11",
+                        "/std:c17",
                         "/arch:SSE42",
                         "/arch:AVX2",
                     ]
@@ -103,7 +103,7 @@ extras_require = {
 
 setup_kwargs = {
     "name": "cshogi",
-    "version": "0.9.0",
+    "version": "0.9.1",
     "description": "A fast Python shogi library",
     "long_description": None,
     "author": "Tadao Yamaoka",

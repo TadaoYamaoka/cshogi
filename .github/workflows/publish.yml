@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         python-major-version: [3]
-        python-minor-version: [7, 8, 9, 10, 11, 12]
+        python-minor-version: [7, 8, 9, 10, 11, 12, 13]
     env:
       python-version: ${{ format('{0}.{1}', matrix.python-major-version, matrix.python-minor-version) }}
     steps:
@@ -44,7 +44,7 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: twine upload dist/*
   deploy-manylinux2010:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         python-version: ["cp36-cp36m", "cp37-cp37m", "cp38-cp38", "cp39-cp39"]
@@ -65,7 +65,7 @@ jobs:
           docker run --rm -v $(pwd):/work \
             -w /work quay.io/pypa/manylinux2010_x86_64 \
             /bin/sh -c "\
-              $PYTHON_BIN/pip install numpy==1.19.5 Cython && \
+              $PYTHON_BIN/pip install numpy==1.19.5 'Cython<3.1' && \
               $PYTHON_BIN/python setup.py bdist_wheel && \
               cd dist && auditwheel repair *.whl"
       - name: Publish
@@ -75,7 +75,7 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: twine upload dist/wheelhouse/*
   deploy-manylinux_2_24:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         python-version: ["cp310-cp310", "cp311-cp311"]
@@ -96,7 +96,7 @@ jobs:
           docker run --rm -v $(pwd):/work \
             -w /work quay.io/pypa/manylinux_2_24_x86_64 \
             /bin/sh -c "\
-              $PYTHON_BIN/pip install numpy Cython && \
+              $PYTHON_BIN/pip install numpy 'Cython<3.1' && \
               $PYTHON_BIN/python setup.py bdist_wheel && \
               cd dist && auditwheel repair *.whl"
       - name: Publish
@@ -106,10 +106,10 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: twine upload dist/wheelhouse/*
   deploy-manylinux_2_28:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version: ["cp312-cp312"]
+        python-version: ["cp312-cp312", "cp313-cp313"]
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -127,7 +127,7 @@ jobs:
           docker run --rm -v $(pwd):/work \
             -w /work quay.io/pypa/manylinux_2_28_x86_64 \
             /bin/sh -c "\
-              $PYTHON_BIN/pip install numpy Cython && \
+              $PYTHON_BIN/pip install setuptools numpy 'Cython<3.1' && \
               $PYTHON_BIN/python setup.py bdist_wheel && \
               cd dist && auditwheel repair *.whl"
       - name: Publish
