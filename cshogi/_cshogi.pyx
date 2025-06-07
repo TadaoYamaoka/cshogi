@@ -314,6 +314,7 @@ cdef extern from "cshogi.h":
     int __hand_piece_to_piece_type(const int hp)
     int __make_file(const int sq)
     int __make_rank(const int sq)
+    string __rotate_sfen(const string& sfen)
 
 
 cdef class Board:
@@ -1152,6 +1153,17 @@ def make_rank(int sq):
     :rtype: int
     """
     return __make_rank(sq)
+
+
+def rotate_sfen(str sfen):
+    """Rotates the board represented by the SFEN string by 180 degrees.
+
+    :param sfen: The SFEN string representing the board position.
+    :type sfen: str
+    :return: A new SFEN string representing the rotated board position.
+    :rtype: str
+    """
+    return __rotate_sfen(sfen.encode('ascii')).decode('ascii')
 
 
 cdef extern from "cshogi.h":

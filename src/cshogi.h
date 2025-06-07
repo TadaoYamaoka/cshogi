@@ -471,6 +471,192 @@ private:
     }
 };
 
+std::string __rotate_sfen(const std::string& sfen) {
+    constexpr unsigned char PROMOTED_OFFSET = 128;
+
+    // 駒の大文字小文字を反転
+    const auto flipPiece = [](unsigned char piece) {
+        if (piece >= 'A' && piece <= 'Z') {
+            return static_cast<unsigned char>(piece - 'A' + 'a');
+        }
+        else if (piece >= 'a' && piece <= 'z') {
+            return static_cast<unsigned char>(piece - 'a' + 'A');
+        }
+        return piece;
+    };
+
+    // 段を配列に展開
+    const auto expandRank = [PROMOTED_OFFSET](const std::string& rank) {
+        std::vector<unsigned char> result(9, 0);  // 0は空マス
+        int pos = 0;
+
+        for (int i = 0; i < rank.length() && pos < 9; i++) {
+            char c = rank[i];
+            if (c >= '1' && c <= '9') {
+                // 空白の数だけスキップ
+                pos += (c - '0');
+            }
+            else if (c == '+') {
+                // 成り駒の場合
+                i++; // 次の文字も読む
+                if (i < rank.length()) {
+                    result[pos] = static_cast<unsigned char>(rank[i]) + PROMOTED_OFFSET;
+                    pos++;
+                }
+            }
+            else {
+                // 通常の駒
+                result[pos] = static_cast<unsigned char>(c);
+                pos++;
+            }
+        }
+        return result;
+    };
+
+
+    // 段の配列を段文字列に圧縮
+    const auto compressRank = [&flipPiece, PROMOTED_OFFSET](const std::vector<unsigned char>&rank) {
+        std::string result;
+        int emptyCount = 0;
+
+        for (int i = 0; i < 9; i++) {
+            if (rank[i] == 0) {
+                emptyCount++;
+            }
+            else {
+                if (emptyCount > 0) {
+                    result += std::to_string(emptyCount);
+                    emptyCount = 0;
+                }
+
+                unsigned char piece = rank[i];
+                if (piece >= PROMOTED_OFFSET) {
+                    // 成り駒
+                    result += '+';
+                    result += static_cast<char>(flipPiece(piece - PROMOTED_OFFSET));
+                }
+                else {
+                    // 通常の駒
+                    result += static_cast<char>(flipPiece(piece));
+                }
+            }
+        }
+
+        if (emptyCount > 0) {
+            result += std::to_string(emptyCount);
+        }
+
+        return result;
+    };
+
+    // 盤面の行を左右反転
+    const auto reverseRank = [&expandRank, &compressRank](const std::string& rank) {
+        // 段を9マスの配列に展開
+        std::vector<unsigned char> expanded = expandRank(rank);
+
+        // 配列を左右反転
+        std::reverse(expanded.begin(), expanded.end());
+
+        // 配列を文字列に圧縮
+        return compressRank(expanded);
+    };
+
+    // 持ち駒文字列を反転
+    const auto flipHand = [&flipPiece](const std::string& hand) {
+        if (hand == "-") return std::string{"-"};
+
+        std::string result;
+        std::string senteHand, goteHand;
+
+        // 持ち駒を解析
+        for (int i = 0; i < hand.length(); i++) {
+            char c = hand[i];
+
+            if (c >= '2' && c <= '9') {
+                // 数字の場合、次の駒と組み合わせる
+                i++;
+                if (i < hand.length()) {
+                    char piece = hand[i];
+                    if (piece >= 'A' && piece <= 'Z') {
+                        senteHand += c;
+                        senteHand += piece;
+                    }
+                    else {
+                        goteHand += c;
+                        goteHand += piece;
+                    }
+                }
+            }
+            else if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
+                // 駒の場合
+                if (c >= 'A' && c <= 'Z') {
+                    senteHand += c;
+                }
+                else {
+                    goteHand += c;
+                }
+            }
+        }
+
+        // 先手後手を入れ替えて結合
+        std::string flippedSente, flippedGote;
+        for (char c : senteHand) {
+            flippedGote += flipPiece(c);
+        }
+        for (char c : goteHand) {
+            flippedSente += flipPiece(c);
+        }
+
+        result = flippedSente + flippedGote;
+        return result.empty() ? std::string{"-"} : result;
+    };
+
+    std::istringstream iss(sfen);
+    std::string boardPart, turn, hand, moveNumber;
+
+    // SFEN文字列を分割
+    iss >> boardPart >> turn >> hand >> moveNumber;
+
+    // 盤面を行に分割
+    std::vector<std::string> ranks;
+    std::string currentRank;
+
+    ranks.reserve(9);
+    for (char c : boardPart) {
+        if (c == '/') {
+            ranks.emplace_back(currentRank);
+            currentRank.clear();
+        }
+        else {
+            currentRank += c;
+        }
+    }
+    ranks.emplace_back(currentRank);
+
+    // 盤面を180度回転（行を逆順にして、各行を左右反転）
+    std::vector<std::string> flippedRanks;
+    flippedRanks.reserve(ranks.size());
+    for (int i = ranks.size() - 1; i >= 0; i--) {
+        flippedRanks.emplace_back(reverseRank(ranks[i]));
+    }
+
+    // 盤面を再構築
+    std::string flippedBoard;
+    for (int i = 0; i < flippedRanks.size(); i++) {
+        if (i > 0) flippedBoard += "/";
+        flippedBoard += flippedRanks[i];
+    }
+
+    // 手番を反転
+    std::string flippedTurn = (turn == "b") ? "w" : "b";
+
+    // 持ち駒を反転
+    std::string flippedHand = flipHand(hand);
+
+    // 結果を構築
+    return flippedBoard + " " + flippedTurn + " " + flippedHand + " " + moveNumber;
+}
+
 class __LegalMoveList
 {
 public:

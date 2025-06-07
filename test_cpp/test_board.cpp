@@ -70,5 +70,24 @@ TEST(TestBoard, mateMove_issue46) {
     auto board = __Board("pk7/9/G8/2LKP4/9/9/9/9/9 b Bn 1");
 
     auto move = board.mateMove(3);
-    EXPECT_EQ(Move::moveNone(), Move(move).toUSI());
+    EXPECT_EQ(Move::moveNone(), Move(move));
+}
+
+TEST(TestSfen, rotate_sfen) {
+    {
+        const auto result = __rotate_sfen("lnsgkgsnl/1r5b1/ppppppppp/9/9/7P1/PPPPPPP1P/1B5R1/LNSGKGSNL w - 2");
+        EXPECT_EQ("lnsgkgsnl/1r5b1/p1ppppppp/1p7/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 2", result);
+    }
+    {
+        const auto result = __rotate_sfen("lr5nl/3k2g2/4ps1p1/p1pg1pp1p/3s3P1/P1P2PP1P/1PN1P1N2/1KG2G3/L2Rs3L b BNPbs2p 75");
+        EXPECT_EQ("l3Sr2l/3g2gk1/2n1p1np1/p1pp2p1p/1p3S3/P1PP1GP1P/1P1SP4/2G2K3/LN5RL w BS2Pbnp 75", result);
+    }
+    {
+        const auto result = __rotate_sfen("l3r3l/2+P6/2n2G1k1/p1p2+B1pp/3p5/PPPn2P1P/2S1P1s2/2G5R/LNK1s3L w NPb2gs5p 118");
+        EXPECT_EQ("l3S1knl/r5g2/2S1p1s2/p1p2Nppp/5P3/PP1+b2P1P/1K1g2N2/6+p2/L3R3L b B2GS5Pnp 118", result);
+    }
+    {
+        const auto result = __rotate_sfen("l+S5nl/5+R3/2+Pspn1p1/p4ks1p/2G2g1P1/PP4p1P/1G3+p2B/1K1p5/LN3B1NL w SPrg5p 142");
+        EXPECT_EQ("ln1b3nl/5P1k1/b2+P3g1/p1P4pp/1p1G2g2/P1SK4P/1P1NPS+p2/3+r5/LN5+sL b RG5Psp 142", result);
+    }
 }
