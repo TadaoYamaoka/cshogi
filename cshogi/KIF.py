@@ -93,7 +93,7 @@ class Parser:
         :raises KIF.ParserException: In the case of a parse error.
         """
         prefix, ext = os.path.splitext(path)
-        enc = 'utf-8' if ext == '.kifu' else 'cp932'
+        enc = 'utf-8' if ext in ['.kif', '.kifu'] else 'cp932'
         with codecs.open(path, 'r', enc) as f:
             return Parser.parse_str(f.read())
 
