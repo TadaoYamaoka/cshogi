@@ -78,7 +78,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version: ["cp310-cp310", "cp311-cp311"]
+        python-version: ["cp310-cp310"]
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -109,7 +109,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version: ["cp312-cp312", "cp313-cp313"]
+        python-version: ["cp311-cp311", "cp312-cp312", "cp313-cp313"]
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
