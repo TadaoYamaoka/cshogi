@@ -91,3 +91,25 @@ TEST(TestSfen, rotate_sfen) {
         EXPECT_EQ("ln1b3nl/5P1k1/b2+P3g1/p1P4pp/1p1G2g2/P1SK4P/1P1NPS+p2/3+r5/LN5+sL b RG5Psp 142", result);
     }
 }
+
+TEST(TestDfPn, get_pv_issue56) {
+    using namespace ns_dfpn;
+
+    initTable();
+    Position::initZobrist();
+
+    __DfPn dfpn(11, 100000, 32767);
+
+    auto board = __Board("8l/1R2S1kgr/3pp2p1/p2nlpp1p/5ns2/2+BPl3P/1PNK1PP2/1GGS2S2/5G1NL b B3P3p 1");
+
+    auto ret = dfpn.search(board);
+    EXPECT_TRUE(ret);
+
+    EXPECT_NO_THROW(
+        dfpn.get_pv(board)
+    );
+    EXPECT_EQ(
+        (std::vector<u32>{ 1331887, 526729, 417855, 10422, 1974198, 10413, 1973037, 525459, 923301, 526738, 922276, 526611, 922158, 526738, 923437, 526611, 923319, 526738, 924598, 526620, 924462, 527899, 923429, 527762, 10908, 526611, 347684, 526729, 922267 }),
+        dfpn.pv
+    );
+}

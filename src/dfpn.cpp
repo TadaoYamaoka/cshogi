@@ -795,7 +795,7 @@ int DfPn::get_pv_inner(Position& pos, std::vector<u32>& pv) {
                 }
                 StateInfo state_info;
                 pos.doMove(move, state_info);
-                switch (pos.isDraw(16)) {
+                switch (pos.isDraw(256)) {
                 case NotRepetition:
                 case RepetitionSuperior:
                 {
