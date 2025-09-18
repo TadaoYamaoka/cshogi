@@ -303,59 +303,208 @@ def move_to_ki2(move: int, board: Board) -> str:
             # 後手は180度回転
             to_file, to_rank = divmod(to_square if board.turn == cshogi.BLACK else 80 - to_square, 9)
             from_file, from_rank = divmod(from_square if board.turn == cshogi.BLACK else 80 - from_square, 9)
-            candidates_left = candidates_right = candidates_up = candidates_down = candidates_side = 0
+            candidates_left = candidates_right = candidates_up = candidates_down = candidates_side = same_file_count = 0
+            other_left = other_right = False
+            left_up = left_down = left_side = right_up = right_down = right_side = same_up = same_down = same_side = 0
             for move2 in candidates:
                 from_square2 = move_from(move2)
                 # 後手は180度回転
                 from_file2, from_rank2 = divmod(from_square2 if board.turn == cshogi.BLACK else 80 - from_square2, 9)
-                if from_file2 > to_file: # 左
+                if from_file2 > to_file:
                     candidates_left += 1
-                elif from_file2 < to_file: # 右
+                    rel = 'left'
+                    if from_square2 != from_square:
+                        other_left = True
+                elif from_file2 < to_file:
                     candidates_right += 1
+                    rel = 'right'
+                    if from_square2 != from_square:
+                        other_right = True
+                else:
+                    same_file_count += 1
+                    rel = 'same'
 
-                if from_rank2 > to_rank: # 上
+                if from_rank2 > to_rank:
                     candidates_up += 1
-                elif from_rank2 < to_rank: # 引
+                    direction = 'up'
+                elif from_rank2 < to_rank:
                     candidates_down += 1
-                else: # 寄
+                    direction = 'down'
+                else:
                     candidates_side += 1
+                    direction = 'side'
 
-            if from_file == to_file and from_rank > to_rank: # 直
-                relative = '直'
-            else:
-                if from_rank > to_rank: # 上
-                    if candidates_up == 1:
-                        motion = '上'
+                if rel == 'left':
+                    if direction == 'up':
+                        left_up += 1
+                    elif direction == 'down':
+                        left_down += 1
+                    else:
+                        left_side += 1
+                elif rel == 'right':
+                    if direction == 'up':
+                        right_up += 1
+                    elif direction == 'down':
+                        right_down += 1
+                    else:
+                        right_side += 1
+                else:
+                    if direction == 'up':
+                        same_up += 1
+                    elif direction == 'down':
+                        same_down += 1
+                    else:
+                        same_side += 1
+
+            if from_rank > to_rank: # 上
+                direction_count = candidates_up
+                branch_motion = '上'
+                relative_count_total = 0
+                relative_direction_count = 0
+                if direction_count == 1:
+                    motion = branch_motion
+                else:
+                    if from_file == to_file:
+                        if piece_type not in (cshogi.PROM_BISHOP, cshogi.PROM_ROOK):
+                            relative = '直'
+                            relative_count_total = same_file_count
+                            relative_direction_count = same_up
+                        else:
+                            if other_right and not other_left:
+                                relative = '左'
+                                relative_count_total = candidates_left
+                                relative_direction_count = left_up
+                            elif other_left and not other_right:
+                                relative = '右'
+                                relative_count_total = candidates_right
+                                relative_direction_count = right_up
                     elif from_file > to_file: # 左
                         relative = '左'
-                        if candidates_left > 1:
-                            motion = '上'
+                        relative_count_total = candidates_left
+                        relative_direction_count = left_up
                     else: # 右
                         relative = '右'
-                        if candidates_right > 1:
-                            motion = '上'
-                elif from_rank < to_rank: # 引
-                    if candidates_down == 1:
-                        motion = '引'
+                        relative_count_total = candidates_right
+                        relative_direction_count = right_up
+
+                    if relative == '' or relative_count_total > 0:
+                        other_same_relative = relative_count_total - relative_direction_count
+                        need_motion = False
+                        if relative == '':
+                            need_motion = True
+                        elif relative_direction_count > 1:
+                            need_motion = True
+                        elif other_same_relative > 0:
+                            if relative in ('左', '右'):
+                                need_motion = True
+                            else: # 直
+                                if same_down > 0 and candidates_down > 1:
+                                    need_motion = True
+                                if same_side > 0 and candidates_side > 1:
+                                    need_motion = True
+                        if need_motion:
+                            motion = branch_motion
+            elif from_rank < to_rank: # 引
+                direction_count = candidates_down
+                branch_motion = '引'
+                relative_count_total = 0
+                relative_direction_count = 0
+                if direction_count == 1:
+                    motion = branch_motion
+                else:
+                    if from_file == to_file:
+                        if piece_type not in (cshogi.PROM_BISHOP, cshogi.PROM_ROOK):
+                            relative = '直'
+                            relative_count_total = same_file_count
+                            relative_direction_count = same_down
+                        else:
+                            if other_right and not other_left:
+                                relative = '左'
+                                relative_count_total = candidates_left
+                                relative_direction_count = left_down
+                            elif other_left and not other_right:
+                                relative = '右'
+                                relative_count_total = candidates_right
+                                relative_direction_count = right_down
                     elif from_file > to_file: # 左
                         relative = '左'
-                        if candidates_left > 1:
-                            motion = '引'
+                        relative_count_total = candidates_left
+                        relative_direction_count = left_down
                     else: # 右
                         relative = '右'
-                        if candidates_right > 1:
-                            motion = '上'
-                else: # 寄
-                    if candidates_side == 1:
-                        motion = '寄'
-                    elif from_file > to_file: # 左
+                        relative_count_total = candidates_right
+                        relative_direction_count = right_down
+
+                    if relative == '' or relative_count_total > 0:
+                        other_same_relative = relative_count_total - relative_direction_count
+                        need_motion = False
+                        if relative == '':
+                            need_motion = True
+                        elif relative_direction_count > 1:
+                            need_motion = True
+                        elif other_same_relative > 0:
+                            if relative == '左':
+                                if left_up > 0 and candidates_up > 1:
+                                    need_motion = True
+                                if left_side > 0 and candidates_side > 1:
+                                    need_motion = True
+                            elif relative == '右':
+                                if right_up > 0 and candidates_up > 1:
+                                    need_motion = True
+                                if right_side > 0 and candidates_side > 1:
+                                    need_motion = True
+                            else: # 直
+                                if same_up > 0 and candidates_up > 1:
+                                    need_motion = True
+                                if same_side > 0 and candidates_side > 1:
+                                    need_motion = True
+                        if need_motion:
+                            motion = branch_motion
+            else: # 寄
+                direction_count = candidates_side
+                branch_motion = '寄'
+                relative_count_total = 0
+                relative_direction_count = 0
+                if direction_count == 1:
+                    motion = branch_motion
+                else:
+                    if from_file > to_file: # 左
                         relative = '左'
-                        if candidates_left > 1:
-                            motion = '寄'
-                    else: # 右
+                        relative_count_total = candidates_left
+                        relative_direction_count = left_side
+                    elif from_file < to_file: # 右
                         relative = '右'
-                        if candidates_right > 1:
-                            motion = '寄'
+                        relative_count_total = candidates_right
+                        relative_direction_count = right_side
+                    else:
+                        relative_count_total = same_file_count
+                        relative_direction_count = same_side
+
+                    if relative == '' or relative_count_total > 0:
+                        other_same_relative = relative_count_total - relative_direction_count
+                        need_motion = False
+                        if relative == '':
+                            need_motion = True
+                        elif relative_direction_count > 1:
+                            need_motion = True
+                        elif other_same_relative > 0:
+                            if relative == '左':
+                                if left_up > 0 and candidates_up > 1:
+                                    need_motion = True
+                                if left_down > 0 and candidates_down > 1:
+                                    need_motion = True
+                            elif relative == '右':
+                                if right_up > 0 and candidates_up > 1:
+                                    need_motion = True
+                                if right_down > 0 and candidates_down > 1:
+                                    need_motion = True
+                            else: # 直
+                                if same_up > 0 and candidates_up > 1:
+                                    need_motion = True
+                                if same_down > 0 and candidates_down > 1:
+                                    need_motion = True
+                        if need_motion:
+                            motion = branch_motion
 
         move_str = '{}{}{}{}{}{}'.format(
             kifu_turn,
