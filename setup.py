@@ -16,7 +16,7 @@ class MyBuildExt(build_ext):
                     ]
                 )
 
-                if machine == "x86_64" or machine == "AMD64":
+                if machine == "x86_64" or machine == "amd64":
                     # AMD64/x86_64
                     e.extra_compile_args.extend(
                         [
