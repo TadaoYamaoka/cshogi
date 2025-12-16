@@ -27,7 +27,12 @@ class MyBuildExt(build_ext):
                 elif machine == "aarch64":
                     # ARM Linux
                     e.extra_compile_args.extend([
-                        "-march=armv8-a+simd",
+                        "-mcpu=generic",
+                    ])
+                elif machine == "arm64":
+                    # Apple Silicon
+                    e.extra_compile_args.extend([
+                        "-mcpu=apple-m1",
                     ])
         elif self.compiler.compiler_type == "msvc":
             for e in self.extensions:
