@@ -1,3 +1,4 @@
+import platform
 from setuptools import setup
 from Cython.Build import build_ext, cythonize
 from setuptools import Extension
@@ -6,15 +7,33 @@ from setuptools import Extension
 class MyBuildExt(build_ext):
     def build_extensions(self):
         if self.compiler.compiler_type == "unix":
+            machine = platform.machine().lower()
             for e in self.extensions:
                 e.extra_compile_args.extend(
                     [
                         "-std=c++17",
-                        "-msse4.2",
-                        "-mavx2",
                         "-Wno-enum-constexpr-conversion",
                     ]
                 )
+
+                if machine == "x86_64" or machine == "amd64":
+                    # AMD64/x86_64
+                    e.extra_compile_args.extend(
+                        [
+                            "-msse4.2",
+                            "-mavx2",
+                        ]
+                    )
+                elif machine == "aarch64":
+                    # ARM Linux
+                    e.extra_compile_args.extend([
+                        "-mcpu=generic",
+                    ])
+                elif machine == "arm64":
+                    # Apple Silicon
+                    e.extra_compile_args.extend([
+                        "-mcpu=apple-m1",
+                    ])
         elif self.compiler.compiler_type == "msvc":
             for e in self.extensions:
                 e.extra_compile_args.extend(
