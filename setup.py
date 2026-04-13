@@ -38,8 +38,7 @@ class MyBuildExt(build_ext):
             for e in self.extensions:
                 e.extra_compile_args.extend(
                     [
-                        "/std:c17",
-                        "/arch:SSE42",
+                        "/std:c++17",
                         "/arch:AVX2",
                     ]
                 )

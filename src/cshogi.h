@@ -864,6 +864,9 @@ public:
     void set_max_search_node(const uint32_t max_search_node) {
         dfpn.set_max_search_node(max_search_node);
     }
+    void set_hash(const uint64_t hash_mb) {
+        dfpn.set_hash(hash_mb);
+    }
 
     uint32_t get_searched_node() {
         return dfpn.searchedNode;

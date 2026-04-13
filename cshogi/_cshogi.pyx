@@ -1631,6 +1631,7 @@ cdef extern from "dfpn.h":
         void set_draw_ply(const int draw_ply)
         void set_maxdepth(const int depth)
         void set_max_search_node(int max_search_node)
+        void set_hash(unsigned long long hash_mb)
         unsigned int get_searched_node()
 
 
@@ -1647,7 +1648,7 @@ cdef class DfPn:
 
     cdef __DfPn __dfpn
 
-    def __cinit__(self, depth=31, nodes=1048576, draw_ply=32767):
+    def __cinit__(self, depth=2000, nodes=4294967295, draw_ply=32767):
         self.__dfpn = __DfPn(depth, nodes, draw_ply)
 
     def search(self, Board board):
@@ -1722,6 +1723,14 @@ cdef class DfPn:
         :type max_search_node: int
         """
         self.__dfpn.set_max_search_node(max_search_node)
+
+    def set_hash(self, hash_mb):
+        """Sets the hash table size in megabytes.
+
+        :param hash_mb: Hash table size in MB.
+        :type hash_mb: int
+        """
+        self.__dfpn.set_hash(hash_mb)
 
     @property
     def searched_node(self):
