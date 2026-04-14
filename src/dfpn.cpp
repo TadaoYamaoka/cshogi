@@ -3216,6 +3216,17 @@ DfPn::NodeState DfPn::dfpn_inner(Position& pos, Threshold threshold, const uint1
     if (node.pn == 0 || node.dn == 0) {
         return node;
     }
+    // Same position on the current search path: do not re-expand.
+    // Update cpn to the current threshold so that the parent AND node's
+    // proofNumber reaches its threshold and exits. In shtsume, cpn grows
+    // naturally because the cycle position is re-expanded (set_current
+    // overwrites cpn each time). We avoid re-expansion (stack depth) by
+    // updating cpn here and returning immediately.
+    if (node.current) {
+        transposition_table.SetCurrent<or_node>(pos, threshold.pn);
+        node.pn = std::max(1, threshold.pn);
+        return node;
+    }
 
     MovePicker<or_node> movePicker(pos);
     if (movePicker.empty()) {
@@ -3412,6 +3423,13 @@ DfPn::NodeState DfPn::dfpn_inner(Position& pos, Threshold threshold, const uint1
                 node.sh = groups->state.data.sh + 1;
 
                 if (groups->state.data.pn >= kPreProofMax - 1 && groups->state.data.dn == 1) {
+                    if (groups->state.current) {
+                        // Cycle-caused simple loop: soft exit with moderate values.
+                        // Don't declare hard no-mate — the position may be provable
+                        // via a non-cyclic path.  (In shtsume, GC eventually frees
+                        // the stale entry; here we avoid creating it.)
+                        return freeAndFinalize(node);
+                    }
                     const TTState resolved = makeNoMateByAndMove(pos, groups->headMove(), groups->state);
                     node.pn = kInfinite;
                     node.dn = 0;
@@ -3591,6 +3609,8 @@ bool DfPn::dfpn(Position& pos) {
     const uint16_t maxDepth = static_cast<uint16_t>(std::min<int>(rootPly + kMaxDepth, draw_ply));
     const int shThreshold = std::min(kMaxDepth, draw_ply);
     const NodeState base = dfpn_inner<true>(pos, { kProofMax - 1, kRootDnThreshold, shThreshold }, maxDepth, searchedNode);
+    printf("dfpn: pn=%d dn=%d sh=%d inc=%d nodes=%u rootPly=%d maxDepth=%d shTh=%d\n",
+        base.pn, base.dn, base.sh, (int)base.inc, searchedNode, rootPly, maxDepth, shThreshold);
     NodeState result = base;
     if (base.pn == 0 && !stop) {
         // make_tree: g_n_make_tree iterations (shtsume default 2).

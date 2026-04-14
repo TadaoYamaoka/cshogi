@@ -246,6 +246,20 @@ TEST(TestDfPn, mate11) {
     );
 }
 
+TEST(TestDfPn, mate11_2) {
+    using namespace ns_dfpn;
+
+    initTable();
+    Position::initZobrist();
+
+    __DfPn dfpn;
+
+    auto board = __Board("8+S/4S4/k6p1/1pp+bPPS1p/3p5/p1PP2PnP/3g1K3/9/L7L b RB2GSN2L4Prg2n2p 151");
+
+    auto ret = dfpn.search(board);
+    EXPECT_TRUE(ret);
+}
+
 #ifdef NDEBUG
 TEST(TestDfPn, zukou001) {
     using namespace ns_dfpn;
