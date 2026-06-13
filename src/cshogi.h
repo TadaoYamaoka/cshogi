@@ -839,10 +839,18 @@ public:
     __DfPn(const int max_depth, const uint32_t max_search_node, const int draw_ply) : dfpn(max_depth, max_search_node, draw_ply) {}
     bool search(__Board& board) {
         pv.clear();
-        return dfpn.dfpn(board.pos);
+        const bool result = dfpn.dfpn(board.pos);
+        if (result) {
+            dfpn.get_pv(board.pos, pv);
+        }
+        return result;
     }
     bool search_andnode(__Board& board) {
         return dfpn.dfpn_andnode(board.pos);
+    }
+    bool search_with_history(__Board& root, const std::vector<Move>& history) {
+        pv.clear();
+        return dfpn.dfpn_with_history(root.pos, history);
     }
     void stop(bool is_stop) {
         dfpn.dfpn_stop(is_stop);
@@ -863,6 +871,9 @@ public:
     }
     void set_max_search_node(const uint32_t max_search_node) {
         dfpn.set_max_search_node(max_search_node);
+    }
+    void set_hash(const uint64_t hash_mb) {
+        dfpn.set_hash(hash_mb);
     }
 
     uint32_t get_searched_node() {

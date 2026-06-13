@@ -431,6 +431,10 @@ public:
         static_assert(zobTurn_ == 1, "");
         return getKey() >> 1;
     }
+
+    // Public accessor for Zobrist piece keys (used by dfpn hypothetical key computation)
+    static Key getZobrist(const PieceType pt, const Square sq, const Color c) { return zobrist_[pt][sq][c]; }
+
     void print(std::ostream& os) const;
     std::string toSFEN(const Ply ply) const;
     std::string toSFEN() const { return toSFEN(gamePly()); }

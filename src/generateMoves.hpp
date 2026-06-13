@@ -42,6 +42,8 @@ enum MoveType {
     PseudoLegal,        // 玉の移動による自殺手と、pinされている駒の移動による自殺手を削除しない
     Check,              // 王手をかける手
     CheckAll,           // Check + 歩, 飛, 角 の不成、香の二段目の不成
+    CheckAllOslmate,    // CheckAll を oslmate の生成フェーズ順に並べた別実装
+    CheckAllOslmateFixedRaw, // FixedDepthSearcher 用。OSL AddEffectWithEffect の生順に合わせる
     MoveTypeNone
 };
 
@@ -50,6 +52,11 @@ template <MoveType MT>
 ExtMove* generateMoves(ExtMove* moveList, const Position& pos);
 template <MoveType MT>
 ExtMove* generateMoves(ExtMove* moveList, const Position& pos, const Square to);
+
+// OSLmate DFPN escape generation equivalent.
+ExtMove* generateOslmateEscapeMoves(ExtMove* moveList, const Position& pos, bool cheapOnly, bool sortMoves = true);
+ExtMove* generateOslmateCheapKingEscapeMoves(ExtMove* moveList, const Position& pos, bool sortMoves = true);
+ExtMove* generateOslmateEscapeNonblockMoves(ExtMove* moveList, const Position& pos, bool sortMoves = true);
 
 template <MoveType MT>
 class MoveList {

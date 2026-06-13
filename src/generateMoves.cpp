@@ -21,7 +21,179 @@
 
 #include "generateMoves.hpp"
 
+#include <algorithm>
+#include <array>
+#include <cstdio>
+#include <cstdlib>
+#include <tuple>
+#include <utility>
+
 namespace {
+    constexpr std::array<int, 8> kOslDirFileDelta = { 1, 0, -1, 1, -1, 1, 0, -1 };
+    constexpr std::array<int, 8> kOslDirRankDelta = { -1, -1, -1, 0, 0, 1, 1, 1 };
+
+    int orient_for_osl_attacker(const Color attacker, const int delta) {
+        return attacker == Black ? delta : -delta;
+    }
+
+    bool offset_square_osl(const Square sq, const int file_delta, const int rank_delta, Square& out) {
+        const int file = static_cast<int>(makeFile(sq)) + file_delta;
+        const int rank = static_cast<int>(makeRank(sq)) + rank_delta;
+        if (!isInSquare(static_cast<File>(file), static_cast<Rank>(rank))) {
+            return false;
+        }
+        out = makeSquare(static_cast<File>(file), static_cast<Rank>(rank));
+        return true;
+    }
+
+    int osl_dir_index_from_delta(const Color attacker, const int file_delta, const int rank_delta) {
+        const int oriented_file_delta = orient_for_osl_attacker(attacker, file_delta);
+        const int oriented_rank_delta = orient_for_osl_attacker(attacker, rank_delta);
+        for (size_t dir = 0; dir < kOslDirFileDelta.size(); ++dir) {
+            if (kOslDirFileDelta[dir] == oriented_file_delta
+                && kOslDirRankDelta[dir] == oriented_rank_delta) {
+                return static_cast<int>(dir);
+            }
+        }
+        return -1;
+    }
+
+    bool osl_king8_square(const Square king, const int dir_index, const Color attack_color, Square& out) {
+        return offset_square_osl(
+            king,
+            -orient_for_osl_attacker(attack_color, kOslDirFileDelta[static_cast<size_t>(dir_index)]),
+            -orient_for_osl_attacker(attack_color, kOslDirRankDelta[static_cast<size_t>(dir_index)]),
+            out);
+    }
+
+    Bitboard osl_pinned_pieces_of(const Position& pos, const Color pinned_color) {
+        Bitboard result = allZeroBB();
+        const Color attacker = oppositeColor(pinned_color);
+        const Square king_sq = pos.kingSquare(pinned_color);
+        Bitboard pinners = pos.bbOf(attacker);
+
+        pinners &= (pos.bbOf(Lance) & lanceAttackToEdge(attacker, king_sq))
+            | (pos.bbOf(Rook, Dragon) & rookAttackToEdge(king_sq))
+            | (pos.bbOf(Bishop, Horse) & bishopAttackToEdge(king_sq));
+
+        while (pinners.isAny()) {
+            const Square sq = pinners.firstOneFromSQ11();
+            const Bitboard between = betweenBB(sq, king_sq) & pos.occupiedBB();
+            if (between && between.isOneBit<false>() && between.andIsAny(pos.bbOf(pinned_color))) {
+                result |= between;
+            }
+        }
+        return result;
+    }
+
+    bool same_dir_as_osl_king8_index(const Square king, const Square sq, const int dir_index, const Color attack_color) {
+        const Color defense_color = oppositeColor(attack_color);
+        const int file_delta = static_cast<int>(makeFile(king)) - static_cast<int>(makeFile(sq));
+        const int rank_delta = static_cast<int>(makeRank(king)) - static_cast<int>(makeRank(sq));
+        const int step_file = file_delta == 0 ? 0 : (file_delta > 0 ? 1 : -1);
+        const int step_rank = rank_delta == 0 ? 0 : (rank_delta > 0 ? 1 : -1);
+        return step_file == orient_for_osl_attacker(defense_color, kOslDirFileDelta[static_cast<size_t>(dir_index)])
+            && step_rank == orient_for_osl_attacker(defense_color, kOslDirRankDelta[static_cast<size_t>(dir_index)]);
+    }
+
+    bool has_enough_osl_defense_effect(const Position& pos, const Color attack_color, const Square target_king,
+        const Square sq, const Bitboard& pinned_defense, const int dir_index) {
+        const Color defense_color = oppositeColor(attack_color);
+        Bitboard defenders = pos.attackersTo(defense_color, sq);
+        defenders.clearBit(target_king);
+        if (!defenders.isAny()) {
+            return false;
+        }
+
+        if ((defenders & ~pinned_defense).isAny()) {
+            return true;
+        }
+
+        while (defenders.isAny()) {
+            const Square from = defenders.firstOneFromSQ11();
+            if (pinned_defense.isSet(from) && same_dir_as_osl_king8_index(target_king, from, dir_index, attack_color)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool is_osl_long_king_effect_attacker(const Position& pos, const Square king, const Square from) {
+        const PieceType piece_type = pieceToPieceType(pos.piece(from));
+        if (!(isSlider(piece_type) || piece_type == Lance)) {
+            return false;
+        }
+
+        const int file_delta = static_cast<int>(makeFile(king)) - static_cast<int>(makeFile(from));
+        const int rank_delta = static_cast<int>(makeRank(king)) - static_cast<int>(makeRank(from));
+        if (std::max(std::abs(file_delta), std::abs(rank_delta)) <= 1) {
+            return false;
+        }
+        if (piece_type == Lance && file_delta != 0) {
+            return false;
+        }
+        return file_delta == 0 || rank_delta == 0 || std::abs(file_delta) == std::abs(rank_delta);
+    }
+
+    bool osl_king8_liberty(const Position& pos, const Color defense_color, const Square to) {
+        const Color attack_color = oppositeColor(defense_color);
+        const Square king = pos.kingSquare(defense_color);
+        int dir_index = -1;
+        for (size_t dir = 0; dir < kOslDirFileDelta.size(); ++dir) {
+            Square candidate = SquareNum;
+            if (osl_king8_square(king, static_cast<int>(dir), attack_color, candidate) && candidate == to) {
+                dir_index = static_cast<int>(dir);
+                break;
+            }
+        }
+        if (dir_index < 0) {
+            return false;
+        }
+
+        Square expected = SquareNum;
+        if (!osl_king8_square(king, dir_index, attack_color, expected) || expected != to) {
+            return false;
+        }
+
+        bool liberty = false;
+        const Piece piece = pos.piece(to);
+        const bool is_empty = piece == Empty;
+        const bool is_attack_piece = piece != Empty && pieceToColor(piece) == attack_color;
+        const bool is_defense_piece = piece != Empty && pieceToColor(piece) == defense_color;
+        if (is_defense_piece) {
+            return false;
+        }
+
+        if (!pos.attackersToIsAny(attack_color, to)) {
+            liberty = is_empty || is_attack_piece;
+        }
+        else {
+            const Bitboard pinned_defense = osl_pinned_pieces_of(pos, defense_color);
+            const bool enough_defense = has_enough_osl_defense_effect(pos, attack_color, king, to, pinned_defense, dir_index);
+            liberty = !enough_defense && is_empty;
+        }
+
+        if (!liberty) {
+            return false;
+        }
+
+        Bitboard long_attackers = pos.attackersTo(attack_color, king);
+        while (long_attackers.isAny()) {
+            const Square from = long_attackers.firstOneFromSQ11();
+            if (!is_osl_long_king_effect_attacker(pos, king, from)) {
+                continue;
+            }
+            const int lf = static_cast<int>(makeFile(from)) - static_cast<int>(makeFile(king));
+            const int lr = static_cast<int>(makeRank(from)) - static_cast<int>(makeRank(king));
+            const int lfs = lf == 0 ? 0 : (lf > 0 ? 1 : -1);
+            const int lrs = lr == 0 ? 0 : (lr > 0 ? 1 : -1);
+            if (osl_dir_index_from_delta(attack_color, lfs, lrs) == dir_index) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     // 角, 飛車の場合
     template <MoveType MT, PieceType PT, Color US, bool ALL>
     FORCE_INLINE ExtMove* generateBishopOrRookMoves(ExtMove* moveList, const Position& pos,
@@ -640,6 +812,806 @@ namespace {
         return moveList;
     }
 
+    enum class OslCheckPhase : int {
+        U = 0,
+        Knight = 1,
+        UL = 2,
+        UR = 3,
+        L = 4,
+        R = 5,
+        D = 6,
+        DL = 7,
+        DR = 8,
+        RookLong = 9,
+        BishopLong = 10,
+        DropGold = 11,
+        DropSilver = 12,
+        DropBishop = 13,
+        DropRook = 14,
+        Other = 15,
+    };
+
+    int orient_for_attacker(const Color attacker, const int delta) {
+        // OSL DirectionPlayerTraits keeps DirectionTraits::blackOffset() for
+        // BLACK and negates it for WHITE.
+        return attacker == Black ? delta : -delta;
+    }
+
+    int osl_adjacent_dir_index(const Color attacker, const Square king, const Square to) {
+        static constexpr std::array<std::pair<int, int>, 8> kDirs = {{
+            { 1, -1 },
+            { 0, -1 },
+            { -1, -1 },
+            { 1, 0 },
+            { -1, 0 },
+            { 1, 1 },
+            { 0, 1 },
+            { -1, 1 },
+        }};
+
+        // OSL AddEffectWithEffect enumerates pos = target - offset.  The
+        // direction is therefore king - move.to, not move.to - king.
+        const int file_delta = static_cast<int>(makeFile(king)) - static_cast<int>(makeFile(to));
+        const int rank_delta = static_cast<int>(makeRank(king)) - static_cast<int>(makeRank(to));
+        const int oriented_file = orient_for_attacker(attacker, file_delta);
+        const int oriented_rank = orient_for_attacker(attacker, rank_delta);
+
+        for (size_t i = 0; i < kDirs.size(); ++i) {
+            if (kDirs[i].first == oriented_file && kDirs[i].second == oriented_rank) {
+                return static_cast<int>(i);
+            }
+        }
+        return -1;
+    }
+
+    int osl_adjacent_phase_group(const int dir_index) {
+        switch (dir_index) {
+        case 1: return static_cast<int>(OslCheckPhase::U);
+        case 0: return static_cast<int>(OslCheckPhase::UL);
+        case 2: return static_cast<int>(OslCheckPhase::UR);
+        case 3: return static_cast<int>(OslCheckPhase::L);
+        case 4: return static_cast<int>(OslCheckPhase::R);
+        case 6: return static_cast<int>(OslCheckPhase::D);
+        case 5: return static_cast<int>(OslCheckPhase::DL);
+        case 7: return static_cast<int>(OslCheckPhase::DR);
+        default: return static_cast<int>(OslCheckPhase::Other);
+        }
+    }
+
+    int osl_knight_side_index(const Color attacker, const Square king, const Square to) {
+        const int file_delta = static_cast<int>(makeFile(king)) - static_cast<int>(makeFile(to));
+        const int rank_delta = static_cast<int>(makeRank(king)) - static_cast<int>(makeRank(to));
+        const int oriented_file = orient_for_attacker(attacker, file_delta);
+        const int oriented_rank = orient_for_attacker(attacker, rank_delta);
+        if (oriented_file == 1 && oriented_rank == -2) {
+            return 0;
+        }
+        if (oriented_file == -1 && oriented_rank == -2) {
+            return 1;
+        }
+        return 2;
+    }
+
+    int osl_line_dir_index(const Color attacker, const Square king, const Square to) {
+        const int file_delta = static_cast<int>(makeFile(king)) - static_cast<int>(makeFile(to));
+        const int rank_delta = static_cast<int>(makeRank(king)) - static_cast<int>(makeRank(to));
+        const int file_step = file_delta == 0 ? 0 : (file_delta > 0 ? 1 : -1);
+        const int rank_step = rank_delta == 0 ? 0 : (rank_delta > 0 ? 1 : -1);
+        if (!(file_delta == 0 || rank_delta == 0 || std::abs(file_delta) == std::abs(rank_delta))) {
+            return -1;
+        }
+        const int oriented_file = orient_for_attacker(attacker, file_step);
+        const int oriented_rank = orient_for_attacker(attacker, rank_step);
+        static constexpr std::array<std::pair<int, int>, 8> kDirs = {{
+            { 1, -1 },
+            { 0, -1 },
+            { -1, -1 },
+            { 1, 0 },
+            { -1, 0 },
+            { 1, 1 },
+            { 0, 1 },
+            { -1, 1 },
+        }};
+        for (size_t i = 0; i < kDirs.size(); ++i) {
+            if (kDirs[i].first == oriented_file && kDirs[i].second == oriented_rank) {
+                return static_cast<int>(i);
+            }
+        }
+        return -1;
+    }
+
+    int osl_gold_drop_subphase(const int dir_index) {
+        switch (dir_index) {
+        case 1: return 0;
+        case 0: return 1;
+        case 2: return 2;
+        case 3: return 3;
+        case 4: return 4;
+        case 6: return 5;
+        default: return 6;
+        }
+    }
+
+    int osl_silver_drop_subphase(const int dir_index) {
+        switch (dir_index) {
+        case 5: return 0;
+        case 7: return 1;
+        case 1: return 2;
+        case 0: return 3;
+        case 2: return 4;
+        default: return 5;
+        }
+    }
+
+    int osl_bishop_drop_subphase(const int dir_index) {
+        switch (dir_index) {
+        case 5: return 0;
+        case 7: return 1;
+        case 0: return 2;
+        case 2: return 3;
+        default: return 4;
+        }
+    }
+
+    int osl_rook_drop_subphase(const int dir_index) {
+        switch (dir_index) {
+        case 1: return 0;
+        case 3: return 1;
+        case 4: return 2;
+        case 6: return 3;
+        default: return 4;
+        }
+    }
+
+    int osl_square_index_for_sort(const Square square) {
+        const int x = static_cast<int>(makeFile(square)) + 1;
+        const int y = static_cast<int>(makeRank(square)) + 1;
+        return x * 16 + y + 1;
+    }
+
+    PieceType osl_basic_piece_type(const PieceType pt) {
+        switch (pt) {
+        case ProPawn: return Pawn;
+        case ProLance: return Lance;
+        case ProKnight: return Knight;
+        case ProSilver: return Silver;
+        case Horse: return Bishop;
+        case Dragon: return Rook;
+        default: return pt;
+        }
+    }
+
+    int osl_piece_number_group_key(const PieceType pt) {
+        switch (osl_basic_piece_type(pt)) {
+        case Pawn: return 0;
+        case Knight: return 18;
+        case Silver: return 22;
+        case Gold: return 26;
+        case King: return 30;
+        case Lance: return 32;
+        case Bishop: return 36;
+        case Rook: return 38;
+        default: return 128;
+        }
+    }
+
+    int osl_escape_block_piece_order(const PieceType pt) {
+        switch (osl_basic_piece_type(pt)) {
+        case Pawn: return 0;
+        case Lance: return 1;
+        case Knight: return 2;
+        case Silver: return 3;
+        case Gold: return 4;
+        case Bishop: return 5;
+        case Rook: return 6;
+        default: return 128;
+        }
+    }
+
+    int immediate_osl_piece_number_from_position(const Position& pos, const Square square) {
+        if (!isInSquare(square)) {
+            return 1024;
+        }
+        const Piece target_piece = pos.piece(square);
+        if (target_piece == Empty) {
+            return 1024;
+        }
+
+        std::array<int, SquareNum> board_number;
+        board_number.fill(-1);
+        std::array<bool, 40> used{};
+        const auto assign_piece = [&](const Color owner, const Square sq, const PieceType pt) {
+            const int begin = osl_piece_number_group_key(pt);
+            const int end = pt == Pawn ? 18 : begin + (pt == King ? 2 : (pt == Bishop || pt == Rook ? 2 : 4));
+            for (int num = begin; num < end; ++num) {
+                if (used[static_cast<size_t>(num)]) {
+                    continue;
+                }
+                if (pt == King && num != 30 + static_cast<int>(owner)) {
+                    continue;
+                }
+                used[static_cast<size_t>(num)] = true;
+                board_number[sq] = num;
+                return;
+            }
+        };
+
+        for (int rank = static_cast<int>(Rank1); rank <= static_cast<int>(Rank9); ++rank) {
+            for (int file = static_cast<int>(File9); file >= static_cast<int>(File1); --file) {
+                const Square sq = makeSquare(static_cast<File>(file), static_cast<Rank>(rank));
+                const Piece piece = pos.piece(sq);
+                if (piece != Empty) {
+                    assign_piece(pieceToColor(piece), sq, osl_basic_piece_type(pieceToPieceType(piece)));
+                }
+            }
+        }
+        return board_number[square] >= 0 ? board_number[square] : 1024;
+    }
+
+    int osl_piece_iteration_key(const Move move) {
+        if (move.isDrop()) {
+            return 0;
+        }
+        // OSL AddEffectWithEffect enumerates state.effectSetAt(to) by fixed
+        // piece-number groups, not by board square. This puts silver before
+        // lance for the same adjacent target square, for example.
+        return osl_piece_number_group_key(move.pieceTypeFrom()) * 256
+            + osl_square_index_for_sort(move.from());
+    }
+
+    PieceType osl_check_piece_type_after_move(const Position& pos, const Move move) {
+        if (move.isDrop()) {
+            return move.pieceTypeDropped();
+        }
+        PieceType piece_type = pieceToPieceType(pos.piece(move.from()));
+        if (move.isPromotion() && (piece_type & PTPromote) == 0) {
+            piece_type = static_cast<PieceType>(piece_type + PTPromote);
+        }
+        return piece_type;
+    }
+
+    Bitboard osl_attack_bb_after_move(const Position& pos, const Color attacker, const Move move) {
+        Bitboard occupied = pos.occupiedBB();
+        if (move.isDrop()) {
+            occupied.setBit(move.to());
+        }
+        else {
+            occupied.xorBit(move.from());
+            occupied.setBit(move.to());
+        }
+
+        const PieceType piece_type_to = osl_check_piece_type_after_move(pos, move);
+        switch (piece_type_to) {
+        case Pawn:
+            return pawnAttack(attacker, move.to());
+        case Lance:
+            return lanceAttack(attacker, move.to(), occupied);
+        case Knight:
+            return knightAttack(attacker, move.to());
+        case Silver:
+            return silverAttack(attacker, move.to());
+        case Gold:
+        case ProPawn:
+        case ProLance:
+        case ProKnight:
+        case ProSilver:
+            return goldAttack(attacker, move.to());
+        case Bishop:
+            return bishopAttack(move.to(), occupied);
+        case Rook:
+            return rookAttack(move.to(), occupied);
+        case King:
+            return kingAttack(move.to());
+        case Horse:
+            return horseAttack(move.to(), occupied);
+        case Dragon:
+            return dragonAttack(move.to(), occupied);
+        default:
+            return allZeroBB();
+        }
+    }
+
+    bool osl_move_is_direct_check(const Position& pos, const Color attacker, const Move move) {
+        return osl_attack_bb_after_move(pos, attacker, move).isSet(pos.kingSquare(oppositeColor(attacker)));
+    }
+
+    bool osl_move_is_discovered_check(const Position& pos, const Color attacker, const Move move) {
+        if (move.isDrop()) {
+            return false;
+        }
+        const Square king = pos.kingSquare(oppositeColor(attacker));
+        return pos.discoveredCheckBB().isSet(move.from()) && !isAligned<true>(move.from(), move.to(), king);
+    }
+
+    int osl_knight_subphase(const Position& attacker_pos, const Color attacker, const Move move) {
+        const int side = osl_knight_side_index(attacker, attacker_pos.kingSquare(oppositeColor(attacker)), move.to());
+        if (side < 2) {
+            return side * 2 + (move.isDrop() ? 1 : 0);
+        }
+        return 4 + (move.isDrop() ? 1 : 0);
+    }
+
+    int osl_discovered_phase(const Position& pos, const Color attacker, const Move move) {
+        if (move.isDrop()) {
+            return -1;
+        }
+        const Square king = pos.kingSquare(oppositeColor(attacker));
+
+        // Dfpn::generateCheck calls AddEffectWithEffect with isAttackToKing=true.
+        // In that path generateKing excludes pin/open pieces from the adjacent
+        // direction generators; discovered checks are emitted by the later
+        // rook/bishop long generators.
+        if ((betweenBB(move.from(), king) & pos.occupiedBB()).isAny()) {
+            return -1;
+        }
+
+        Bitboard occupied_without_blocker = pos.occupiedBB();
+        occupied_without_blocker.xorBit(move.from());
+
+        Bitboard rook_pinners = pos.bbOf(attacker) & pos.bbOf(Rook, Dragon)
+            & rookAttack(king, occupied_without_blocker);
+        while (rook_pinners) {
+            const Square pinner = rook_pinners.firstOneFromSQ11();
+            rook_pinners.clearBit(pinner);
+            if ((betweenBB(pinner, king) & pos.occupiedBB()) == setMaskBB(move.from())) {
+                return static_cast<int>(OslCheckPhase::RookLong);
+            }
+        }
+
+        Bitboard bishop_pinners = pos.bbOf(attacker) & pos.bbOf(Bishop, Horse)
+            & bishopAttack(king, occupied_without_blocker);
+        while (bishop_pinners) {
+            const Square pinner = bishop_pinners.firstOneFromSQ11();
+            bishop_pinners.clearBit(pinner);
+            if ((betweenBB(pinner, king) & pos.occupiedBB()) == setMaskBB(move.from())) {
+                return static_cast<int>(OslCheckPhase::BishopLong);
+            }
+        }
+        return -1;
+    }
+
+    int osl_move_phase(const Position& pos, const Color attacker, const Move move, const bool direct_check, const bool discovered_check) {
+        const Square king = pos.kingSquare(oppositeColor(attacker));
+        const int adjacent_dir = osl_adjacent_dir_index(attacker, king, move.to());
+        if (move.isDrop()) {
+            switch (move.pieceTypeDropped()) {
+            case Pawn:
+            case Lance:
+                return static_cast<int>(OslCheckPhase::U);
+            case Knight:
+                return static_cast<int>(OslCheckPhase::Knight);
+            case Gold:
+                return static_cast<int>(OslCheckPhase::DropGold);
+            case Silver:
+                return static_cast<int>(OslCheckPhase::DropSilver);
+            case Bishop:
+                return static_cast<int>(OslCheckPhase::DropBishop);
+            case Rook:
+                return static_cast<int>(OslCheckPhase::DropRook);
+            default:
+                return static_cast<int>(OslCheckPhase::Other);
+            }
+        }
+
+        const PieceType piece_type_to = osl_check_piece_type_after_move(pos, move);
+        const bool direct_unpromoted_long =
+            direct_check && (piece_type_to == Bishop || piece_type_to == Rook);
+
+        const int discovered_phase = osl_discovered_phase(pos, attacker, move);
+        if (discovered_phase >= 0 && !direct_unpromoted_long) {
+            return discovered_phase;
+        }
+
+        if (direct_check) {
+            if (piece_type_to == Knight) {
+                return static_cast<int>(OslCheckPhase::Knight);
+            }
+            if (adjacent_dir >= 0) {
+                return osl_adjacent_phase_group(adjacent_dir);
+            }
+            if (piece_type_to == Bishop) {
+                return static_cast<int>(OslCheckPhase::BishopLong);
+            }
+            if (piece_type_to == Rook) {
+                return static_cast<int>(OslCheckPhase::RookLong);
+            }
+            if (piece_type_to == Horse) {
+                return static_cast<int>(OslCheckPhase::BishopLong);
+            }
+            if (piece_type_to == Dragon) {
+                return static_cast<int>(OslCheckPhase::RookLong);
+            }
+
+            const int line_dir = osl_line_dir_index(attacker, king, move.to());
+            if (line_dir >= 0) {
+                return osl_adjacent_phase_group(line_dir);
+            }
+        }
+
+        // OSL AddEffectWithEffect::generateKing emits non-adjacent long-piece
+        // checks in the rook/bishop long generator loops.  Preserve that phase
+        // for checks that are not caught by the direct/discovered classifiers,
+        // otherwise the later Dfpn::sort oldPtype segments differ from OSL.
+        const PieceType moving_type = pieceToPieceType(pos.piece(move.from()));
+        if (moving_type == Bishop || moving_type == Horse) {
+            return static_cast<int>(OslCheckPhase::BishopLong);
+        }
+        if (moving_type == Rook || moving_type == Dragon) {
+            return static_cast<int>(OslCheckPhase::RookLong);
+        }
+
+        return static_cast<int>(OslCheckPhase::Other);
+    }
+
+    int osl_move_subphase(const Position& pos, const Color attacker, const Move move, const int phase) {
+        const Square king = pos.kingSquare(oppositeColor(attacker));
+        const int adjacent_dir = osl_adjacent_dir_index(attacker, king, move.to());
+        const int line_dir = osl_line_dir_index(attacker, king, move.to());
+
+        if (move.isDrop()) {
+            switch (move.pieceTypeDropped()) {
+            case Pawn:
+                return 1;
+            case Lance:
+                return 2;
+            case Knight:
+                return osl_knight_subphase(pos, attacker, move);
+            case Gold:
+                return osl_gold_drop_subphase(adjacent_dir);
+            case Silver:
+                return osl_silver_drop_subphase(adjacent_dir);
+            case Bishop:
+                return osl_bishop_drop_subphase(line_dir);
+            case Rook:
+                return osl_rook_drop_subphase(line_dir);
+            default:
+                return 0;
+            }
+        }
+
+        if (phase == static_cast<int>(OslCheckPhase::Knight)) {
+            return osl_knight_subphase(pos, attacker, move);
+        }
+
+        return 0;
+    }
+
+    std::tuple<int, int, int, int, int, int> osl_check_move_order_key(const Position& pos, const Color attacker, const Move move) {
+        const bool direct_check = osl_move_is_direct_check(pos, attacker, move);
+        const bool discovered_check = osl_move_is_discovered_check(pos, attacker, move);
+        const int phase = osl_move_phase(pos, attacker, move, direct_check, discovered_check);
+        const int subphase = osl_move_subphase(pos, attacker, move, phase);
+        const int from_key = osl_piece_iteration_key(move);
+        const int to_key = osl_square_index_for_sort(move.to());
+        const int promote_key = move.isPromotion() ? 0 : 1;
+        return std::make_tuple(phase, subphase, to_key, move.isDrop() ? 1 : 0, from_key, promote_key);
+    }
+
+    struct OslmateCheckOrderEntry {
+        ExtMove ext{};
+        std::tuple<int, int, int, int, int, int> key{};
+    };
+
+    auto osl_dfpn_move_sort_key(const Position& pos, const Color turn, const Move move) {
+        const int attack_support = pos.attackersTo(turn, move.to()).popCount() + (move.isDrop() ? 1 : 0);
+        const int defense_support = pos.attackersTo(oppositeColor(turn), move.to()).popCount();
+        const int turn_sign = turn == Black ? 1 : -1;
+        const int file = static_cast<int>(makeFile(move.to())) + 1;
+        const int rank = static_cast<int>(makeRank(move.to())) + 1;
+        const int to_y = turn_sign * rank;
+        const int to_x = (5 - std::abs(5 - file)) * 2 + (file > 5 ? 1 : 0);
+        int from_to = (to_y * 16 + to_x) * 256;
+        if (move.isDrop()) {
+            from_to += static_cast<int>(move.pieceTypeDropped());
+        }
+        else {
+            from_to += osl_square_index_for_sort(move.from());
+        }
+        return std::make_tuple(attack_support > defense_support, from_to, move.isPromotion());
+    }
+
+    template <Color US>
+    void sort_check_moves_like_osl_dfpn(const Position& pos, ExtMove* first, ExtMove* last) {
+        size_t last_sorted = 0;
+        size_t cur = 0;
+        PieceType last_piece_type = Occupied;
+        const size_t count = static_cast<size_t>(last - first);
+        const auto sort_segment = [&](const size_t begin, const size_t end) {
+            std::sort(first + static_cast<std::ptrdiff_t>(begin),
+                first + static_cast<std::ptrdiff_t>(end),
+                [&](const ExtMove& lhs, const ExtMove& rhs) {
+                    return osl_dfpn_move_sort_key(pos, US, lhs.move)
+                        > osl_dfpn_move_sort_key(pos, US, rhs.move);
+                });
+        };
+
+        for (; cur < count; ++cur) {
+            const Move move = first[cur].move;
+            const PieceType piece_type = move.isDrop() ? Occupied : move.pieceTypeFrom();
+            if (move.isDrop() || piece_type == last_piece_type) {
+                continue;
+            }
+            sort_segment(last_sorted, cur);
+            last_sorted = cur;
+            last_piece_type = piece_type;
+        }
+        sort_segment(last_sorted, cur);
+    }
+
+    int osl_check_sort_ptype(const PieceType pt) {
+        switch (pt) {
+        case ProPawn: return 2;
+        case ProLance: return 3;
+        case ProKnight: return 4;
+        case ProSilver: return 5;
+        case Horse: return 6;
+        case Dragon: return 7;
+        case King: return 8;
+        case Gold: return 9;
+        case Pawn: return 10;
+        case Lance: return 11;
+        case Knight: return 12;
+        case Silver: return 13;
+        case Bishop: return 14;
+        case Rook: return 15;
+        default: return 0;
+        }
+    }
+
+    int osl_check_square_index(const Square square) {
+        if (square == SquareNum) {
+            return 0;
+        }
+        return (static_cast<int>(makeFile(square)) + 1) * 16
+            + (static_cast<int>(makeRank(square)) + 1) + 1;
+    }
+
+    int osl_check_effect_count(const Position& pos, const Color color, const Square sq) {
+        return pos.attackersTo(color, sq).popCount();
+    }
+
+    std::tuple<int, int, int> osl_check_move_sort_key(const Position& pos, const Color attacker, const Move move) {
+        const int attack_support = osl_check_effect_count(pos, attacker, move.to()) + (move.isDrop() ? 1 : 0);
+        const int defense_support = osl_check_effect_count(pos, oppositeColor(attacker), move.to());
+        const int turn_sign = attacker == Black ? 1 : -1;
+        const int file = static_cast<int>(makeFile(move.to())) + 1;
+        const int to_y = turn_sign * (static_cast<int>(makeRank(move.to())) + 1);
+        const int to_x = (5 - std::abs(5 - file)) * 2 + (file > 5 ? 1 : 0);
+        int from_to = (to_y * 16 + to_x) * 256;
+        if (move.isDrop()) {
+            from_to += osl_check_sort_ptype(move.pieceTypeDropped());
+        }
+        else {
+            from_to += osl_check_square_index(move.from());
+        }
+        return std::make_tuple(attack_support > defense_support, from_to, move.isPromotion());
+    }
+
+    struct OslmateCheckSortEntry {
+        ExtMove ext{};
+        std::tuple<int, int, int> key{};
+    };
+
+    template <Color US>
+    void sort_check_moves_oslmate(const Position& pos, ExtMove* first, ExtMove* last) {
+        std::array<OslmateCheckSortEntry, MaxLegalMoves> sorted;
+        size_t last_sorted = 0;
+        size_t cur = 0;
+        PieceType last_piece_type = Occupied;
+        const size_t size = static_cast<size_t>(last - first);
+        const auto sort_segment = [&](const size_t begin, const size_t end) {
+            for (size_t i = begin; i < end; ++i) {
+                sorted[i - begin] = { first[i], osl_check_move_sort_key(pos, US, first[i].move) };
+            }
+            std::sort(sorted.data(), sorted.data() + static_cast<std::ptrdiff_t>(end - begin),
+                [](const OslmateCheckSortEntry& lhs, const OslmateCheckSortEntry& rhs) {
+                    return lhs.key > rhs.key;
+                });
+            for (size_t i = begin; i < end; ++i) {
+                first[i] = sorted[i - begin].ext;
+            }
+        };
+        for (; cur < size; ++cur) {
+            const PieceType piece_type = first[cur].move.isDrop()
+                ? Occupied
+                : first[cur].move.pieceTypeFrom();
+            if (first[cur].move.isDrop() || piece_type == last_piece_type) {
+                continue;
+            }
+            sort_segment(last_sorted, cur);
+            last_sorted = cur;
+            last_piece_type = piece_type;
+        }
+        sort_segment(last_sorted, cur);
+    }
+
+    template <Color US, bool ALL>
+    FORCE_INLINE void append_oslmate_generated_variants(ExtMove* raw, size_t& count, const Position& pos, const Square from, const Square to) {
+        const PieceType pt = pieceToPieceType(pos.piece(from));
+        std::array<ExtMove, 2> variants{};
+        ExtMove* last = generatCheckMoves<US, ALL>(variants.data(), pt, pos, from, to);
+        const Bitboard pinned = pos.pinnedBB();
+        for (ExtMove* it = variants.data(); it != last; ++it) {
+            if (!pos.moveGivesCheck(it->move)) {
+                continue;
+            }
+            if (!pos.pseudoLegalMoveIsLegal<true, false>(it->move, pinned)) {
+                continue;
+            }
+            raw[count++] = *it;
+        }
+    }
+
+    template <Color US>
+    bool osl_ignored_unpromote_candidate(const Position& pos, const Move move) {
+        if (move.isDrop() || move.isPromotion()) {
+            return false;
+        }
+        // OSL's Move::hasIgnoredUnpromote is based on the moving piece ptype.
+        // Promoted pieces have canPromote(ptype)==false there, even though
+        // cshogi Move::pieceTypeFrom() may report the unpromoted base type.
+        if ((pieceToPieceType(pos.piece(move.from())) & PTPromote) != 0) {
+            return false;
+        }
+        switch (move.pieceTypeFrom()) {
+        case Pawn:
+            return canPromote(US, makeRank(move.to()));
+        case Bishop:
+        case Rook:
+            return canPromote(US, makeRank(move.to())) || canPromote(US, makeRank(move.from()));
+        case Lance:
+            return makeRank(move.to()) == (US == Black ? Rank2 : Rank8);
+        default:
+            return false;
+        }
+    }
+
+    bool osl_pin_or_open_shadow(const Position& pos, const Color attacker, const Square blocker) {
+        const Square king = pos.kingSquare(oppositeColor(attacker));
+        if ((betweenBB(blocker, king) & pos.occupiedBB()).isAny()) {
+            return false;
+        }
+
+        Bitboard occupied_without_blocker = pos.occupiedBB();
+        occupied_without_blocker.xorBit(blocker);
+        Bitboard pinners = pos.bbOf(attacker)
+            & ((rookAttack(king, occupied_without_blocker) & pos.bbOf(Rook, Dragon))
+                | (bishopAttack(king, occupied_without_blocker) & pos.bbOf(Bishop, Horse))
+                | (lanceAttack(oppositeColor(attacker), king, occupied_without_blocker) & pos.bbOf(Lance)));
+
+        while (pinners) {
+            const Square pinner = pinners.firstOneFromSQ11();
+            pinners.clearBit(pinner);
+            if ((betweenBB(pinner, king) & pos.occupiedBB()) == setMaskBB(blocker)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    Move promote_counterpart(const Move move) {
+        return Move(move.value() | Move::PromoteFlag);
+    }
+
+    struct OslIgnoredUnpromoteSignature {
+        Square from = SquareNum;
+        Square to = SquareNum;
+        PieceType piece_type = Occupied;
+        PieceType captured = Occupied;
+
+        bool operator<(const OslIgnoredUnpromoteSignature& other) const {
+            return std::tie(from, to, piece_type, captured)
+                < std::tie(other.from, other.to, other.piece_type, other.captured);
+        }
+    };
+
+    OslIgnoredUnpromoteSignature osl_ignored_unpromote_signature(const Move move) {
+        return { move.from(), move.to(), move.pieceTypeFrom(), move.cap() };
+    }
+
+    bool osl_invalid_promoted_piece_promotion(const Position& pos, const Move move) {
+        if (!move.isPromotion() || move.isDrop()) {
+            return false;
+        }
+        return (pieceToPieceType(pos.piece(move.from())) & PTPromote) != 0;
+    }
+
+    template <Color US>
+    bool osl_unpromoted_ptype_has_effect_to_king(const Move move, const Square king) {
+        const Square to = move.to();
+        switch (move.pieceTypeFrom()) {
+        case Pawn:
+            return pawnAttack(US, to).isSet(king);
+        case Lance:
+            return lanceAttackToEdge(US, to).isSet(king);
+        case Bishop:
+            return bishopAttackToEdge(to).isSet(king);
+        case Rook:
+            return rookAttackToEdge(to).isSet(king);
+        default:
+            return false;
+        }
+    }
+
+    template <Color US>
+    bool osl_should_append_ignored_unpromote_check(const Position& pos, const Move promoted, const Move unpromoted) {
+        if (!promoted.isPromotion() || !osl_ignored_unpromote_candidate<US>(pos, unpromoted)) {
+            return false;
+        }
+        const Square king = pos.kingSquare(oppositeColor(US));
+        return osl_unpromoted_ptype_has_effect_to_king<US>(unpromoted, king)
+            || osl_pin_or_open_shadow(pos, US, promoted.from());
+    }
+
+    template <Color US, bool ALL>
+    FORCE_INLINE ExtMove* generate_check_moves_oslmate(ExtMove* moveList, const Position& pos) {
+        std::array<ExtMove, MaxLegalMoves> all;
+        ExtMove* all_last = GenerateMoves<Check, US, ALL>()(all.data(), pos);
+        const size_t all_count = static_cast<size_t>(all_last - all.data());
+
+        // OSL's Dfpn::generateCheck does not sort here, but its source
+        // generator AddEffectWithEffect::generateKing emits checks in fixed
+        // phase order (U, Knight, UL, ..., rook long, bishop long, drops).
+        // cshogi's generic Check generator has a different raw order, so
+        // reorder to the OSL source generator order before applying
+        // hasIgnoredUnpromote handling.
+        std::array<OslmateCheckOrderEntry, MaxLegalMoves> ordered;
+        size_t ordered_count = 0;
+        for (size_t i = 0; i < all_count; ++i) {
+            if (osl_invalid_promoted_piece_promotion(pos, all[i].move)) {
+                continue;
+            }
+            ordered[ordered_count++] = { all[i], osl_check_move_order_key(pos, US, all[i].move) };
+        }
+        std::sort(ordered.data(), ordered.data() + static_cast<std::ptrdiff_t>(ordered_count),
+            [](const OslmateCheckOrderEntry& lhs, const OslmateCheckOrderEntry& rhs) {
+                return lhs.key < rhs.key;
+            });
+        for (size_t i = 0; i < ordered_count; ++i) {
+            all[i] = ordered[i].ext;
+        }
+
+        size_t count = 0;
+        for (size_t i = 0; i < ordered_count; ++i) {
+            const Move move = all[i].move;
+            if (osl_ignored_unpromote_candidate<US>(pos, move)) {
+                continue;
+            }
+            moveList[count++] = all[i];
+        }
+        return moveList + count;
+    }
+
+    template <Color US, bool ALL>
+    FORCE_INLINE ExtMove* generate_fixed_depth_check_moves_oslmate(ExtMove* moveList, const Position& pos) {
+        std::array<ExtMove, MaxLegalMoves> all;
+        ExtMove* all_last = GenerateMoves<Check, US, ALL>()(all.data(), pos);
+        const size_t all_count = static_cast<size_t>(all_last - all.data());
+
+        std::array<OslmateCheckOrderEntry, MaxLegalMoves> ordered;
+        size_t ordered_count = 0;
+        for (size_t i = 0; i < all_count; ++i) {
+            if (osl_invalid_promoted_piece_promotion(pos, all[i].move)) {
+                continue;
+            }
+            ordered[ordered_count++] = { all[i], osl_check_move_order_key(pos, US, all[i].move) };
+        }
+        std::sort(ordered.data(), ordered.data() + static_cast<std::ptrdiff_t>(ordered_count),
+            [](const OslmateCheckOrderEntry& lhs, const OslmateCheckOrderEntry& rhs) {
+                return lhs.key < rhs.key;
+            });
+
+        size_t count = 0;
+        for (size_t i = 0; i < ordered_count; ++i) {
+            const Move move = ordered[i].ext.move;
+            if (osl_ignored_unpromote_candidate<US>(pos, move)) {
+                continue;
+            }
+            moveList[count++] = ordered[i].ext;
+        }
+        return moveList + count;
+    }
+
     // 部分特殊化
     // 王手をかける手を生成する。
     template <Color US, bool ALL> struct GenerateMoves<Check, US, ALL> {
@@ -1128,6 +2100,18 @@ namespace {
             return GenerateMoves<Check, US, true>()(moveList, pos);
         }
     };
+
+    template <Color US> struct GenerateMoves<CheckAllOslmate, US> {
+        FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos) {
+            return generate_check_moves_oslmate<US, true>(moveList, pos);
+        }
+    };
+
+    template <Color US> struct GenerateMoves<CheckAllOslmateFixedRaw, US> {
+        FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos) {
+            return generate_fixed_depth_check_moves_oslmate<US, true>(moveList, pos);
+        }
+    };
 }
 
 template <MoveType MT>
@@ -1138,6 +2122,577 @@ ExtMove* generateMoves(ExtMove* moveList, const Position& pos) {
 template <MoveType MT>
 ExtMove* generateMoves(ExtMove* moveList, const Position& pos, const Square to) {
     return generateRecaptureMoves(moveList, pos, to, pos.turn());
+}
+
+namespace {
+    int osl_sort_ptype(const PieceType pt) {
+        switch (pt) {
+        case ProPawn: return 2;
+        case ProLance: return 3;
+        case ProKnight: return 4;
+        case ProSilver: return 5;
+        case Horse: return 6;
+        case Dragon: return 7;
+        case King: return 8;
+        case Gold: return 9;
+        case Pawn: return 10;
+        case Lance: return 11;
+        case Knight: return 12;
+        case Silver: return 13;
+        case Bishop: return 14;
+        case Rook: return 15;
+        default: return 0;
+        }
+    }
+
+    int osl_square_index(const Square square) {
+        if (square == SquareNum) {
+            return 0;
+        }
+        return (static_cast<int>(makeFile(square)) + 1) * 16
+            + (static_cast<int>(makeRank(square)) + 1) + 1;
+    }
+
+    int effect_count(const Position& pos, const Color color, const Square sq) {
+        return pos.attackersTo(color, sq).popCount();
+    }
+
+    auto move_sort_key(const Position& pos, const Color turn, const Move move) {
+        const int attack_support = effect_count(pos, turn, move.to()) + (move.isDrop() ? 1 : 0);
+        const int defense_support = effect_count(pos, oppositeColor(turn), move.to());
+        const int move_sort_turn_sign = turn == Black ? 1 : -1;
+        const int file = static_cast<int>(makeFile(move.to())) + 1;
+        const int to_y = move_sort_turn_sign * (static_cast<int>(makeRank(move.to())) + 1);
+        const int to_x = (5 - std::abs(5 - file)) * 2 + (file > 5 ? 1 : 0);
+        int from_to = (to_y * 16 + to_x) * 256;
+        if (move.isDrop()) {
+            from_to += osl_sort_ptype(move.pieceTypeDropped());
+        }
+        else {
+            from_to += osl_square_index(move.from());
+        }
+        return std::make_tuple(attack_support > defense_support, from_to, move.isPromotion());
+    }
+
+    void sort_oslmate_escape_moves(const Position& pos, const Color turn, ExtMove* first, ExtMove* last) {
+        size_t last_sorted = 0;
+        size_t cur = 0;
+        PieceType last_piece_type = Occupied;
+        const size_t size = static_cast<size_t>(last - first);
+        for (; cur < size; ++cur) {
+            const PieceType piece_type = first[cur].move.isDrop()
+                ? Occupied
+                : first[cur].move.pieceTypeFrom();
+            if (first[cur].move.isDrop() || piece_type == last_piece_type) {
+                continue;
+            }
+            std::sort(first + static_cast<std::ptrdiff_t>(last_sorted), first + static_cast<std::ptrdiff_t>(cur),
+                [&](const ExtMove& lhs, const ExtMove& rhs) {
+                    return move_sort_key(pos, turn, lhs.move) > move_sort_key(pos, turn, rhs.move);
+                });
+            last_sorted = cur;
+            last_piece_type = piece_type;
+        }
+        std::sort(first + static_cast<std::ptrdiff_t>(last_sorted), first + static_cast<std::ptrdiff_t>(cur),
+            [&](const ExtMove& lhs, const ExtMove& rhs) {
+                return move_sort_key(pos, turn, lhs.move) > move_sort_key(pos, turn, rhs.move);
+            });
+    }
+
+    bool contains_ext_move(const ExtMove* first, const ExtMove* last, const Move move) {
+        for (const ExtMove* it = first; it != last; ++it) {
+            if (it->move == move) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool has_drop_piece(const Hand hand, const PieceType pt) {
+        switch (pt) {
+        case Pawn: return hand.exists<HPawn>();
+        case Lance: return hand.exists<HLance>();
+        case Knight: return hand.exists<HKnight>();
+        case Silver: return hand.exists<HSilver>();
+        case Gold: return hand.exists<HGold>();
+        case Bishop: return hand.exists<HBishop>();
+        case Rook: return hand.exists<HRook>();
+        default: return false;
+        }
+    }
+
+    template <Color US>
+    bool can_oslmate_drop_to(const Position& pos, const PieceType pt, const Square to) {
+        const Rank rank = makeRank(to);
+        if (pt == Pawn) {
+            const Rank last_rank = (US == Black ? Rank1 : Rank9);
+            if (rank == last_rank) {
+                return false;
+            }
+            Bitboard pawns = pos.bbOf(Pawn, US);
+            while (pawns) {
+                const Square pawn = pawns.firstOneFromSQ11();
+                if (makeFile(pawn) == makeFile(to)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        if (pt == Lance) {
+            const Rank last_rank = (US == Black ? Rank1 : Rank9);
+            return rank != last_rank;
+        }
+        if (pt == Knight) {
+            const Rank last_rank = (US == Black ? Rank1 : Rank9);
+            const Rank second_last_rank = (US == Black ? Rank2 : Rank8);
+            return rank != last_rank && rank != second_last_rank;
+        }
+        return true;
+    }
+
+    template <Color US>
+    void append_escape_if_legal(const Position& pos, const Bitboard& pinned,
+        const Move move, const ExtMove* first, ExtMove*& last) {
+        if (!pos.moveIsPseudoLegal<false>(move)) {
+            return;
+        }
+        if (!pos.pseudoLegalMoveIsLegal<false, false>(move, pinned)) {
+            return;
+        }
+        if (contains_ext_move(first, last, move)) {
+            return;
+        }
+        (*last++).move = move;
+    }
+
+    template <Color US>
+    bool osl_pin_or_open_piece(const Position& pos, const Square from) {
+        const Piece piece = pos.piece(from);
+        if (piece == Empty) {
+            return false;
+        }
+        const Color us = pieceToColor(piece);
+        const Color them = oppositeColor(us);
+        const Square king = pos.kingSquare(us);
+        const int file_delta = static_cast<int>(makeFile(from)) - static_cast<int>(makeFile(king));
+        const int rank_delta = static_cast<int>(makeRank(from)) - static_cast<int>(makeRank(king));
+        if (!(file_delta == 0 || rank_delta == 0 || std::abs(file_delta) == std::abs(rank_delta))) {
+            return false;
+        }
+        if ((betweenBB(king, from) & pos.occupiedBB()).isAny()) {
+            return false;
+        }
+
+        const int file_step = file_delta == 0 ? 0 : (file_delta > 0 ? 1 : -1);
+        const int rank_step = rank_delta == 0 ? 0 : (rank_delta > 0 ? 1 : -1);
+        for (int file = static_cast<int>(makeFile(from)) + file_step,
+                 rank = static_cast<int>(makeRank(from)) + rank_step;
+             isInSquare(static_cast<File>(file), static_cast<Rank>(rank));
+             file += file_step, rank += rank_step) {
+            const Square sq = makeSquare(static_cast<File>(file), static_cast<Rank>(rank));
+            const Piece behind = pos.piece(sq);
+            if (behind == Empty) {
+                continue;
+            }
+            if (pieceToColor(behind) != them) {
+                return false;
+            }
+            const PieceType behind_type = pieceToPieceType(behind);
+            if (file_step != 0 && rank_step != 0) {
+                return (behind_type == Bishop || behind_type == Horse)
+                    && bishopAttack(sq, pos.occupiedBB()).isSet(from);
+            }
+            if (behind_type == Rook || behind_type == Dragon) {
+                return rookAttack(sq, pos.occupiedBB()).isSet(from);
+            }
+            if (file_step == 0 && behind_type == Lance) {
+                return lanceAttack(them, sq, pos.occupiedBB()).isSet(from);
+            }
+            return false;
+        }
+        return false;
+    }
+
+    template <Color US>
+    bool osl_pin_or_open_can_move_to(const Position& pos, const Square from, const Square to) {
+        if (!osl_pin_or_open_piece<US>(pos, from)) {
+            return true;
+        }
+        const Square king = pos.kingSquare(US);
+        return isAligned<true>(from, to, king);
+    }
+
+    template <Color US>
+    void append_escape_if_osl_capture_or_block(const Position& pos, const Bitboard& pinned,
+        const Move move, const ExtMove* first, ExtMove*& last) {
+        (void)pinned;
+        if (!pos.moveIsPseudoLegal<false>(move)) {
+            return;
+        }
+        if (!move.isDrop() && !osl_pin_or_open_can_move_to<US>(pos, move.from(), move.to())) {
+            return;
+        }
+        if (contains_ext_move(first, last, move)) {
+            return;
+        }
+        (*last++).move = move;
+    }
+
+    template <Color US>
+    void append_escape_piece_variants(const Position& pos, const Bitboard& pinned,
+        const Square from, const Square to, const ExtMove* first, ExtMove*& last) {
+        const PieceType pt = pieceToPieceType(pos.piece(from));
+        const auto append_non_promote = [&]() {
+            append_escape_if_osl_capture_or_block<US>(pos, pinned, makeNonPromoteMove<Evasion>(pt, from, to, pos), first, last);
+        };
+        const auto append_promote = [&]() {
+            append_escape_if_osl_capture_or_block<US>(pos, pinned, makePromoteMove<Evasion>(pt, from, to, pos), first, last);
+        };
+        const bool from_can_promote = canPromote(US, makeRank(from));
+        const bool to_can_promote = canPromote(US, makeRank(to));
+
+        switch (pt) {
+        case Pawn:
+            if (to_can_promote) {
+                append_promote();
+            }
+            else {
+                append_non_promote();
+            }
+            break;
+        case Lance:
+            if (to_can_promote) {
+                append_promote();
+                if (isBehind<US, Rank2, Rank8>(makeRank(to))) {
+                    append_non_promote();
+                }
+            }
+            else {
+                append_non_promote();
+            }
+            break;
+        case Knight:
+            if (to_can_promote) {
+                append_promote();
+                if (isBehind<US, Rank2, Rank8>(makeRank(to))) {
+                    append_non_promote();
+                }
+            }
+            else {
+                append_non_promote();
+            }
+            break;
+        case Silver:
+            if (from_can_promote || to_can_promote) {
+                append_promote();
+            }
+            append_non_promote();
+            break;
+        case Bishop:
+        case Rook:
+            if (from_can_promote || to_can_promote) {
+                append_promote();
+            }
+            else {
+                append_non_promote();
+            }
+            break;
+        case Gold:
+        case King:
+        case ProPawn:
+        case ProLance:
+        case ProKnight:
+        case ProSilver:
+        case Horse:
+        case Dragon:
+            append_non_promote();
+            break;
+        default:
+            break;
+        }
+    }
+
+    template <Color US>
+    void append_escape_moves_to_target(const Position& pos, const Bitboard& pinned,
+        const Square target, const Square excluded_from, const ExtMove* first, ExtMove*& last) {
+        Bitboard attackers = pos.attackersTo(US, target);
+        if (excluded_from != SquareNum) {
+            attackers &= ~setMaskBB(excluded_from);
+        }
+        std::array<Square, 32> from_squares{};
+        size_t from_count = 0;
+        while (attackers) {
+            const Square from = attackers.firstOneFromSQ11();
+            if (from != pos.kingSquare(US)) {
+                from_squares[from_count++] = from;
+            }
+        }
+        std::stable_sort(from_squares.begin(), from_squares.begin() + static_cast<std::ptrdiff_t>(from_count),
+            [&](const Square lhs, const Square rhs) {
+                const PieceType lhs_type = pieceToPieceType(pos.piece(lhs));
+                const PieceType rhs_type = pieceToPieceType(pos.piece(rhs));
+                const int lhs_key = osl_piece_number_group_key(lhs_type) * 256 + osl_square_index_for_sort(lhs);
+                const int rhs_key = osl_piece_number_group_key(rhs_type) * 256 + osl_square_index_for_sort(rhs);
+                return lhs_key < rhs_key;
+            });
+        for (size_t i = 0; i < from_count; ++i) {
+            append_escape_piece_variants<US>(pos, pinned, from_squares[i], target, first, last);
+        }
+    }
+
+    template <Color US>
+    void append_escape_cheapest_block_move_to_target(const Position& pos, const Bitboard& pinned,
+        const Square target, const ExtMove* first, ExtMove*& last) {
+        const Bitboard all_attackers = pos.attackersTo(US, target);
+        if (all_attackers.popCount() < 2) {
+            return;
+        }
+
+        Bitboard attackers = all_attackers & ~pos.bbOf(King, US);
+        Square selected = SquareNum;
+        int selected_key = 1 << 30;
+        while (attackers) {
+            const Square from = attackers.firstOneFromSQ11();
+            const PieceType pt = pieceToPieceType(pos.piece(from));
+            const int order = osl_escape_block_piece_order(pt);
+            if (order >= 128) {
+                continue;
+            }
+            const int key = order * 1024 + immediate_osl_piece_number_from_position(pos, from);
+            if (key < selected_key) {
+                selected_key = key;
+                selected = from;
+            }
+        }
+
+        if (selected != SquareNum) {
+            append_escape_piece_variants<US>(pos, pinned, selected, target, first, last);
+        }
+    }
+
+    template <Color US, bool CheapOnly>
+    void append_escape_drops_to_target(const Position& pos, const Bitboard& pinned,
+        const Square target, const ExtMove* first, ExtMove*& last) {
+        static constexpr std::array<PieceType, 7> kDropOrder = {
+            Pawn, Lance, Knight, Silver, Gold, Bishop, Rook
+        };
+
+        const Hand our_hand = pos.hand(US);
+        for (const PieceType pt : kDropOrder) {
+            if (!has_drop_piece(our_hand, pt)) {
+                continue;
+            }
+            if (!can_oslmate_drop_to<US>(pos, pt, target)) {
+                continue;
+            }
+            const Move move = makeDropMove(pt, target);
+            if (!pos.moveIsPseudoLegal<false>(move)) {
+                continue;
+            }
+            if (contains_ext_move(first, last, move)) {
+                continue;
+            }
+            (*last++).move = move;
+            if (CheapOnly) {
+                return;
+            }
+        }
+    }
+
+    template <Color US>
+    void append_escape_king_moves(const Position& pos, const Bitboard& pinned,
+        const ExtMove* first, ExtMove*& last) {
+        const Square king = pos.kingSquare(US);
+        // OSL PieceOnBoard::generateKing emits king moves in
+        // UL, DR, U, D, UR, DL, L, R order, with directions oriented by side.
+        static constexpr std::array<std::pair<int, int>, 8> kBlackOrder = { {
+            { 1, -1 }, { -1, 1 }, { 0, -1 }, { 0, 1 },
+            { -1, -1 }, { 1, 1 }, { 1, 0 }, { -1, 0 }
+        } };
+        static constexpr std::array<std::pair<int, int>, 8> kWhiteOrder = { {
+            { -1, 1 }, { 1, -1 }, { 0, 1 }, { 0, -1 },
+            { 1, 1 }, { -1, -1 }, { -1, 0 }, { 1, 0 }
+        } };
+        const auto& order = US == Black ? kBlackOrder : kWhiteOrder;
+        for (const auto& [file_delta, rank_delta] : order) {
+            const int file = static_cast<int>(makeFile(king)) + file_delta;
+            const int rank = static_cast<int>(makeRank(king)) + rank_delta;
+            if (!isInSquare(static_cast<File>(file), static_cast<Rank>(rank))) {
+                continue;
+            }
+            const Square to = makeSquare(static_cast<File>(file), static_cast<Rank>(rank));
+            if (pos.bbOf(US).isSet(to)) {
+                continue;
+            }
+            if (!osl_king8_liberty(pos, US, to)) {
+                continue;
+            }
+            append_escape_if_legal<US>(pos, pinned, makeCaptureMove(King, king, to, pos), first, last);
+        }
+    }
+
+    template <Color US, bool CheapOnly>
+    ExtMove* generate_oslmate_escape_moves_impl(ExtMove* moveList, const Position& pos, const bool sortMoves) {
+        assert(pos.inCheck());
+
+        const ExtMove* first = moveList;
+        ExtMove* last = moveList;
+        const Bitboard pinned = pos.pinnedBB();
+        const Square king = pos.kingSquare(US);
+        Bitboard checkers = pos.checkersBB();
+        const int checker_count = checkers.popCount();
+
+        if (checker_count != 1) {
+            append_escape_king_moves<US>(pos, pinned, first, last);
+            if (sortMoves) {
+                sort_oslmate_escape_moves(pos, US, moveList, last);
+            }
+            return last;
+        }
+
+        const Square checker = checkers.firstOneFromSQ11();
+        const auto trace_issue56_escape_stage = [&](const char* phase) {
+#ifndef NDEBUG
+            const char* enabled = std::getenv("CSHOGI_DFPN_DEBUG");
+            if (!enabled || !*enabled) {
+                return;
+            }
+            bool has_2b3b = false;
+            bool has_s4c = false;
+            for (const ExtMove* it = first; it != last; ++it) {
+                has_2b3b = has_2b3b || it->move.toUSI() == "2b3b";
+                has_s4c = has_s4c || it->move.toUSI() == "S*4c";
+            }
+            if (!has_2b3b && !has_s4c) {
+                return;
+            }
+            std::fprintf(stderr,
+                "cshogi issue56 escape gen phase=%s sfen=%s checker=%s count=%zu cheap=%d sort=%d\n",
+                phase,
+                pos.toSFEN().c_str(),
+                squareToStringUSI(checker).c_str(),
+                static_cast<size_t>(last - first),
+                CheapOnly ? 1 : 0,
+                sortMoves ? 1 : 0);
+            for (const ExtMove* it = first; it != last; ++it) {
+                std::fprintf(stderr, "  %s\n", it->move.toUSI().c_str());
+            }
+#else
+            (void)phase;
+#endif
+        };
+        append_escape_moves_to_target<US>(pos, pinned, checker, king, first, last);
+        trace_issue56_escape_stage("capture-checker");
+        append_escape_king_moves<US>(pos, pinned, first, last);
+        trace_issue56_escape_stage("king");
+
+        const int king_file = static_cast<int>(makeFile(king));
+        const int king_rank = static_cast<int>(makeRank(king));
+        const int checker_file = static_cast<int>(makeFile(checker));
+        const int checker_rank = static_cast<int>(makeRank(checker));
+        const int file_step = checker_file == king_file ? 0 : (checker_file > king_file ? 1 : -1);
+        const int rank_step = checker_rank == king_rank ? 0 : (checker_rank > king_rank ? 1 : -1);
+        std::array<Square, 8> blocking_squares{};
+        size_t blocking_count = 0;
+        for (int file = king_file + file_step, rank = king_rank + rank_step;
+            file != checker_file || rank != checker_rank;
+            file += file_step, rank += rank_step) {
+            if (!isInSquare(static_cast<File>(file), static_cast<Rank>(rank))) {
+                break;
+            }
+            const Square block_sq = makeSquare(static_cast<File>(file), static_cast<Rank>(rank));
+            if (betweenBB(checker, king).isSet(block_sq)) {
+                blocking_squares[blocking_count++] = block_sq;
+            }
+        }
+        for (size_t i = 0; i < blocking_count; ++i) {
+            const Square block_sq = blocking_squares[i];
+            // OSL Escape::generateBlockingKing keeps all moving interpositions even
+            // for CheapOnly; only drops are reduced to the cheapest piece.
+            append_escape_moves_to_target<US>(pos, pinned, block_sq, king, first, last);
+            append_escape_drops_to_target<US, CheapOnly>(pos, pinned, block_sq, first, last);
+            trace_issue56_escape_stage("block");
+        }
+
+        if (sortMoves) {
+            sort_oslmate_escape_moves(pos, US, moveList, last);
+            trace_issue56_escape_stage("sort");
+        }
+
+        return last;
+    }
+
+    template <Color US>
+    ExtMove* generate_oslmate_escape_nonblock_moves_impl(ExtMove* moveList, const Position& pos, const bool sortMoves) {
+        assert(pos.inCheck());
+
+        const ExtMove* first = moveList;
+        ExtMove* last = moveList;
+        const Bitboard pinned = pos.pinnedBB();
+        const Square king = pos.kingSquare(US);
+        Bitboard checkers = pos.checkersBB();
+        const int checker_count = checkers.popCount();
+
+        if (checker_count == 1) {
+            const Square checker = checkers.firstOneFromSQ11();
+            append_escape_moves_to_target<US>(pos, pinned, checker, king, first, last);
+        }
+        append_escape_king_moves<US>(pos, pinned, first, last);
+
+        if (sortMoves) {
+            sort_oslmate_escape_moves(pos, US, moveList, last);
+        }
+
+        return last;
+    }
+
+    template <Color US>
+    ExtMove* generate_oslmate_cheap_king_escape_moves_impl(ExtMove* moveList, const Position& pos, const bool sortMoves) {
+        return generate_oslmate_escape_moves_impl<US, true>(moveList, pos, sortMoves);
+    }
+}
+
+ExtMove* generateOslmateEscapeMoves(ExtMove* moveList, const Position& pos, const bool cheapOnly, const bool sortMoves) {
+    if (!cheapOnly && sortMoves) {
+        std::array<ExtMove, MaxLegalMoves> full{};
+        ExtMove* cheap_last = pos.turn() == Black
+            ? generate_oslmate_escape_moves_impl<Black, true>(moveList, pos, true)
+            : generate_oslmate_escape_moves_impl<White, true>(moveList, pos, true);
+        ExtMove* full_last = pos.turn() == Black
+            ? generate_oslmate_escape_moves_impl<Black, false>(full.data(), pos, true)
+            : generate_oslmate_escape_moves_impl<White, false>(full.data(), pos, true);
+
+        const ExtMove* first = moveList;
+        const ExtMove* original_last = cheap_last;
+        ExtMove* out = cheap_last;
+        for (ExtMove* it = full.data(); it != full_last; ++it) {
+            if (!contains_ext_move(first, original_last, it->move)) {
+                (*out++).move = it->move;
+            }
+        }
+        return out;
+    }
+
+    if (pos.turn() == Black) {
+        return cheapOnly
+            ? generate_oslmate_escape_moves_impl<Black, true>(moveList, pos, sortMoves)
+            : generate_oslmate_escape_moves_impl<Black, false>(moveList, pos, sortMoves);
+    }
+    return cheapOnly
+        ? generate_oslmate_escape_moves_impl<White, true>(moveList, pos, sortMoves)
+        : generate_oslmate_escape_moves_impl<White, false>(moveList, pos, sortMoves);
+}
+
+ExtMove* generateOslmateCheapKingEscapeMoves(ExtMove* moveList, const Position& pos, const bool sortMoves) {
+    return pos.turn() == Black
+        ? generate_oslmate_cheap_king_escape_moves_impl<Black>(moveList, pos, sortMoves)
+        : generate_oslmate_cheap_king_escape_moves_impl<White>(moveList, pos, sortMoves);
+}
+
+ExtMove* generateOslmateEscapeNonblockMoves(ExtMove* moveList, const Position& pos, const bool sortMoves) {
+    return pos.turn() == Black
+        ? generate_oslmate_escape_nonblock_moves_impl<Black>(moveList, pos, sortMoves)
+        : generate_oslmate_escape_nonblock_moves_impl<White>(moveList, pos, sortMoves);
 }
 
 // 明示的なインスタンス化
@@ -1158,3 +2713,5 @@ template ExtMove* generateMoves<PseudoLegal       >(ExtMove* moveList, const Pos
 template ExtMove* generateMoves<Recapture         >(ExtMove* moveList, const Position& pos, const Square to);
 template ExtMove* generateMoves<Check             >(ExtMove* moveList, const Position& pos);
 template ExtMove* generateMoves<CheckAll          >(ExtMove* moveList, const Position& pos);
+template ExtMove* generateMoves<CheckAllOslmate   >(ExtMove* moveList, const Position& pos);
+template ExtMove* generateMoves<CheckAllOslmateFixedRaw>(ExtMove* moveList, const Position& pos);

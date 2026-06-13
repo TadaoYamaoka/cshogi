@@ -21,6 +21,10 @@
 
 #include "move.hpp"
 
+#include <chrono>
+#include <cstdio>
+#include <cstdlib>
+
 namespace {
     const std::string HandPieceToStringTable[HandPieceNum] = {"P*", "L*", "N*", "S*", "G*", "B*", "R*"};
     inline std::string handPieceToString(const HandPiece hp) { return HandPieceToStringTable[hp]; }
@@ -29,9 +33,87 @@ namespace {
         "", "FU", "KY", "KE", "GI", "KA", "HI", "KI", "OU", "TO", "NY", "NK", "NG", "UM", "RY"
     };
     inline std::string pieceTypeToString(const PieceType pt) { return PieceTypeToStringTable[pt]; }
+
+    struct MoveProfileCounter {
+        uint64_t calls = 0;
+        uint64_t ns = 0;
+    };
+
+#ifndef CSHOGI_ENABLE_MOVE_PROFILE_CODE
+#define CSHOGI_ENABLE_MOVE_PROFILE_CODE 0
+#endif
+
+#if CSHOGI_ENABLE_MOVE_PROFILE_CODE
+    bool move_profile_enabled() {
+        static const bool enabled = []() {
+            char* value = nullptr;
+            size_t value_len = 0;
+            const errno_t env_err = _dupenv_s(&value, &value_len, "CSHOGI_MOVE_PROFILE");
+            const bool result = env_err == 0 && value != nullptr && value_len > 0;
+            free(value);
+            return result;
+        }();
+        return enabled;
+    }
+
+    uint64_t move_profile_now_ns() {
+        return static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::steady_clock::now().time_since_epoch()).count());
+    }
+
+    MoveProfileCounter& to_usi_profile_counter() {
+        static MoveProfileCounter counter;
+        return counter;
+    }
+
+    struct MoveProfileDumper {
+        ~MoveProfileDumper() {
+            if (!move_profile_enabled()) {
+                return;
+            }
+            const auto& counter = to_usi_profile_counter();
+            std::fprintf(stderr, "move profile\n");
+            std::fprintf(stderr, "  to_usi calls=%llu ms=%.3f\n",
+                static_cast<unsigned long long>(counter.calls),
+                static_cast<double>(counter.ns) / 1000000.0);
+        }
+    };
+
+    MoveProfileDumper move_profile_dumper;
+
+    class MoveProfileScope {
+    public:
+        explicit MoveProfileScope(MoveProfileCounter& counter)
+            : counter_(counter), enabled_(move_profile_enabled()), start_(enabled_ ? move_profile_now_ns() : 0) {}
+
+        ~MoveProfileScope() {
+            if (!enabled_) {
+                return;
+            }
+            ++counter_.calls;
+            counter_.ns += move_profile_now_ns() - start_;
+        }
+
+    private:
+        MoveProfileCounter& counter_;
+        bool enabled_;
+        uint64_t start_;
+    };
+#else
+    MoveProfileCounter& to_usi_profile_counter() {
+        static MoveProfileCounter counter;
+        return counter;
+    }
+
+    class MoveProfileScope {
+    public:
+        explicit MoveProfileScope(MoveProfileCounter&) {}
+    };
+#endif
 }
 
 std::string Move::toUSI() const {
+    MoveProfileScope profile(to_usi_profile_counter());
     if (!(*this)) return "None";
 
     const Square from = this->from();

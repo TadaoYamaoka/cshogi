@@ -24,6 +24,103 @@
 #include "mt64bit.hpp"
 #include "generateMoves.hpp"
 
+#include <chrono>
+#include <cstdio>
+#include <cstdlib>
+
+namespace {
+    struct PositionProfileCounter {
+        uint64_t calls = 0;
+        uint64_t ns = 0;
+    };
+
+#ifndef CSHOGI_ENABLE_POSITION_PROFILE_CODE
+#define CSHOGI_ENABLE_POSITION_PROFILE_CODE 0
+#endif
+
+#if CSHOGI_ENABLE_POSITION_PROFILE_CODE
+    bool position_profile_enabled() {
+        static const bool enabled = []() {
+            char* value = nullptr;
+            size_t value_len = 0;
+            const errno_t env_err = _dupenv_s(&value, &value_len, "CSHOGI_POSITION_PROFILE");
+            const bool result = env_err == 0 && value != nullptr && value_len > 0;
+            free(value);
+            return result;
+        }();
+        return enabled;
+    }
+
+    uint64_t position_profile_now_ns() {
+        return static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::steady_clock::now().time_since_epoch()).count());
+    }
+
+    PositionProfileCounter& do_move_profile_counter() {
+        static PositionProfileCounter counter;
+        return counter;
+    }
+
+    PositionProfileCounter& undo_move_profile_counter() {
+        static PositionProfileCounter counter;
+        return counter;
+    }
+
+    struct PositionProfileDumper {
+        ~PositionProfileDumper() {
+            if (!position_profile_enabled()) {
+                return;
+            }
+            const auto& do_move = do_move_profile_counter();
+            const auto& undo_move = undo_move_profile_counter();
+            std::fprintf(stderr, "position profile\n");
+            std::fprintf(stderr, "  do_move calls=%llu ms=%.3f\n",
+                static_cast<unsigned long long>(do_move.calls),
+                static_cast<double>(do_move.ns) / 1000000.0);
+            std::fprintf(stderr, "  undo_move calls=%llu ms=%.3f\n",
+                static_cast<unsigned long long>(undo_move.calls),
+                static_cast<double>(undo_move.ns) / 1000000.0);
+        }
+    };
+
+    PositionProfileDumper position_profile_dumper;
+
+    class PositionProfileScope {
+    public:
+        explicit PositionProfileScope(PositionProfileCounter& counter)
+            : counter_(counter), enabled_(position_profile_enabled()), start_(enabled_ ? position_profile_now_ns() : 0) {}
+
+        ~PositionProfileScope() {
+            if (!enabled_) {
+                return;
+            }
+            ++counter_.calls;
+            counter_.ns += position_profile_now_ns() - start_;
+        }
+
+    private:
+        PositionProfileCounter& counter_;
+        bool enabled_;
+        uint64_t start_;
+    };
+#else
+    PositionProfileCounter& do_move_profile_counter() {
+        static PositionProfileCounter counter;
+        return counter;
+    }
+
+    PositionProfileCounter& undo_move_profile_counter() {
+        static PositionProfileCounter counter;
+        return counter;
+    }
+
+    class PositionProfileScope {
+    public:
+        explicit PositionProfileScope(PositionProfileCounter&) {}
+    };
+#endif
+}
+
 Key Position::zobrist_[PieceTypeNum][SquareNum][ColorNum];
 Key Position::zobHand_[HandPieceNum][ColorNum];
 
@@ -461,6 +558,7 @@ bool Position::moveIsLegal(const Move move) const {
 
 // 局面の更新
 void Position::doMove(const Move move, StateInfo& newSt) {
+    PositionProfileScope profile(do_move_profile_counter());
     const CheckInfo ci(*this);
     doMove(move, newSt, ci, moveGivesCheck(move, ci));
 }
@@ -581,6 +679,7 @@ void Position::doMove(const Move move, StateInfo& newSt, const CheckInfo& ci, co
 }
 
 void Position::undoMove(const Move move) {
+    PositionProfileScope profile(undo_move_profile_counter());
     assert(isOK());
     assert(move);
 
