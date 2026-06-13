@@ -33,7 +33,16 @@
 
 using ns_dfpn::ProofDisproof;
 
+#ifndef CSHOGI_ENABLE_DFPN_PROFILE_CODE
+#define CSHOGI_ENABLE_DFPN_PROFILE_CODE 0
+#endif
+
+#ifndef CSHOGI_ENABLE_DFPN_TRACE_CODE
+#define CSHOGI_ENABLE_DFPN_TRACE_CODE 0
+#endif
+
 namespace {
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
     thread_local bool g_trace_fixed_a3_window = false;
 
     struct FixedA3TraceScope {
@@ -47,6 +56,13 @@ namespace {
             g_trace_fixed_a3_window = previous;
         }
     };
+#else
+    constexpr bool g_trace_fixed_a3_window = false;
+
+    struct FixedA3TraceScope {
+        explicit FixedA3TraceScope(bool) {}
+    };
+#endif
 
     constexpr size_t kMoveBufferSize = MaxLegalMoves;
     constexpr size_t kCheckOrEscapeMoveCapacity = 150;
@@ -148,21 +164,25 @@ namespace {
         DefenseChildInit,
         DefenseChildRecurse,
         DefenseSelectLoop,
+        ChildKeyStand,
+        ChildPosition,
+        ChildRecordAssign,
+        FixedImmediate,
+        FixedCheckGen,
+        FixedDefenseEstimate,
+        FixedEscapeLeaf,
+        EffectSetAt,
+        EffectCount,
+        EffectHasAt,
+        StandDominance,
         Count,
     };
 
     struct DfpnProfileCounter {
         uint64_t calls = 0;
         uint64_t ns = 0;
+        uint64_t self_ns = 0;
     };
-
-#ifndef CSHOGI_ENABLE_DFPN_PROFILE_CODE
-#define CSHOGI_ENABLE_DFPN_PROFILE_CODE 0
-#endif
-
-#ifndef CSHOGI_ENABLE_DFPN_TRACE_CODE
-#define CSHOGI_ENABLE_DFPN_TRACE_CODE 0
-#endif
 
 #if CSHOGI_ENABLE_DFPN_TRACE_CODE
 #define CSHOGI_DFPN_TRACE_GETENV(name) std::getenv(name)
@@ -193,24 +213,45 @@ namespace {
             std::chrono::steady_clock::now().time_since_epoch()).count());
     }
 
+    struct DfpnProfileFrame {
+        DfpnProfileSlot slot;
+        uint64_t start_ns;
+        uint64_t child_ns = 0;
+    };
+
+    std::vector<DfpnProfileFrame>& dfpn_profile_stack() {
+        static thread_local std::vector<DfpnProfileFrame> stack;
+        return stack;
+    }
+
     class DfpnProfileScope {
     public:
         explicit DfpnProfileScope(const DfpnProfileSlot slot)
-            : slot_(slot), enabled_(dfpn_profile_enabled()), start_(enabled_ ? dfpn_profile_now_ns() : 0) {}
+            : enabled_(dfpn_profile_enabled()) {
+            if (enabled_) {
+                dfpn_profile_stack().push_back({ slot, dfpn_profile_now_ns(), 0 });
+            }
+        }
 
         ~DfpnProfileScope() {
             if (!enabled_) {
                 return;
             }
-            auto& counter = dfpn_profile_counters()[static_cast<size_t>(slot_)];
+            auto& stack = dfpn_profile_stack();
+            DfpnProfileFrame frame = stack.back();
+            stack.pop_back();
+            const uint64_t elapsed = dfpn_profile_now_ns() - frame.start_ns;
+            auto& counter = dfpn_profile_counters()[static_cast<size_t>(frame.slot)];
             ++counter.calls;
-            counter.ns += dfpn_profile_now_ns() - start_;
+            counter.ns += elapsed;
+            counter.self_ns += elapsed >= frame.child_ns ? elapsed - frame.child_ns : 0;
+            if (!stack.empty()) {
+                stack.back().child_ns += elapsed;
+            }
         }
 
     private:
-        DfpnProfileSlot slot_;
         bool enabled_;
-        uint64_t start_;
     };
 
     void dfpn_profile_dump() {
@@ -226,21 +267,25 @@ namespace {
             "oracle_defense_child_probe", "oracle_defense_d2", "oracle_defense_traceable",
             "oracle_defense_effect", "oracle_defense_recurse", "board_index_key", "board_secondary_key",
             "attack_child_init", "attack_child_recurse", "attack_select_loop",
-            "defense_child_init", "defense_child_recurse", "defense_select_loop"
+            "defense_child_init", "defense_child_recurse", "defense_select_loop",
+            "child_key_stand", "child_position", "child_record_assign",
+            "fixed_immediate", "fixed_check_gen", "fixed_defense_estimate", "fixed_escape_leaf",
+            "effect_set_at", "effect_count", "effect_has_at", "stand_dominance"
         };
         const auto& counters = dfpn_profile_counters();
         std::fprintf(stderr, "cshogi dfpn profile\n");
         for (size_t i = 0; i < counters.size(); ++i) {
-            std::fprintf(stderr, "  %s calls=%llu ms=%.3f\n",
+            std::fprintf(stderr, "  %s calls=%llu ms=%.3f self_ms=%.3f\n",
                 names[i],
                 static_cast<unsigned long long>(counters[i].calls),
-                static_cast<double>(counters[i].ns) / 1000000.0);
+                static_cast<double>(counters[i].ns) / 1000000.0,
+                static_cast<double>(counters[i].self_ns) / 1000000.0);
         }
     }
 #else
     class DfpnProfileScope {
     public:
-        explicit DfpnProfileScope(DfpnProfileSlot) {}
+        explicit constexpr DfpnProfileScope(DfpnProfileSlot) noexcept {}
     };
 
     inline void dfpn_profile_dump() {}
@@ -266,6 +311,10 @@ namespace {
 #endif
     }
     bool dfpn_observe_env_flag(const char* name) {
+#if !CSHOGI_ENABLE_DFPN_TRACE_CODE
+        (void)name;
+        return false;
+#else
 #ifdef _WIN32
         char* value = nullptr;
         size_t value_len = 0;
@@ -276,8 +325,13 @@ namespace {
 #else
         return std::getenv(name) != nullptr;
 #endif
+#endif
     }
     std::optional<std::string> dfpn_observe_env_string(const char* name) {
+#if !CSHOGI_ENABLE_DFPN_TRACE_CODE
+        (void)name;
+        return std::nullopt;
+#else
 #ifdef _WIN32
         char* value = nullptr;
         size_t value_len = 0;
@@ -292,6 +346,7 @@ namespace {
 #else
         const char* value = std::getenv(name);
         return value ? std::optional<std::string>(value) : std::nullopt;
+#endif
 #endif
     }
     uint32_t dfpn_env_uint(const char* name, const uint32_t fallback = 0) {
@@ -317,6 +372,10 @@ namespace {
 #endif
     }
     uint32_t dfpn_observe_env_uint(const char* name, const uint32_t fallback = 0) {
+#if !CSHOGI_ENABLE_DFPN_TRACE_CODE
+        (void)name;
+        return fallback;
+#else
 #ifdef _WIN32
         char* value = nullptr;
         size_t value_len = 0;
@@ -331,6 +390,7 @@ namespace {
 #else
         const char* value = std::getenv(name);
         return value ? static_cast<uint32_t>(std::strtoul(value, nullptr, 10)) : fallback;
+#endif
 #endif
     }
     std::optional<uint64_t> dfpn_env_u64(const char* name) {
@@ -389,6 +449,18 @@ namespace {
         const uint32_t max_node = dfpn_env_uint("CSHOGI_DFPN_TRACE_NODECOUNT_MAX", UINT32_MAX);
         return node_count >= min_node && node_count <= max_node;
     }
+
+#if !CSHOGI_ENABLE_DFPN_TRACE_CODE
+#define dfpn_env_flag(name) false
+#define dfpn_observe_env_flag(name) false
+#define dfpn_env_uint(name, fallback) (fallback)
+#define dfpn_observe_env_uint(name, fallback) (fallback)
+#define dfpn_env_u64(name) std::optional<uint64_t>()
+#define dfpn_env_string(name) std::optional<std::string>()
+#define dfpn_observe_env_string(name) std::optional<std::string>()
+#define dfpn_trace_nodecount_event_enabled(node_count, node_limit) false
+#endif
+
     uint32_t next_root_search_limit(const uint32_t current, const uint32_t max_search_node) {
         if (current >= max_search_node) {
             return max_search_node;
@@ -666,6 +738,47 @@ namespace {
         return board64;
     }
 
+    struct OslBoardKeyParts {
+        Key board_index = 0;
+        uint64_t board_secondary = 0;
+    };
+
+    OslBoardKeyParts board_keys_after_move(
+        const uint64_t board_index_key,
+        const uint64_t board_secondary_key,
+        const Color mover,
+        const Move move) {
+        uint64_t board64 = board_index_key;
+        uint32_t board32 = static_cast<uint32_t>(board_secondary_key);
+        if (!move) {
+            constexpr int kOslInvalidFromSquare = 1;
+            constexpr int kOslInvalidToSquare = 0;
+            constexpr int kOslBlackEmptyPtypeOIndex = 16;
+            osl_sub_hash_direct(board64, board32, kOslInvalidFromSquare, kOslBlackEmptyPtypeOIndex);
+            osl_add_hash_direct(board64, board32, kOslInvalidToSquare, kOslBlackEmptyPtypeOIndex);
+            board64 ^= uint64_t{ 1 };
+            return { static_cast<Key>(board64), static_cast<uint64_t>(board32) };
+        }
+        if (!move.isDrop()) {
+            const PieceType old_type = move.pieceTypeFrom();
+            const PieceType new_type = move.pieceTypeTo();
+            if (move.isCapture()) {
+                const PieceType captured = move.cap();
+                osl_sub_hash(board64, board32, move.to(), oppositeColor(mover), captured);
+                osl_add_hash(board64, board32, SquareNum, mover, osl_captured_ptype(captured));
+            }
+            osl_sub_hash(board64, board32, move.from(), mover, old_type);
+            osl_add_hash(board64, board32, move.to(), mover, new_type);
+        }
+        else {
+            const PieceType dropped = move.pieceTypeDropped();
+            osl_sub_hash(board64, board32, SquareNum, mover, dropped);
+            osl_add_hash(board64, board32, move.to(), mover, dropped);
+        }
+        board64 ^= uint64_t{ 1 };
+        return { static_cast<Key>(board64), static_cast<uint64_t>(board32) };
+    }
+
     uint64_t board_index_key_before_move(uint64_t key, const Color mover, const Move move) {
         uint64_t board64 = key;
         uint32_t board32 = 0;
@@ -712,16 +825,28 @@ namespace {
     }
 
     inline bool trace_issue56_5b3b_bucket_position(const Position& pos) {
+        if constexpr (!CSHOGI_ENABLE_DFPN_TRACE_CODE) {
+            (void)pos;
+            return false;
+        }
         return dfpn_trace_enabled()
             && pos.toSFEN().rfind("5+S1kl/6+Rgr/3p3p1/p2nppp1p/5ns2/3Pl3P/1PNK1PP2/1GGS2S2/5G1NL w ", 0) == 0;
     }
 
     inline bool trace_issue56_5b3b_bucket_key(const Position& pos) {
+        if constexpr (!CSHOGI_ENABLE_DFPN_TRACE_CODE) {
+            (void)pos;
+            return false;
+        }
         return dfpn_trace_enabled()
             && board_index_key(pos) == static_cast<Key>(3325044760457281623ULL);
     }
 
     inline bool trace_issue56_b7f_oracle_bucket_key(const Position& pos) {
+        if constexpr (!CSHOGI_ENABLE_DFPN_TRACE_CODE) {
+            (void)pos;
+            return false;
+        }
         return dfpn_trace_enabled()
             && board_index_key(pos) == static_cast<Key>(5930309791338632486ULL);
     }
@@ -759,9 +884,8 @@ namespace {
 
     struct OslmateBoardKeyHash {
         size_t operator()(const OslmateBoardKey& key) const {
-            const size_t h1 = std::hash<Key>{}(key.board_key);
-            const size_t h2 = std::hash<uint64_t>{}(key.board_secondary);
-            return h1 ^ (h2 + 0x9e3779b97f4a7c15ull + (h1 << 6) + (h1 >> 2));
+            // OSL std::hash<BoardKey> returns BoardKey96::signature(), i.e. board32.
+            return static_cast<size_t>(static_cast<uint32_t>(key.board_secondary));
         }
     };
 
@@ -788,30 +912,38 @@ namespace {
     class OslPieceNumberState;
 
     struct ChildState {
-        Move move = Move::moveNone();
-        ProofDisproof pdp = ProofDisproof::Unknown();
-        Move best_reply = Move::moveNone();
-        Move last_move = Move::moveNone();
-        Hand proof_pieces = Hand(0);
-        ProofPiecesType proof_pieces_type = ProofPiecesType::Unset;
-        uint32_t node_count = 0;
-        uint32_t tried_oracle = 0;
-        uint32_t min_pdp = ProofDisproof::PROOF_MAX;
-        uint32_t working_threads = 0;
-        uint16_t remaining_depth = 0;
-        uint64_t solved = 0;
-        uint64_t dag_moves = 0;
-        Hand proof_pieces_candidate = Hand(0);
-        Square last_to = SquareNum;
-        bool false_branch = false;
-        bool dag_terminal = false;
-        bool exact = false;
-        int8_t proof_cost = 0;
-        uint8_t need_full_width = 0;
-        Key board_index = 0;
-        uint64_t board_secondary = 0;
-        std::array<Hand, ColorNum> stands{ Hand(0), Hand(0) };
-        const PathRecord* path_record = nullptr;
+        ChildState() noexcept {}
+
+        void reset_for_move(const Move move_) {
+            move = move_;
+            path_record = nullptr;
+            proof_cost = 0;
+        }
+
+        Move move;
+        ProofDisproof pdp;
+        Move best_reply;
+        Move last_move;
+        Hand proof_pieces;
+        ProofPiecesType proof_pieces_type;
+        uint32_t node_count;
+        uint32_t tried_oracle;
+        uint32_t min_pdp;
+        uint32_t working_threads;
+        uint16_t remaining_depth;
+        uint64_t solved;
+        uint64_t dag_moves;
+        Hand proof_pieces_candidate;
+        Square last_to;
+        bool false_branch;
+        bool dag_terminal;
+        bool exact;
+        int8_t proof_cost;
+        uint8_t need_full_width;
+        Key board_index;
+        uint64_t board_secondary;
+        std::array<Hand, ColorNum> stands;
+        const PathRecord* path_record;
     };
 
     struct LibertyInfo {
@@ -876,12 +1008,12 @@ namespace {
     Hand zero_hand();
     int hand_count(const Hand& hand, HandPiece hp);
     std::string hand_debug_string(const Hand& hand);
-    bool trace_board_key_env_enabled();
-    bool trace_board_key_from_env(Key key);
+    inline bool trace_board_key_env_enabled();
+    inline bool trace_board_key_from_env(Key key);
     bool is_osl_normal_move(Move move);
     PieceType osl_move_ptype(const Position& pos, Move move);
     Move validated_mate_move_in_1(Position& pos);
-    Move immediate_mate_move_in_1_osl(Position& pos);
+    Move immediate_mate_move_in_1_osl(Position& pos, const OslPieceNumberState* current_piece_numbers = nullptr);
     ProofDisproof fixed_attack_osl_shortcut(Position& pos, Color attack_color, Move* best_move = nullptr,
         Hand* proof_pieces = nullptr, OslPieceNumberState* current_piece_numbers = nullptr);
     Hand proof_pieces_leaf(const Position& pos, const Color attack_color, const Hand& max);
@@ -894,7 +1026,8 @@ namespace {
     std::vector<Move> generate_check_moves(Position& pos, bool* has_pawn_checkmate = nullptr);
     std::vector<Move> generate_fixed_depth_check_moves(Position& pos, bool* has_pawn_checkmate = nullptr,
         const OslPieceNumberState* current_piece_numbers = nullptr);
-    void sort_moves(const Position& pos, Color turn, std::vector<Move>& moves);
+    template <class MoveContainer>
+    void sort_moves(const Position& pos, Color turn, MoveContainer& moves);
     void generate_escape_moves(Position& pos, std::vector<Move>& moves, bool need_full_width = true, Square last_to = SquareNum,
         const OslPieceNumberState* current_piece_numbers = nullptr);
     std::vector<Move> generate_escape_moves(Position& pos, bool need_full_width = true, Square last_to = SquareNum,
@@ -923,6 +1056,7 @@ namespace {
     int dir_index_from_delta(Color attacker, int file_delta, int rank_delta);
     std::optional<Square> king8_square(Square king, int dir_index, Color attack_color);
     King8RuntimeInfo make_king8_runtime_info(const Position& pos, Color attack_color);
+    King8RuntimeInfo king8_runtime_info_at(const Position& pos, Color attack_color);
     King8RuntimeInfo reset_edge_from_liberty_runtime(Square king, Color attack_color, King8RuntimeInfo info);
     int move_candidate_mask_runtime(const Position& pos, Color attack_color, Square king, const King8RuntimeInfo& info);
     LibertyInfo defender_king_liberty_info(const Position& pos, const Color attack_color);
@@ -934,14 +1068,23 @@ namespace {
     bool immediate_candidate_preserves_liberty_candidate_effect(const Position& pos, Color attack_color,
         Square target_king, Move move, const King8RuntimeInfo& king8_info, int dir_index);
     bool immediate_opponent_long_effect_follows(const Position& pos, Color attack_color, Move move);
+    bool immediate_king_open_move(const Position& pos, Color attack_color, Move move, const Bitboard& pinned_attack);
     int immediate_osl_piece_number_from_position(const Position& pos, Square square);
+    int immediate_osl_piece_number_from_state_or_position(
+        const Position& pos, Square square, const OslPieceNumberState* current_piece_numbers);
+    bool osl_piece_number_info(
+        const OslPieceNumberState* current_piece_numbers, int number, Color* owner, Square* square);
     bool immediate_can_checkmate_drop_ptype(PieceType piece_type, int dir_index, uint8_t liberty_mask);
     bool immediate_slow_drop_ok(const Position& pos, Color attack_color,
         Square target_king, PieceType piece_type, int dir_index, const King8RuntimeInfo& king8_info);
     Move immediate_mate_move_by_osl_move_candidates(Position& pos, Color attack_color,
-        Square target_king, const King8RuntimeInfo& king8_info, bool trace_fixed_probe);
+        Square target_king, const King8RuntimeInfo& king8_info, bool trace_fixed_probe,
+        const OslPieceNumberState* current_piece_numbers = nullptr);
     bool immediate_reject_prook_false_positive(const Position& pos, Color attack_color, Square target_king, Move move);
+    inline Bitboard effect_set_at(const Position& pos, const Color c, const Square sq);
+    inline bool effect_has_at(const Position& pos, const Color c, const Square sq);
     inline int effect_count(const Position& pos, const Color c, const Square sq);
+    inline bool has_multiple_effect_at(const Position& pos, Color c, Square sq);
     inline uint32_t saturate_sum(const uint64_t value, const uint32_t limit);
     int osl_king_escape_order_key(Color defense_color, Square from, Move move);
     bool is_blockable_single_check(const Position& pos, Square checker, Square defense_king);
@@ -953,6 +1096,9 @@ namespace {
         const bool success = false);
 
     inline bool dfpn_trace_enabled() {
+#if !CSHOGI_ENABLE_DFPN_TRACE_CODE
+        return false;
+#else
 #ifdef NDEBUG
         return false;
 #else
@@ -965,6 +1111,7 @@ namespace {
             return result;
         }();
         return enabled;
+#endif
 #endif
     }
 
@@ -1558,6 +1705,7 @@ namespace {
 #define dfpn_trace_zukou_top_s5d_defense_enabled() false
 #define dfpn_trace_zukou_s5d6e7e_late_enabled() false
 #define dfpn_trace_root_dump_enabled() false
+#define dfpn_trace_zukou_dag_enabled() false
 #define dfpn_trace_zukou001_node_limit_only_enabled() false
 #define dfpn_trace_attack_estimation_enabled() false
 #define dfpn_issue56_target_trace_enabled() false
@@ -1588,6 +1736,7 @@ namespace {
 #define dfpn_trace_zukou_top_s5d_defense_enabled() false
 #define dfpn_trace_zukou_s5d6e7e_late_enabled() false
 #define dfpn_trace_root_dump_enabled() false
+#define dfpn_trace_zukou_dag_enabled() false
 #define dfpn_trace_zukou001_node_limit_only_enabled() false
 #define dfpn_trace_attack_estimation_enabled() false
 #define dfpn_issue56_target_trace_enabled() dfpn_issue56_target_trace_release_enabled()
@@ -2992,7 +3141,7 @@ namespace {
 
     ProofDisproof fixed_escape_by_move_zero(Position& pos, const Color attack_color, Move* best_move = nullptr,
         Hand* proof_pieces = nullptr, const bool no_proof_pieces_attack_estimation = false,
-        const bool may_unsafe = true) {
+        const bool may_unsafe = true, const OslPieceNumberState* current_piece_numbers = nullptr) {
         if (best_move) {
             *best_move = Move::moveNone();
         }
@@ -3007,7 +3156,7 @@ namespace {
         const bool trace_fixed_a3_leaf = g_trace_fixed_a3_window
             && dfpn_observe_env_flag("CSHOGI_DFPN_ZUKOU_FIXED_A3_DEFENSE");
         const Square target_king = pos.kingSquare(oppositeColor(attack_color));
-        const bool still_checking = target_king && pos.attackersToIsAny(attack_color, target_king);
+        const bool still_checking = target_king && effect_has_at(pos, attack_color, target_king);
         if (trace_fixed_a3_leaf) {
             std::fprintf(stderr,
                 "cshogi fixed-a3 leaf enter still_checking=%d in_check=%d may_unsafe=%d no_est=%d sfen=%s\n",
@@ -3024,7 +3173,8 @@ namespace {
             return ProofDisproof::NoEscape();
         }
         if (!pos.inCheck()) {
-            const Move mate1 = immediate_mate_move_in_1_osl(pos);
+            DfpnProfileScope immediate_profile(DfpnProfileSlot::FixedImmediate);
+            const Move mate1 = immediate_mate_move_in_1_osl(pos, current_piece_numbers);
             if (trace_fixed_a3_leaf) {
                 std::fprintf(stderr,
                     "cshogi fixed-a3 leaf mate1=%s sfen=%s\n",
@@ -3047,7 +3197,10 @@ namespace {
 
         const ProofDisproof result = no_proof_pieces_attack_estimation
             ? ProofDisproof::Unknown()
-            : fixed_attack_estimation_zero(pos, attack_color);
+            : [&]() {
+                DfpnProfileScope estimate_profile(DfpnProfileSlot::FixedEscapeLeaf);
+                return fixed_attack_estimation_zero(pos, attack_color);
+            }();
         if (trace_fixed_a3_leaf) {
             std::fprintf(stderr,
                 "cshogi fixed-a3 leaf estimate=%u,%u sfen=%s\n",
@@ -3073,9 +3226,13 @@ namespace {
         }
 
         const Color defense_color = oppositeColor(attack_color);
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
         const bool trace_fixed_probe = trace_issue56_fixed_probe_position(pos);
+#else
+        constexpr bool trace_fixed_probe = false;
+#endif
         const Square attacker_king = pos.kingSquare(attack_color);
-        if (attacker_king && pos.attackersToIsAny(defense_color, attacker_king)) {
+        if (attacker_king && effect_has_at(pos, defense_color, attacker_king)) {
             return ProofDisproof::NoCheckmate();
         }
 
@@ -3083,11 +3240,8 @@ namespace {
         ExtMove* last = generateOslmateEscapeNonblockMoves(buffer.data(), pos, false);
         FixedMoveVector<kCheckOrEscapeMoveCapacity> moves;
         FixedMoveVector<kCheckOrEscapeMoveCapacity> king_moves;
-        FixedMoveVector<kCheckOrEscapeMoveCapacity> blocking_moves;
-        FixedMoveVector<kCheckOrEscapeMoveCapacity> liberty0_blocking_moves;
         FixedMoveVector<kCheckOrEscapeMoveCapacity> raw_blocking_moves;
         bool raw_blocking_collected = false;
-        bool blocking_collected = false;
 
         const Square defense_king = pos.kingSquare(defense_color);
         Bitboard checkers = pos.checkersBB();
@@ -3148,35 +3302,20 @@ namespace {
             reorder_osl_numbered_escape_target_moves_impl(current_piece_numbers, raw_blocking_moves);
         };
 
-        const auto collect_liberty0_blocking_moves = [&]() {
-            if (blocking_collected) {
-                return;
-            }
-            blocking_collected = true;
+        if (moves.empty()) {
             collect_raw_blocking_moves();
             for (const Move move : raw_blocking_moves) {
-                blocking_moves.push_back(move);
-            }
-        };
-
-        if (moves.empty()) {
-            collect_liberty0_blocking_moves();
-            for (const Move move : blocking_moves) {
                 if (move.isDrop()) {
-                    if (!pos.attackersToIsAny(defense_color, move.to())) {
+                    if (!effect_has_at(pos, defense_color, move.to())) {
                         continue;
                     }
                 }
                 else if (std::abs(static_cast<int>(makeFile(move.from())) - static_cast<int>(makeFile(defense_king))) > 1
                     || std::abs(static_cast<int>(makeRank(move.from())) - static_cast<int>(makeRank(defense_king))) > 1) {
-                    if (effect_count(pos, defense_color, move.to()) < 2) {
+                    if (!has_multiple_effect_at(pos, defense_color, move.to())) {
                         continue;
                     }
                 }
-                liberty0_blocking_moves.push_back(move);
-            }
-            moves.clear();
-            for (const Move move : liberty0_blocking_moves) {
                 moves.push_back(move);
             }
         }
@@ -3185,7 +3324,7 @@ namespace {
             std::fprintf(stderr, "cshogi issue56 d2 enter sfen=%s nonblock=%zu block=%zu blockable=%d captures=%d\n",
                 pos.toSFEN().c_str(),
                 moves.size(),
-                blocking_moves.size(),
+                raw_blocking_moves.size(),
                 blockable_check ? 1 : 0,
                 num_captures);
             std::fprintf(stderr, "cshogi issue56 d2 nonblock");
@@ -3193,14 +3332,15 @@ namespace {
                 std::fprintf(stderr, " %s", move.toUSI().c_str());
             }
             std::fprintf(stderr, "\n");
-            if (!blocking_moves.empty()) {
+            if (!raw_blocking_moves.empty()) {
                 std::fprintf(stderr, "cshogi issue56 d2 blocking");
-                for (const Move move : blocking_moves) {
+                for (const Move move : raw_blocking_moves) {
                     std::fprintf(stderr, " %s", move.toUSI().c_str());
                 }
                 std::fprintf(stderr, "\n");
             }
         }
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
         const bool trace_fixed_defense = []() {
             static const bool enabled = dfpn_env_flag("CSHOGI_FIXED_DEFENSE_TRACE");
             return enabled;
@@ -3210,6 +3350,11 @@ namespace {
             && dfpn_observe_env_flag("CSHOGI_DFPN_ZUKOU_FIXED_A3_DEFENSE")
             && last_attack_move
             && last_attack_move.toUSI() == "2f4f";
+#else
+        constexpr bool trace_fixed_defense = false;
+        constexpr bool trace_fixed_defense_board_key = false;
+        constexpr bool trace_fixed_a3_defense = false;
+#endif
         if (trace_fixed_defense || trace_fixed_defense_board_key || trace_fixed_a3_defense) {
             std::fprintf(stderr, "cshogi fixed defense moves nonblock=%d blockable=%d size=%zu",
                 nonblock_moves, blockable_check ? 1 : 0, moves.size());
@@ -3258,7 +3403,7 @@ namespace {
                 Hand child_proof = zero_hand();
                 const ProofDisproof child_pdp = fixed_escape_by_move_zero(
                     pos, attack_color, &child_best, &child_proof,
-                    no_proof_pieces_attack_estimation, false);
+                    no_proof_pieces_attack_estimation, false, current_piece_numbers);
 
                 pos.undoMove(move);
                 if (best_move && child_best) {
@@ -5718,6 +5863,10 @@ namespace {
     }
 
     inline bool trace_zukou001_table_window(const size_t table_size) {
+        if constexpr (!CSHOGI_ENABLE_DFPN_TRACE_CODE) {
+            (void)table_size;
+            return false;
+        }
         struct Window {
             bool enabled = false;
             uint32_t begin = 0;
@@ -7334,7 +7483,7 @@ namespace {
         std::vector<Move> moves = generate_check_moves(pos);
         const Color attack_color = pos.turn();
         const Square target_king = pos.kingSquare(oppositeColor(attack_color));
-        const King8RuntimeInfo king8_info = make_king8_runtime_info(pos, attack_color);
+        const King8RuntimeInfo king8_info = king8_runtime_info_at(pos, attack_color);
         const ImmediateMateOrderContext order_ctx{
             attack_color,
             target_king,
@@ -7469,13 +7618,15 @@ namespace {
             return false;
         }
 
-        Bitboard shared_long = pos.attackersTo(attack_color, sq) & pos.attackersTo(attack_color, *up);
+        const Bitboard effect_at_sq = effect_set_at(pos, attack_color, sq);
+        const Bitboard effect_at_up = effect_set_at(pos, attack_color, *up);
+        Bitboard shared_long = effect_at_sq & effect_at_up;
         shared_long &= pos.bbOf(attack_color);
         shared_long &= pos.bbOf(Lance);
         bool has_vertical_pin = shared_long.isAny();
 
         if (!has_vertical_pin) {
-            Bitboard rooks = pos.attackersTo(attack_color, sq) & pos.attackersTo(attack_color, *up);
+            Bitboard rooks = effect_at_sq & effect_at_up;
             rooks &= pos.bbOf(attack_color);
             rooks &= pos.bbOf(Rook, Dragon);
             while (rooks.isAny()) {
@@ -7544,7 +7695,9 @@ namespace {
             return false;
         }
 
-        Bitboard bishops = pos.attackersTo(attack_color, *up) & pos.attackersTo(attack_color, sq);
+        const Bitboard effect_at_up = effect_set_at(pos, attack_color, *up);
+        const Bitboard effect_at_sq = effect_set_at(pos, attack_color, sq);
+        Bitboard bishops = effect_at_up & effect_at_sq;
         bishops &= pos.bbOf(attack_color);
         bishops &= pos.bbOf(Bishop, Horse);
         while (bishops.isAny()) {
@@ -7561,7 +7714,7 @@ namespace {
             if (!next_on_line || *next_on_line != sq) {
                 continue;
             }
-            if (effect_count(pos, attack_color, *up) == 1) {
+            if (effect_at_up.popCount() == 1) {
                 return true;
             }
             const Piece up_piece = pos.piece(*up);
@@ -7608,44 +7761,40 @@ namespace {
             if (target_piece != Empty && pieceToColor(target_piece) == attack_color) {
                 continue;
             }
-            Bitboard defense_effect = pos.attackersTo(defense_color, *to);
+            Bitboard defense_effect = effect_set_at(pos, defense_color, *to);
             defense_effect &= ~pinned_defense;
             if (defense_effect.isAny()) {
                 continue;
             }
 
-            Bitboard knight_attackers = pos.attackersTo(attack_color, *to);
+            Bitboard knight_attackers = effect_set_at(pos, attack_color, *to);
             knight_attackers &= pos.bbOf(Knight, attack_color);
             knight_attackers &= ~pinned_attack;
             if (knight_attackers.isAny()) {
                 const Square from = knight_attackers.firstOneFromSQ11();
                 const Move move = makeCaptureMove(Knight, from, *to, pos);
-                if (pos.moveIsLegal(move)) {
-                    if (immediate_knight_blocking_vertical_attack(pos, attack_color, *to)
-                        || immediate_knight_blocking_diagonal_attack(pos, attack_color, target_king, king8_info, *to)) {
-                        continue;
-                    }
-                    if (trace_fixed_probe) {
-                        std::fprintf(stderr, "cshogi issue56 osl mate1 try=%s source=knight\n",
-                            move.toUSI().c_str());
-                    }
-                    return move;
+                if (immediate_knight_blocking_vertical_attack(pos, attack_color, *to)
+                    || immediate_knight_blocking_diagonal_attack(pos, attack_color, target_king, king8_info, *to)) {
+                    continue;
                 }
+                if (trace_fixed_probe) {
+                    std::fprintf(stderr, "cshogi issue56 osl mate1 try=%s source=knight\n",
+                        move.toUSI().c_str());
+                }
+                return move;
             }
 
             if (can_drop_knight && target_piece == Empty) {
                 const Move move = makeDropMove(Knight, *to);
-                if (pos.moveIsLegal(move)) {
-                    if (immediate_knight_blocking_vertical_attack(pos, attack_color, *to)
-                        || immediate_knight_blocking_diagonal_attack(pos, attack_color, target_king, king8_info, *to)) {
-                        continue;
-                    }
-                    if (trace_fixed_probe) {
-                        std::fprintf(stderr, "cshogi issue56 osl mate1 try=%s source=knight-drop\n",
-                            move.toUSI().c_str());
-                    }
-                    return move;
+                if (immediate_knight_blocking_vertical_attack(pos, attack_color, *to)
+                    || immediate_knight_blocking_diagonal_attack(pos, attack_color, target_king, king8_info, *to)) {
+                    continue;
                 }
+                if (trace_fixed_probe) {
+                    std::fprintf(stderr, "cshogi issue56 osl mate1 try=%s source=knight-drop\n",
+                        move.toUSI().c_str());
+                }
+                return move;
             }
         }
 
@@ -7683,9 +7832,6 @@ namespace {
                     continue;
                 }
                 const Move move = makeDropMove(piece_type, *to);
-                if (!pos.moveIsLegal(move)) {
-                    continue;
-                }
                 if (trace_fixed_probe) {
                     std::fprintf(stderr, "cshogi issue56 osl mate1 try=%s key=%u dir=%d source=drop\n",
                         move.toUSI().c_str(),
@@ -7699,7 +7845,7 @@ namespace {
         return Move::moveNone();
     }
 
-    Move immediate_mate_move_in_1_osl(Position& pos) {
+    Move immediate_mate_move_in_1_osl(Position& pos, const OslPieceNumberState* current_piece_numbers) {
         if (pos.inCheck()) {
             return Move::moveNone();
         }
@@ -7714,7 +7860,7 @@ namespace {
             && (trace_sfen.rfind("6k1l/1R5gr/3pp+S1p1/p2nlpp1p/5ns2/2+BPl3P/1PNK1PP2/1GGS2S2/5G1NL b B3P3p ", 0) == 0
                 || trace_sfen.rfind("4+S3l/1R3B1gr/3ppk1p1/p2nlpp1p/5ns2/2+BPl3P/1PNK1PP2/1GGS2S2/5G1NL b 3P3p ", 0) == 0
                 || trace_sfen.rfind("5+S1kl/4+R1g1r/3p1B1p1/p2nppp1p/5ns2/3Pl3P/1PNK1PP2/1GGS2S2/5G1NL b BL4P2p ", 0) == 0);
-        const King8RuntimeInfo king8_info = make_king8_runtime_info(pos, attack_color);
+        const King8RuntimeInfo king8_info = king8_runtime_info_at(pos, attack_color);
         const ImmediateMateOrderContext order_ctx{
             attack_color,
             target_king,
@@ -7738,7 +7884,7 @@ namespace {
         }
 
         if (const Move move = immediate_mate_move_by_osl_move_candidates(
-            pos, attack_color, target_king, king8_info, trace_fixed_probe)) {
+            pos, attack_color, target_king, king8_info, trace_fixed_probe, current_piece_numbers)) {
             return move;
         }
 
@@ -7886,13 +8032,14 @@ namespace {
     }
 
     bool osl_stand_is_superior_or_equal(const Hand& lhs, const Hand& rhs) {
+        DfpnProfileScope profile(DfpnProfileSlot::StandDominance);
         constexpr uint32_t carry_mask = 0x48822224u;
         const uint32_t lhs_flags = osl_piece_stand_flags(lhs) | carry_mask;
         const uint32_t rhs_flags = osl_piece_stand_flags(rhs) & ~carry_mask;
         return ((lhs_flags - rhs_flags) & carry_mask) == carry_mask;
     }
 
-    Key trace_board_key_env_target() {
+    inline Key trace_board_key_env_target() {
         static const Key target = []() {
             char* value = nullptr;
             size_t value_len = 0;
@@ -7906,13 +8053,22 @@ namespace {
         return target;
     }
 
-    bool trace_board_key_env_enabled() {
+    inline bool trace_board_key_env_enabled() {
+#if !CSHOGI_ENABLE_DFPN_TRACE_CODE
+        return false;
+#else
         return trace_board_key_env_target() != static_cast<Key>(0);
+#endif
     }
 
-    bool trace_board_key_from_env(const Key key) {
+    inline bool trace_board_key_from_env(const Key key) {
+#if !CSHOGI_ENABLE_DFPN_TRACE_CODE
+        (void)key;
+        return false;
+#else
         const Key target = trace_board_key_env_target();
         return target != static_cast<Key>(0) && key == target;
+#endif
     }
 
     void set_hand_count(Hand& hand, const HandPiece hp, const int count) {
@@ -8128,11 +8284,12 @@ namespace {
         if (last_to == SquareNum) {
             return false;
         }
+        const Bitboard defense_effect = effect_set_at(pos, defense_color, last_to);
         const Bitboard defense_attackers_except_king =
-            pos.attackersTo(defense_color, last_to) & ~pos.bbOf(King, defense_color);
-        return pos.attackersToIsAny(defense_color, last_to)
+            defense_effect & ~pos.bbOf(King, defense_color);
+        return defense_effect.isAny()
             && (defense_attackers_except_king.isAny()
-                || !pos.attackersToIsAny(attack_color, last_to));
+                || !effect_has_at(pos, attack_color, last_to));
     }
 
     class PathEncodingTable {
@@ -8505,6 +8662,7 @@ namespace {
             size_t trace_index = 0;
             for (const DfpnRecord& record : it->second) {
                 const bool same = same_stands(record, pos);
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
                 const bool success = record.proof_disproof.isCheckmateSuccess();
                 const bool fail = record.proof_disproof.isCheckmateFail();
                 const bool proof_dom = success && osl_stand_is_superior_or_equal(attack_stand, record.proofPieces());
@@ -8529,6 +8687,7 @@ namespace {
                         disproof_dom ? 1 : 0,
                         record.exact ? 1 : 0);
                 }
+#endif
                 if (same) {
                     result = record;
                     if (result.proof_disproof.isFinal()) {
@@ -8536,13 +8695,17 @@ namespace {
                     }
                     continue;
                 }
-                if (success && proof_dom) {
-                    result.setFrom(record);
-                    break;
+                if (record.proof_disproof.isCheckmateSuccess()) {
+                    if (osl_stand_is_superior_or_equal(attack_stand, record.proofPieces())) {
+                        result.setFrom(record);
+                        break;
+                    }
                 }
-                if (fail && disproof_dom) {
-                    result.setFrom(record);
-                    break;
+                else if (record.proof_disproof.isCheckmateFail()) {
+                    if (osl_stand_is_superior_or_equal(defense_stand, record.disproofPieces())) {
+                        result.setFrom(record);
+                        break;
+                    }
                 }
                 if (!use_initial_dominance || record.proof_disproof.isFinal()) {
                     continue;
@@ -8597,6 +8760,7 @@ namespace {
             const Hand defense_stand = stands[oppositeColor(attack_color)];
             uint32_t proof_hint = 1;
             uint32_t disproof_hint = 1;
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
             static const bool trace_zukou_7f8e_parent_defense_probe_env =
                 CSHOGI_DFPN_TRACE_GETENV("CSHOGI_DFPN_ZUKOU_7F8E_PARENT_DEFENSE") != nullptr;
             static const bool trace_zukou_rpr_9e9d_probe_env =
@@ -8619,10 +8783,12 @@ namespace {
                     && board_secondary == 3439710186ULL
                     && hand_debug_string(stands[Black]) == "P1 L0 N0 S0 G0 B0 R1"
                     && hand_debug_string(stands[White]) == "P12 L3 N1 S0 G2 B0 R0");
+#endif
 
             size_t trace_index = 0;
             for (const DfpnRecord& record : it->second) {
                 const bool same = same_stands(record, board_secondary, stands);
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
                 const bool success = record.proof_disproof.isCheckmateSuccess();
                 const bool fail = record.proof_disproof.isCheckmateFail();
                 const bool proof_dom = success && osl_stand_is_superior_or_equal(attack_stand, record.proofPieces());
@@ -8654,6 +8820,7 @@ namespace {
                         disproof_hint_dom ? 1 : 0,
                         record.exact ? 1 : 0);
                 }
+#endif
                 if (same) {
                     result = record;
                     if (result.proof_disproof.isFinal()) {
@@ -8661,13 +8828,17 @@ namespace {
                     }
                     continue;
                 }
-                if (success && proof_dom) {
-                    result.setFrom(record);
-                    break;
+                if (record.proof_disproof.isCheckmateSuccess()) {
+                    if (osl_stand_is_superior_or_equal(attack_stand, record.proofPieces())) {
+                        result.setFrom(record);
+                        break;
+                    }
                 }
-                if (fail && disproof_dom) {
-                    result.setFrom(record);
-                    break;
+                else if (record.proof_disproof.isCheckmateFail()) {
+                    if (osl_stand_is_superior_or_equal(defense_stand, record.disproofPieces())) {
+                        result.setFrom(record);
+                        break;
+                    }
                 }
                 if (!use_initial_dominance || record.proof_disproof.isFinal()) {
                     continue;
@@ -8689,6 +8860,7 @@ namespace {
                     std::min(disproof_hint, kInitialDominanceDisproofMax));
                 ++result.node_count;
             }
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
             if (trace_probe_secondary) {
                 std::fprintf(stderr,
                     "cshogi probe-secondary result attack=%s key=%llu secondary=%llu pdp=%u,%u best=%s last=%s nodes=%u proof_hint=%u disproof_hint=%u black=[%s] white=[%s]\n",
@@ -8705,6 +8877,7 @@ namespace {
                     hand_debug_string(stands[Black]).c_str(),
                     hand_debug_string(stands[White]).c_str());
             }
+#endif
             return result;
         }
 
@@ -8978,6 +9151,7 @@ namespace {
             DfpnProfileScope profile(DfpnProfileSlot::TableStoreExact);
             value.refresh_stands(pos, board_secondary);
             value.exact = true;
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
             if (trace_board_key_from_env(board_index)) {
                 std::fprintf(stderr,
                     "cshogi trace-board store-exact-secondary sfen=%s key=%llu secondary=%llu pdp=%u,%u best=%s last=%s nodes=%u solved=0x%llx dag=0x%llx min=%u full=%u false=%u proof_set=%d proof=[%s] black=[%s] white=[%s]\n",
@@ -9069,6 +9243,10 @@ namespace {
                     hand_debug_string(value.stands[Black]).c_str(),
                     hand_debug_string(value.stands[White]).c_str());
             }
+#else
+            constexpr bool trace_before4e = false;
+            constexpr bool trace_zukou_2f3f_store = false;
+#endif
             auto& bucket = table_[make_oslmate_board_key(board_index, board_secondary)];
             for (DfpnRecord& record : bucket) {
                 if (!same_stands(record, pos)) {
@@ -9135,6 +9313,7 @@ namespace {
             DfpnProfileScope profile(DfpnProfileSlot::TableStoreExact);
             value.refresh_stands(board_secondary, stands);
             value.exact = true;
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
             if (trace_board_key_from_env(board_index)) {
                 std::fprintf(stderr,
                     "cshogi trace-board store-exact-stands key=%llu secondary=%llu pdp=%u,%u best=%s last=%s nodes=%u proof_set=%d proof=[%s] solved=0x%llx dag=0x%llx min=%u need_full=%u false=%u black=[%s] white=[%s]\n",
@@ -9181,6 +9360,9 @@ namespace {
                     hand_debug_string(value.stands[Black]).c_str(),
                     hand_debug_string(value.stands[White]).c_str());
             }
+#else
+            constexpr bool trace_zukou_2f3f_store = false;
+#endif
 
             auto& bucket = table_[make_oslmate_board_key(board_index, board_secondary)];
             for (DfpnRecord& record : bucket) {
@@ -9503,6 +9685,7 @@ namespace {
             }
 
             const Hand attack_stand = stands[attack_color];
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
             const bool trace_oracle = []() {
                 static const bool enabled = CSHOGI_DFPN_TRACE_GETENV("CSHOGI_DFPN_TRACE_FIND_ORACLE") != nullptr;
                 return enabled;
@@ -9530,10 +9713,12 @@ namespace {
                     static_cast<size_t>(std::distance(it->second.begin(), it->second.end())));
             }
             size_t trace_index = 0;
+#endif
             for (const DfpnRecord& record : it->second) {
-                const bool success = record.proof_disproof.isCheckmateSuccess();
-                const bool proof_dom = success && osl_stand_is_superior_or_equal(attack_stand, record.proofPieces());
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
                 if (trace_oracle) {
+                    const bool success = record.proof_disproof.isCheckmateSuccess();
+                    const bool proof_dom = success && osl_stand_is_superior_or_equal(attack_stand, record.proofPieces());
                     std::fprintf(stderr,
                         "cshogi findProofOracle record %zu pdp=%u,%u best=%s last=%s nodes=%u proof_set=%d pieces=[%s] black=[%s] white=[%s] success=%d proof_dom=%d last_match=%d exact=%d\n",
                         trace_index++,
@@ -9568,6 +9753,7 @@ namespace {
                         (record.proof_disproof.isCheckmateSuccess()
                             && osl_stand_is_superior_or_equal(attack_stand, record.proofPieces())) ? 1 : 0);
                 }
+#endif
                 if (!record.proof_disproof.isCheckmateSuccess()) {
                     continue;
                 }
@@ -9580,6 +9766,7 @@ namespace {
                     break;
                 }
             }
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
             if (trace_oracle) {
                 std::fprintf(stderr,
                     "cshogi findProofOracle result pdp=%u,%u best=%s last=%s nodes=%u proof_set=%d pieces=[%s] black=[%s] white=[%s]\n",
@@ -9593,6 +9780,7 @@ namespace {
                     hand_debug_string(result.stands[Black]).c_str(),
                     hand_debug_string(result.stands[White]).c_str());
             }
+#endif
             return result;
         }
 
@@ -10200,6 +10388,37 @@ namespace {
 #endif
     }
 
+#if !CSHOGI_ENABLE_DFPN_TRACE_CODE
+#define trace_board_key_env_enabled(...) false
+#define trace_board_key_from_env(...) false
+#define trace_issue56_5b3b_bucket_key(...) false
+#define trace_issue56_5b4ap_3b4c_attack_node(...) false
+#define trace_issue56_5b4c_3b4c_7f5d_4c5d_b7f_prefix(...) false
+#define trace_issue56_7f5d_5c5d_5b4ap_3b4c_attack_node(...) false
+#define trace_issue56_7f5d_5c5d_5b4ap_b5b_8b5bp_3b2a_b4c_2b3b_4c3bp_1b3b_5b3b_2a3b_attack_node(...) false
+#define trace_issue56_7f5d_5c5d_5b4ap_defense_node(...) false
+#define trace_issue56_7f5d_5c5d_5b4ap_p7b_8b7bp_b5b_7b5b_3b2a_attack_node(...) false
+#define trace_issue56_7f5d_5c5d_5b4ap_p7b_8b7bp_b5b_7b5b_3b2a_b4c_2b3b_attack_node(...) false
+#define trace_issue56_7f5d_5c5d_5b4ap_p7b_8b7bp_b5b_7b5b_3b2a_b4c_2b3b_4c3b_1b3b_attack_node(...) false
+#define trace_issue56_7f5d_5c5d_attack_node(...) false
+#define trace_issue56_attack_node(...) false
+#define trace_issue56_fixed_probe_position(...) false
+#define trace_issue56_parent_defense_release(...) false
+#define trace_issue56_pv_target_position(...) false
+#define trace_mate11_2e2g_3h2g_attack_node(...) false
+#define trace_mate11_2e2g_3h2g_g3g_defense_node(...) false
+#define trace_zukou001_5a9ep_prefix(...) false
+#define trace_zukou001_8f7f_prefix(...) false
+#define trace_zukou001_after_4e4c_position_release(...) false
+#define trace_zukou001_isolated_d2_defense_node(...) false
+#define trace_zukou001_l3e_attack_history(...) false
+#define trace_zukou001_node_window(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r4e_p5e_7g9e_8e7f_p7g_7f6f_4e4f_defense_node(...) false
+#define trace_zukou001_pv_checkpoint_release(...) false
+#define trace_zukou001_table_window(...) false
+#define trace_zukou001_target_store_position_release(...) false
+#endif
+
     size_t adjacent_promoted_counterpart_index(const std::vector<Move>& moves, const size_t index) {
         if (index == 0 || index >= moves.size() || moves[index].isDrop() || moves[index].isPromotion()) {
             return std::numeric_limits<size_t>::max();
@@ -10356,7 +10575,7 @@ namespace {
     }
 
     bool has_additional_attack_effect_target(const Position& pos, const Color attacker, const Square target) {
-        Bitboard direct = pos.attackersTo(attacker, target);
+        Bitboard direct = effect_set_at(pos, attacker, target);
         while (direct.isAny()) {
             const Square from = direct.firstOneFromSQ11();
             direct.clearBit(from);
@@ -10395,7 +10614,7 @@ namespace {
     bool has_enough_defense_effect(const Position& pos, const Color attack_color, const Square target_king,
         const Square sq, const Bitboard& pinned_defense, const int dir_index) {
         const Color defense_color = oppositeColor(attack_color);
-        Bitboard defenders = pos.attackersTo(defense_color, sq);
+        Bitboard defenders = effect_set_at(pos, defense_color, sq);
         defenders.clearBit(target_king);
         if (!defenders.isAny()) {
             return false;
@@ -10455,7 +10674,7 @@ namespace {
             const bool is_empty = piece == Empty;
             const bool is_defense_piece = piece != Empty && pieceToColor(piece) == defense_color;
             const bool is_attack_piece = piece != Empty && pieceToColor(piece) == attack_color;
-            const bool attack_has_effect = pos.attackersToIsAny(attack_color, *sq);
+            const bool attack_has_effect = effect_has_at(pos, attack_color, *sq);
 
             if (!attack_has_effect) {
                 if (!is_empty && !is_attack_piece) {
@@ -10506,7 +10725,7 @@ namespace {
             }
         }
 
-        Bitboard long_attackers = pos.attackersTo(attack_color, king);
+        Bitboard long_attackers = effect_set_at(pos, attack_color, king);
         while (long_attackers.isAny()) {
             const Square from = long_attackers.firstOneFromSQ11();
             if (!is_long_king_effect_attacker(pos, attack_color, king, from)) {
@@ -10526,6 +10745,44 @@ namespace {
         }
 
         return info;
+    }
+
+    class King8InfoCache {
+    public:
+        King8RuntimeInfo get(const Position& pos, const Color attack_color) {
+            const Key key = pos.getBoardKey();
+            Entry& entry = entries_[index(key, attack_color)];
+            if (!entry.valid || entry.board_key != key || entry.attack_color != attack_color) {
+                entry.valid = true;
+                entry.board_key = key;
+                entry.attack_color = attack_color;
+                entry.info = make_king8_runtime_info(pos, attack_color);
+            }
+            return entry.info;
+        }
+
+    private:
+        static constexpr size_t kEntryCount = 4096;
+        struct Entry {
+            bool valid = false;
+            Key board_key = 0;
+            Color attack_color = Black;
+            King8RuntimeInfo info{};
+        };
+
+        static size_t index(uint64_t key, const Color attack_color) {
+            key ^= key >> 32;
+            key ^= key >> 16;
+            key ^= static_cast<uint64_t>(attack_color) << 7;
+            return static_cast<size_t>(key) & (kEntryCount - 1);
+        }
+
+        std::array<Entry, kEntryCount> entries_{};
+    };
+
+    King8RuntimeInfo king8_runtime_info_at(const Position& pos, const Color attack_color) {
+        static thread_local King8InfoCache cache;
+        return cache.get(pos, attack_color);
     }
 
     King8RuntimeInfo reset_edge_from_liberty_runtime(const Square king, const Color attack_color, King8RuntimeInfo info) {
@@ -10572,7 +10829,7 @@ namespace {
             if (!sq) {
                 continue;
             }
-            if (effect_count(pos, attack_color, *sq) >= 2 || has_additional_attack_effect_at(pos, attack_color, *sq)) {
+            if (has_multiple_effect_at(pos, attack_color, *sq) || has_additional_attack_effect_at(pos, attack_color, *sq)) {
                 mask |= static_cast<int>(bit);
             }
         }
@@ -10609,7 +10866,7 @@ namespace {
         bool promoted_area = relative_rank == Rank1 || relative_rank == Rank2;
         if (!promoted_area) {
             const auto front = offset_square(king, 0, attack_color == Black ? 1 : -1);
-            promoted_area = front && (pos.attackersTo(attack_color, *front) & pos.goldsBB(attack_color)).isAny();
+            promoted_area = front && (effect_set_at(pos, attack_color, *front) & pos.goldsBB(attack_color)).isAny();
         }
 
         if (promoted_area) {
@@ -10630,7 +10887,7 @@ namespace {
             if (!sq) {
                 continue;
             }
-            if (effect_count(pos, attack_color, *sq) >= 2 || has_additional_attack_effect_at(pos, attack_color, *sq)) {
+            if (has_multiple_effect_at(pos, attack_color, *sq) || has_additional_attack_effect_at(pos, attack_color, *sq)) {
                 ++num_checks;
             }
         }
@@ -10701,7 +10958,7 @@ namespace {
                 const int effects = sq ? effect_count(pos, attack_color, *sq) : 0;
                 const bool additional = sq && has_additional_attack_effect_at(pos, attack_color, *sq);
                 const Color defense_color = oppositeColor(attack_color);
-                Bitboard defenders = sq ? pos.attackersTo(defense_color, *sq) : allZeroBB();
+                Bitboard defenders = sq ? effect_set_at(pos, defense_color, *sq) : allZeroBB();
                 defenders.clearBit(king);
                 const Bitboard pinned_defense = pinned_pieces_of(pos, defense_color);
                 const bool enough = sq && has_enough_defense_effect(pos, attack_color, king, *sq, pinned_defense, static_cast<int>(dir));
@@ -10736,13 +10993,13 @@ namespace {
 
     ProofDisproof attack_estimation_zero(const Position& pos, const Color attack_color) {
         const Square king = pos.kingSquare(oppositeColor(attack_color));
-        const King8RuntimeInfo info = reset_edge_from_liberty_runtime(king, attack_color, make_king8_runtime_info(pos, attack_color));
+        const King8RuntimeInfo info = reset_edge_from_liberty_runtime(king, attack_color, king8_runtime_info_at(pos, attack_color));
         return attack_estimation_zero_with_info(pos, attack_color, info);
     }
 
     ProofDisproof fixed_attack_estimation_zero(const Position& pos, const Color attack_color) {
         const Square king = pos.kingSquare(oppositeColor(attack_color));
-        const King8RuntimeInfo info = reset_edge_from_liberty_runtime(king, attack_color, make_king8_runtime_info(pos, attack_color));
+        const King8RuntimeInfo info = reset_edge_from_liberty_runtime(king, attack_color, king8_runtime_info_at(pos, attack_color));
         return attack_estimation_zero_with_info(pos, attack_color, info);
     }
 
@@ -10769,7 +11026,7 @@ namespace {
             est.disproof,
             pos.toSFEN().c_str());
 
-        Bitboard long_attackers = pos.attackersTo(attack_color, king);
+        Bitboard long_attackers = effect_set_at(pos, attack_color, king);
         while (long_attackers.isAny()) {
             const Square from = long_attackers.firstOneFromSQ11();
             if (!is_long_king_effect_attacker(pos, attack_color, king, from)) {
@@ -10800,7 +11057,7 @@ namespace {
                 continue;
             }
             const Piece piece = pos.piece(*sq);
-            const bool attack_has_effect = pos.attackersToIsAny(attack_color, *sq);
+            const bool attack_has_effect = effect_has_at(pos, attack_color, *sq);
             const bool enough_defense = attack_has_effect
                 ? has_enough_defense_effect(pos, attack_color, king, *sq, pinned_defense, static_cast<int>(dir))
                 : false;
@@ -10894,7 +11151,7 @@ namespace {
 
     struct MoveWithSortKey {
         Move move;
-        MoveSortKey key;
+        uint32_t key;
     };
 
     PieceType osl_old_piece_type(const Position& pos, const Move move) {
@@ -11073,49 +11330,85 @@ namespace {
         return piece_type;
     }
 
-    Bitboard dfpn_check_attack_bb_after_move(const Position& pos, const Color attacker, const Move move) {
-        Bitboard occupied = pos.occupiedBB();
-        if (move.isDrop()) {
-            occupied.setBit(move.to());
-        }
-        else {
-            occupied.xorBit(move.from());
-            occupied.setBit(move.to());
-        }
-
+    bool dfpn_check_move_is_direct_check(const Position& pos, const Color attacker, const Move move) {
+        const Square to = move.to();
+        const Square king = pos.kingSquare(oppositeColor(attacker));
         const PieceType piece_type_to = dfpn_check_piece_type_after_move(pos, move);
+
         switch (piece_type_to) {
         case Pawn:
-            return pawnAttack(attacker, move.to());
-        case Lance:
-            return lanceAttack(attacker, move.to(), occupied);
+            return pawnAttack(attacker, to).isSet(king);
         case Knight:
-            return knightAttack(attacker, move.to());
+            return knightAttack(attacker, to).isSet(king);
         case Silver:
-            return silverAttack(attacker, move.to());
+            return silverAttack(attacker, to).isSet(king);
         case Gold:
         case ProPawn:
         case ProLance:
         case ProKnight:
         case ProSilver:
-            return goldAttack(attacker, move.to());
-        case Bishop:
-            return bishopAttack(move.to(), occupied);
-        case Rook:
-            return rookAttack(move.to(), occupied);
+            return goldAttack(attacker, to).isSet(king);
         case King:
-            return kingAttack(move.to());
-        case Horse:
-            return horseAttack(move.to(), occupied);
-        case Dragon:
-            return dragonAttack(move.to(), occupied);
-        default:
-            return allZeroBB();
+            return kingAttack(to).isSet(king);
+        case Lance: {
+            const int file_delta = static_cast<int>(makeFile(king)) - static_cast<int>(makeFile(to));
+            const int rank_delta = static_cast<int>(makeRank(king)) - static_cast<int>(makeRank(to));
+            if (file_delta != 0 || (attacker == Black ? rank_delta >= 0 : rank_delta <= 0)) {
+                return false;
+            }
+            Bitboard occupied = pos.occupiedBB();
+            if (move.isDrop()) {
+                occupied.setBit(to);
+            }
+            else {
+                occupied.xorBit(move.from());
+                occupied.setBit(to);
+            }
+            return !(betweenBB(to, king) & occupied).isAny();
         }
-    }
-
-    bool dfpn_check_move_is_direct_check(const Position& pos, const Color attacker, const Move move) {
-        return dfpn_check_attack_bb_after_move(pos, attacker, move).isSet(pos.kingSquare(oppositeColor(attacker)));
+        case Bishop:
+        case Horse: {
+            if (piece_type_to == Horse && kingAttack(to).isSet(king)) {
+                return true;
+            }
+            const int file_delta = static_cast<int>(makeFile(king)) - static_cast<int>(makeFile(to));
+            const int rank_delta = static_cast<int>(makeRank(king)) - static_cast<int>(makeRank(to));
+            if (std::abs(file_delta) != std::abs(rank_delta)) {
+                return false;
+            }
+            Bitboard occupied = pos.occupiedBB();
+            if (move.isDrop()) {
+                occupied.setBit(to);
+            }
+            else {
+                occupied.xorBit(move.from());
+                occupied.setBit(to);
+            }
+            return !(betweenBB(to, king) & occupied).isAny();
+        }
+        case Rook:
+        case Dragon: {
+            if (piece_type_to == Dragon && kingAttack(to).isSet(king)) {
+                return true;
+            }
+            const int file_delta = static_cast<int>(makeFile(king)) - static_cast<int>(makeFile(to));
+            const int rank_delta = static_cast<int>(makeRank(king)) - static_cast<int>(makeRank(to));
+            if (file_delta != 0 && rank_delta != 0) {
+                return false;
+            }
+            Bitboard occupied = pos.occupiedBB();
+            if (move.isDrop()) {
+                occupied.setBit(to);
+            }
+            else {
+                occupied.xorBit(move.from());
+                occupied.setBit(to);
+            }
+            return !(betweenBB(to, king) & occupied).isAny();
+        }
+        default:
+            return false;
+        }
     }
 
     bool dfpn_check_move_is_discovered_check(const Position& pos, const Color attacker, const Move move) {
@@ -11128,6 +11421,9 @@ namespace {
 
     int dfpn_check_discovered_long_phase(const Position& pos, const Color attacker, const Move move) {
         if (move.isDrop()) {
+            return -1;
+        }
+        if (!pos.discoveredCheckBB().isSet(move.from())) {
             return -1;
         }
         const Square king = pos.kingSquare(oppositeColor(attacker));
@@ -11212,7 +11508,6 @@ namespace {
 
     int dfpn_check_move_phase(const Position& pos, const Color attacker, const Move move) {
         const Square king = pos.kingSquare(oppositeColor(attacker));
-        const int adjacent_dir = dfpn_check_adjacent_dir_index(attacker, king, move.to());
         if (move.isDrop()) {
             switch (move.pieceTypeDropped()) {
             case Pawn:
@@ -11247,6 +11542,7 @@ namespace {
             if (piece_type_to == Knight) {
                 return static_cast<int>(DfpnCheckGenerationPhase::Knight);
             }
+            const int adjacent_dir = dfpn_check_adjacent_dir_index(attacker, king, move.to());
             if (adjacent_dir >= 0) {
                 return dfpn_check_adjacent_phase(adjacent_dir);
             }
@@ -11294,11 +11590,8 @@ namespace {
     }
 
     int dfpn_check_move_subphase(const Position& pos, const Color attacker, const Move move, const int phase) {
-        const Square king = pos.kingSquare(oppositeColor(attacker));
-        const int adjacent_dir = dfpn_check_adjacent_dir_index(attacker, king, move.to());
-        const int line_dir = dfpn_check_line_dir_index(attacker, king, move.to());
-
         if (move.isDrop()) {
+            const Square king = pos.kingSquare(oppositeColor(attacker));
             switch (move.pieceTypeDropped()) {
             case Pawn:
                 return 1;
@@ -11307,13 +11600,13 @@ namespace {
             case Knight:
                 return dfpn_check_knight_subphase(pos, attacker, move);
             case Gold:
-                return dfpn_check_gold_drop_subphase(adjacent_dir);
+                return dfpn_check_gold_drop_subphase(dfpn_check_adjacent_dir_index(attacker, king, move.to()));
             case Silver:
-                return dfpn_check_silver_drop_subphase(adjacent_dir);
+                return dfpn_check_silver_drop_subphase(dfpn_check_adjacent_dir_index(attacker, king, move.to()));
             case Bishop:
-                return dfpn_check_bishop_drop_subphase(line_dir);
+                return dfpn_check_bishop_drop_subphase(dfpn_check_line_dir_index(attacker, king, move.to()));
             case Rook:
-                return dfpn_check_rook_drop_subphase(line_dir);
+                return dfpn_check_rook_drop_subphase(dfpn_check_line_dir_index(attacker, king, move.to()));
             default:
                 return 0;
             }
@@ -11352,7 +11645,7 @@ namespace {
             const auto key = dfpn_check_generation_raw_key(pos, turn, moves[i]);
             const auto sort_key = move_sort_key(pos, turn, moves[i]);
             const bool already_attacks_king = !moves[i].isDrop()
-                && pos.attackersTo(turn, pos.kingSquare(oppositeColor(turn))).isSet(moves[i].from());
+                && effect_set_at(pos, turn, pos.kingSquare(oppositeColor(turn))).isSet(moves[i].from());
             std::fprintf(stderr, "  %zu %s raw=(%d,%d,%d,%d,%d,%d,%d) sort=(%d,%d,%d) already=%d\n",
                 i,
                 moves[i].toUSI().c_str(),
@@ -11597,7 +11890,7 @@ namespace {
 #define trace_zukou001_isolated_d2_defense_node(...) false
 #define trace_zukou001_isolated_g9g_defense_node(...) false
 #define trace_zukou001_isolated_attack_node(...) false
-#define trace_zukou001_l3e_attack_history(...) trace_zukou001_l3e_attack_history_release(__VA_ARGS__)
+#define trace_zukou001_l3e_attack_history(...) false
 #define trace_zukou001_l3e_2e3e_defense_history(...) trace_zukou001_l3e_2e3e_defense_history_release(__VA_ARGS__)
 #define trace_issue_defense_children(...) ((void)0)
 #define trace_issue_attack_children(...) ((void)0)
@@ -11636,7 +11929,8 @@ namespace {
             });
     }
 
-    void sort_moves(const Position& pos, const Color turn, std::vector<Move>& moves) {
+    template <class MoveContainer>
+    void sort_moves(const Position& pos, const Color turn, MoveContainer& moves) {
         DfpnProfileScope profile(DfpnProfileSlot::SortMoves);
         std::array<int, static_cast<size_t>(ColorNum) * static_cast<size_t>(SquareNum)> effect_count_cache;
         effect_count_cache.fill(-1);
@@ -11648,7 +11942,7 @@ namespace {
             }
             return value;
         };
-        const auto sort_key = [&](const Move move) {
+        const auto sort_key = [&](const Move move) -> uint32_t {
             const int attack_support = cached_effect_count(turn, move.to()) + (move.isDrop() ? 1 : 0);
             const int defense_support = cached_effect_count(oppositeColor(turn), move.to());
             const int move_sort_turn_sign = turn == Black ? 1 : -1;
@@ -11662,7 +11956,9 @@ namespace {
             else {
                 from_to += osl_square_index(move.from());
             }
-            return std::make_tuple(attack_support > defense_support, from_to, move.isPromotion());
+            return ((attack_support > defense_support) ? 0x80000000u : 0u)
+                | (static_cast<uint32_t>(from_to + 65536) << 1)
+                | (move.isPromotion() ? 1u : 0u);
         };
         const auto sort_segment = [&](const size_t begin, const size_t end) {
             if (end <= begin + 1) {
@@ -11732,6 +12028,113 @@ namespace {
                 std::get<2>(key) ? 1 : 0);
         }
     }
+
+#if !CSHOGI_ENABLE_DFPN_TRACE_CODE
+#define trace_issue_s2f_2g1h_l1f_defense(...) false
+#define trace_issue_s2f_2g1h_l1f_p1g_2f1gp_2i1g_attack(...) false
+#define trace_issue_s2f_2g1h_l1f_p1g_2f1gp_2i1g_n2f_1h2g_attack(...) false
+#define trace_issue_s2f_2g1h_l1f_p1g_2f1gp_2i1g_n2f_defense(...) false
+#define trace_issue_s2f_2g1h_l1f_p1g_2f1gp_defense(...) false
+#define trace_issue_s2f_2g1h_l1f_p1g_5i2i_1h2i_attack(...) false
+#define trace_issue_s2f_2g1h_l1f_p1g_5i2i_defense(...) false
+#define trace_issue_s2f_2g1h_l1f_p1g_attack(...) false
+#define trace_issue_s2f_2g1h_subtree(...) false
+#define trace_issue56_4b5cp_3b2a_root_sfen(...) false
+#define trace_issue56_7f5d_5c5d_5b4ap_b5b_8b5bp_3b2a_attack_node(...) false
+#define trace_issue56_7f5d_5c5d_5b4ap_3b4c_attack_node(...) false
+#define trace_issue56_7f5d_5c5d_5b4ap_b5b_attack_node(...) false
+#define trace_issue56_7f5d_5c5d_5b4ap_b5b_8b5bp_3b2a_b4c_2b3b_4c3bp_1b3b_5b3b_defense_node(...) false
+#define trace_issue56_7f5d_5c5d_5b4ap_b5b_8b5bp_3b2a_b4c_2b3b_4c3bp_1b3b_5b3b_2a3b_attack_node(...) false
+#define trace_issue56_7f5d_5c5d_5b4ap_b5b_8b5bp_3b2a_b4c_2b3b_4c3bp_1b3b_5b3b_2a3b_r4b_3b3c_attack_node(...) false
+#define trace_issue56_7f5d_5c5d_5b4ap_b5b_8b5bp_3b2a_b4c_2b3b_4c3bp_1b3b_attack_node(...) false
+#define trace_issue56_7f5d_5c5d_5b4ap_b5b_8b5bp_3b2a_b4c_2b3b_4c3bp_defense_node(...) false
+#define trace_issue56_7f5d_5c5d_5b4ap_b5b_8b5bp_3b2a_b4c_2b3b_attack_node(...) false
+#define trace_issue56_7f5d_5c5d_5b4ap_b5b_8b5bp_3b2a_b4c_defense_node(...) false
+#define trace_issue56_7f5d_5c5d_5b4ap_p7b_8b7bp_b5b_attack_node(...) false
+#define trace_issue56_7f5d_5c5d_5b4ap_p7b_8b7bp_b5b_7b5b_3b2a_attack_node(...) false
+#define trace_issue56_7f5d_5c5d_5b4ap_p7b_8b7bp_b5b_7b5b_3b2a_b4c_2b3b_attack_node(...) false
+#define trace_issue56_7f5d_5c5d_5b4ap_p7b_8b7bp_b5b_7b5b_3b2a_b4c_2b3b_4c3b_1b3b_attack_node(...) false
+#define trace_issue56_7f5d_5c5d_5b4ap_p7b_8b7bp_b5b_7b5b_3b2a_b4c_2b3b_4c3b_2a2b_attack_node(...) false
+#define trace_issue56_5b4c_3b4c_7f5d_4c5d_b7f_prefix(...) false
+#define trace_issue56_5b4cp_shallow_attack_threshold(...) false
+#define trace_issue56_5b5a_3b2a_b4c_2b3b_attack_node(...) false
+#define trace_issue56_5b5a_3b3c_attack_threshold(...) false
+#define trace_issue56_5b5a_3b3c_b4b_3c3b_4b1ep_defense_node(...) false
+#define trace_issue56_7f5d_5c5d_attack_threshold(...) false
+#define trace_issue56_7f5d_3b3c_fixed_probe(...) false
+#define trace_issue56_8b8ap_2a3b_root_sfen(...) false
+#define trace_issue56_check_generation_sfen(...) false
+#define trace_issue56_parent_defense_release(...) false
+#define trace_issue56_pv_target_position(...) false
+#define trace_mate11_2e2g_3h2g_attack_node(...) false
+#define trace_mate11_2e2g_3h2g_g3g_defense_node(...) false
+#define trace_zukou_root_s5d_defense_release(...) false
+#define trace_zukou001_after_p7c_8g7e_8c9b_attack(...) false
+#define trace_zukou001_after_p7c_8g7e_false_branch(...) false
+#define trace_zukou001_direct_l5e_attack_history_release(...) false
+#define trace_zukou001_env_u32(...) false
+#define trace_zukou001_l3e_2e3e_defense_history_release(...) false
+#define trace_zukou001_l3e_attack_history_release(...) false
+#define trace_zukou001_l3e_parent_history(...) false
+#define trace_zukou001_l5e_7g9e_8e7f_attack_history_release(...) false
+#define trace_zukou001_l5e_7g9e_defense_history_release(...) false
+#define trace_zukou001_l5e_attack_history_release(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_7g9e_8e7f_r4f_l6f_9e7g_7f8e_4f4e_l6e_4e6e_defense_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r1e_1f2e_1e2e_7d7e_7g9e_8e7d_attack_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r1e_1f2e_1e2e_7d7e_7g9e_8e7d_b4a_defense_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r1e_1f2e_1e2e_7d7e_7g9e_8e7d_b4a_p5b_attack_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r1e_1f2e_1e2e_7d7e_7g9e_defense_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r1e_1f2e_1e2e_7d7e_attack_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r1e_1f2e_1e2e_7d7e_b6c_defense_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r1e_1f2e_1e2e_7d7e_b6c_p7d_attack_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r1e_1f2e_1e2e_defense_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r1e_1f2e_attack_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r1e_7d7e_7g9e_8e7d_9e9f_defense_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r1e_7d7e_7g9e_8e7d_attack_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r1e_7d7e_7g9e_defense_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r1e_7d7e_attack_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r1e_defense_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r1e_p2e_attack_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r1e_p3e_branch(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r1e_p5e_attack_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r1e_p7e_attack_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r3e_p5e_attack_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r4e_defense_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r4e_p5e_7g9e_8e7f_4e4f_defense_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r4e_p5e_7g9e_8e7f_attack_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r4e_p5e_7g9e_8e7f_p7g_7f6f_4e4f_5e5f_attack_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r4e_p5e_7g9e_8e7f_p7g_7f6f_4e4f_defense_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r4e_p5e_7g9e_8e7f_p7g_7f6f_attack_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r4e_p5e_7g9e_8e7f_p7g_defense_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r4e_p5e_7g9e_defense_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r4e_p5e_attack_node(...) false
+#define trace_zukou001_p7g_6f7g_9e7g_7f8e_r5e_defense_node(...) false
+#define trace_zukou001_r7e_7d7e_attack_node(...) false
+#define trace_zukou001_r7e_7d7e_b5b_defense_node(...) false
+#define trace_zukou001_s5d_6e7e_7i8g_7e8f_5g6f_3f6f_5a9ep_8f7f_attack_node(...) false
+#define trace_zukou001_s5d_6e7e_7i8g_7e8f_5g6f_3f6f_5a9ep_defense_node(...) false
+#define trace_zukou001_s5d_6e7e_7i8g_7e8f_5g6f_3f6f_attack_node(...) false
+#define trace_zukou001_s5d_6e7e_7i8g_7e8f_5g6f_defense_node(...) false
+#define trace_zukou001_s5d_6e7e_7i8g_7e8f_attack_node(...) false
+#define trace_zukou001_s5d_6e7e_7i8g_attack_node(...) false
+#define trace_zukou001_s5d_6e7e_attack_node(...) false
+#define trace_zukou001_s5d_prefix_release(...) false
+#define trace_zukou001_table_window(...) false
+#define trace_zukou001_top_s5d_defense_node(...) false
+#define trace_generate_check_for_sfen_prefix(...) ((void)0)
+#define trace_history_prefix(...) ((void)0)
+#define trace_issue56_fixed_attack(...) ((void)0)
+#define trace_issue56_fixed_defense(...) ((void)0)
+#define trace_issue56_pv_target_attack_children(...) ((void)0)
+#define trace_root_active_children_lite(...) ((void)0)
+#define trace_root_attack_children(...) ((void)0)
+#define trace_root_attack_meta(...) ((void)0)
+#define trace_root_attack_result_children(...) ((void)0)
+#define trace_root_defense_children(...) ((void)0)
+#define trace_root_limits_only_result(...) ((void)0)
+#define trace_zukou_root_s5d_defense_children_release(...) ((void)0)
+#define trace_zukou_root_s5d_defense_scan_release(...) ((void)0)
+#endif
 
     LibertyInfo defender_king_liberty_info(const Position& pos, const Color attack_color) {
         const Color defender = oppositeColor(attack_color);
@@ -11898,7 +12301,7 @@ namespace {
             return false;
         }
 
-        Bitboard long_effect = pos.attackersTo(attack_color, *drop);
+        Bitboard long_effect = effect_set_at(pos, attack_color, *drop);
         long_effect &= pos.bbOf(attack_color);
         long_effect &= pos.bbOf(Lance, Bishop, Rook, Horse, Dragon);
         if (!long_effect.isAny()) {
@@ -11933,7 +12336,8 @@ namespace {
             if (!pos1) {
                 continue;
             }
-            const int attack_effect_count = effect_count(pos, attack_color, *pos1);
+            const Bitboard effect_at_pos1 = effect_set_at(pos, attack_color, *pos1);
+            const int attack_effect_count = effect_at_pos1.popCount();
             if (trace_b4b || trace_zukou_drop || trace_immediate_drop) {
                 std::fprintf(stderr,
                     "cshogi immediate slow-drop block_dir=%d pos=%s effect_count=%d\n",
@@ -11944,7 +12348,7 @@ namespace {
             if (attack_effect_count > 1) {
                 continue;
             }
-            Bitboard long_effect1 = pos.attackersTo(attack_color, *pos1) & long_effect;
+            Bitboard long_effect1 = effect_at_pos1 & long_effect;
             if (trace_b4b || trace_zukou_drop || trace_immediate_drop) {
                 std::fprintf(stderr,
                     "cshogi immediate slow-drop long1=%d block_dir=%d pos=%s\n",
@@ -11972,7 +12376,8 @@ namespace {
     }
 
     Move immediate_mate_move_by_osl_move_candidates(Position& pos, const Color attack_color,
-        const Square target_king, const King8RuntimeInfo& king8_info, const bool trace_fixed_probe) {
+        const Square target_king, const King8RuntimeInfo& king8_info, const bool trace_fixed_probe,
+        const OslPieceNumberState* current_piece_numbers) {
         const auto is_promotable_basic = [](const PieceType piece_type) {
             switch (piece_type) {
             case Pawn:
@@ -11989,17 +12394,30 @@ namespace {
         const auto is_osl_major_basic_or_pawn = [](const PieceType piece_type) {
             return piece_type == Pawn || piece_type == Bishop || piece_type == Rook;
         };
+        std::optional<Bitboard> pinned_attack;
+        const auto king_open_move = [&](const Move move) {
+            if (!pinned_attack) {
+                pinned_attack = pinned_pieces_of(pos, attack_color);
+            }
+            return immediate_king_open_move(pos, attack_color, move, *pinned_attack);
+        };
         const auto try_move = [&](const Move move, const int dir_index) -> Move {
-            if (!move || !pos.moveIsLegal(move)) {
+            if (!move) {
                 if (trace_fixed_probe) {
-                    std::fprintf(stderr, "cshogi issue56 osl mate1 reject move=%s reason=illegal source=move-candidate\n",
-                        move ? move.toUSI().c_str() : "-");
+                    std::fprintf(stderr, "cshogi issue56 osl mate1 reject move=- reason=invalid source=move-candidate\n");
                 }
                 return Move::moveNone();
             }
             if (move.pieceTypeFrom() == King) {
                 if (trace_fixed_probe) {
                     std::fprintf(stderr, "cshogi issue56 osl mate1 reject move=%s reason=king source=move-candidate\n",
+                        move.toUSI().c_str());
+                }
+                return Move::moveNone();
+            }
+            if (king_open_move(move)) {
+                if (trace_fixed_probe) {
+                    std::fprintf(stderr, "cshogi issue56 osl mate1 reject move=%s reason=king-open source=move-candidate\n",
                         move.toUSI().c_str());
                 }
                 return Move::moveNone();
@@ -12058,14 +12476,50 @@ namespace {
             if (!to) {
                 continue;
             }
-            if (effect_count(pos, attack_color, *to) < 2
+            const Bitboard effect_at_to = effect_set_at(pos, attack_color, *to);
+            if (effect_at_to.popCount() < 2
                 && !has_additional_attack_effect_at(pos, attack_color, *to)) {
                 continue;
             }
 
-            std::vector<Move> candidates;
-            Bitboard attackers = pos.attackersTo(attack_color, *to) & pos.bbOf(attack_color);
+            Bitboard attackers = effect_at_to & pos.bbOf(attack_color);
             attackers.clearBit(pos.kingSquare(attack_color));
+            if (current_piece_numbers) {
+                for (int num = 0; num < 40; ++num) {
+                    Color owner = ColorNum;
+                    Square from = SquareNum;
+                    if (!osl_piece_number_info(current_piece_numbers, num, &owner, &from)
+                        || owner != attack_color
+                        || !isInSquare(from)
+                        || !attackers.isSet(from)) {
+                        continue;
+                    }
+                    const PieceType from_type = pieceToPieceType(pos.piece(from));
+                    if (from_type == King || from_type == Empty) {
+                        continue;
+                    }
+                    const bool can_promote_move = is_promotable_basic(from_type) && canPromote(attack_color, from, *to);
+                    if (can_promote_move) {
+                        if (const Move mate = try_move(makeCapturePromoteMove(from_type, from, *to, pos), dir_index)) {
+                            return mate;
+                        }
+                        if (is_osl_major_basic_or_pawn(from_type)) {
+                            continue;
+                        }
+                    }
+                    if (const Move mate = try_move(makeCaptureMove(from_type, from, *to, pos), dir_index)) {
+                        return mate;
+                    }
+                }
+                continue;
+            }
+
+            std::array<Move, 64> candidates;
+            size_t candidate_count = 0;
+            const auto push_candidate = [&](const Move move) {
+                assert(candidate_count < candidates.size());
+                candidates[candidate_count++] = move;
+            };
             while (attackers.isAny()) {
                 const Square from = attackers.firstOneFromSQ11();
                 const PieceType from_type = pieceToPieceType(pos.piece(from));
@@ -12074,24 +12528,34 @@ namespace {
                 }
                 const bool can_promote_move = is_promotable_basic(from_type) && canPromote(attack_color, from, *to);
                 if (can_promote_move) {
-                    candidates.push_back(makeCapturePromoteMove(from_type, from, *to, pos));
+                    push_candidate(makeCapturePromoteMove(from_type, from, *to, pos));
                     if (!is_osl_major_basic_or_pawn(from_type)) {
-                        candidates.push_back(makeCaptureMove(from_type, from, *to, pos));
+                        push_candidate(makeCaptureMove(from_type, from, *to, pos));
                     }
                 }
                 else {
-                    candidates.push_back(makeCaptureMove(from_type, from, *to, pos));
+                    push_candidate(makeCaptureMove(from_type, from, *to, pos));
                 }
             }
-            std::stable_sort(candidates.begin(), candidates.end(), [&](const Move lhs, const Move rhs) {
-                const int lhs_num = immediate_osl_piece_number_from_position(pos, lhs.from());
-                const int rhs_num = immediate_osl_piece_number_from_position(pos, rhs.from());
+            const auto less_candidate = [&](const Move lhs, const Move rhs) {
+                const int lhs_num = immediate_osl_piece_number_from_state_or_position(pos, lhs.from(), current_piece_numbers);
+                const int rhs_num = immediate_osl_piece_number_from_state_or_position(pos, rhs.from(), current_piece_numbers);
                 if (lhs_num != rhs_num) {
                     return lhs_num < rhs_num;
                 }
                 return lhs.isPromotion() && !rhs.isPromotion();
-            });
-            for (const Move move : candidates) {
+            };
+            for (size_t i = 1; i < candidate_count; ++i) {
+                const Move candidate = candidates[i];
+                size_t j = i;
+                while (j > 0 && less_candidate(candidate, candidates[j - 1])) {
+                    candidates[j] = candidates[j - 1];
+                    --j;
+                }
+                candidates[j] = candidate;
+            }
+            for (size_t i = 0; i < candidate_count; ++i) {
+                const Move move = candidates[i];
                 if (const Move mate = try_move(move, dir_index)) {
                     return mate;
                 }
@@ -12114,7 +12578,7 @@ namespace {
 
         const Square from = move.from();
         const Square to = move.to();
-        const Bitboard attackers_to_to = pos.attackersTo(attack_color, to);
+        const Bitboard attackers_to_to = effect_set_at(pos, attack_color, to);
         const Bitboard from_effect = Position::attacksFrom(move.pieceTypeFrom(), attack_color, from, pos.occupiedBB());
 
         while (mask != 0) {
@@ -12125,7 +12589,8 @@ namespace {
                 continue;
             }
 
-            int count = effect_count(pos, attack_color, *pos1);
+            const Bitboard effect_at_pos1 = effect_set_at(pos, attack_color, *pos1);
+            int count = effect_at_pos1.popCount();
             if (from_effect.isSet(*pos1)) {
                 --count;
             }
@@ -12133,7 +12598,7 @@ namespace {
                 return false;
             }
 
-            Bitboard blocking = pos.attackersTo(attack_color, *pos1) & attackers_to_to;
+            Bitboard blocking = effect_at_pos1 & attackers_to_to;
             while (blocking.isAny()) {
                 const Square attacker_sq = blocking.firstOneFromSQ11();
                 if (attacker_sq == from) {
@@ -12158,6 +12623,34 @@ namespace {
         }
 
         return true;
+    }
+
+    bool immediate_same_king_ray(const Square king, const Square lhs, const Square rhs) {
+        const int lhs_file = static_cast<int>(makeFile(lhs)) - static_cast<int>(makeFile(king));
+        const int lhs_rank = static_cast<int>(makeRank(lhs)) - static_cast<int>(makeRank(king));
+        const int rhs_file = static_cast<int>(makeFile(rhs)) - static_cast<int>(makeFile(king));
+        const int rhs_rank = static_cast<int>(makeRank(rhs)) - static_cast<int>(makeRank(king));
+        const auto normalize = [](const int value) {
+            return value == 0 ? 0 : (value > 0 ? 1 : -1);
+        };
+        const auto on_king_ray = [](const int file_delta, const int rank_delta) {
+            return file_delta == 0
+                || rank_delta == 0
+                || std::abs(file_delta) == std::abs(rank_delta);
+        };
+        if (!on_king_ray(lhs_file, lhs_rank) || !on_king_ray(rhs_file, rhs_rank)) {
+            return false;
+        }
+        return normalize(lhs_file) == normalize(rhs_file)
+            && normalize(lhs_rank) == normalize(rhs_rank);
+    }
+
+    bool immediate_king_open_move(
+        const Position& pos, const Color attack_color, const Move move, const Bitboard& pinned_attack) {
+        if (move.isDrop() || move.pieceTypeFrom() == King || !pinned_attack.isSet(move.from())) {
+            return false;
+        }
+        return !immediate_same_king_ray(pos.kingSquare(attack_color), move.from(), move.to());
     }
 
     bool immediate_opponent_long_effect_follows(const Position& pos, const Color attack_color, const Move move) {
@@ -12289,7 +12782,8 @@ namespace {
             if (piece2 != Empty && pieceToColor(piece2) == defense_color) {
                 return false;
             }
-            int count = effect_count(pos, attack_color, *pos2);
+            const Bitboard effect_at_pos2 = effect_set_at(pos, attack_color, *pos2);
+            int count = effect_at_pos2.popCount();
             const int original_count = count;
             if (from_effect.isSet(*pos2)) {
                 --count;
@@ -12571,6 +13065,12 @@ namespace {
         const Square king = pos.kingSquare(defender);
         const Square to = move.to();
         PieceType piece_type = osl_move_ptype(pos, move);
+        const auto defender_effect_count_at_to = [&]() -> int {
+            return effect_count(pos, defender, to);
+        };
+        const auto attacker_effect_count_at_to = [&]() -> int {
+            return effect_count(pos, attacker, to);
+        };
         const bool trace_zukou_r5e = dfpn_trace_zukou001_direct_enabled()
             && move.toUSI() == "R*5e"
             && pos.toSFEN().rfind("1pG6/Gs+P6/pP7/n1lsS4/1k7/n7b/1N+Bp5/1S7/8K b RPr2gn3l12p ", 0) == 0;
@@ -12581,13 +13081,14 @@ namespace {
                 || move.toUSI() == "4b5a+");
 
         if (piece_type == Knight) {
+            const int defender_count = defender_effect_count_at_to();
             if (trace_issue56_move) {
                 std::fprintf(stderr,
                     "cshogi liberty branch move=%s kind=knight liberty_count=%u defense=%d result=%d sfen=%s\n",
                     move.toUSI().c_str(),
                     liberty_info.count,
-                    effect_count(pos, defender, to),
-                    std::max(1, static_cast<int>(liberty_info.count) + effect_count(pos, defender, to)),
+                    defender_count,
+                    std::max(1, static_cast<int>(liberty_info.count) + defender_count),
                     pos.toSFEN().c_str());
             }
             if (trace_issue56_move) {
@@ -12595,10 +13096,10 @@ namespace {
                     "cshogi liberty move=%s knight liberty_count=%u defense=%d result=%d\n",
                     move.toUSI().c_str(),
                     liberty_info.count,
-                    effect_count(pos, defender, to),
-                    std::max(1, static_cast<int>(liberty_info.count) + effect_count(pos, defender, to)));
+                    defender_count,
+                    std::max(1, static_cast<int>(liberty_info.count) + defender_count));
             }
-            return std::max(1, static_cast<int>(liberty_info.count) + effect_count(pos, defender, to));
+            return std::max(1, static_cast<int>(liberty_info.count) + defender_count);
         }
 
         const int file_delta = static_cast<int>(makeFile(king)) - static_cast<int>(makeFile(to));
@@ -12679,6 +13180,8 @@ namespace {
 
         if (trace_issue56_move || trace_zukou_r5e) {
             const std::string sfen = pos.toSFEN();
+            const int attacker_count = attacker_effect_count_at_to();
+            const int defender_count = defender_effect_count_at_to();
             std::fprintf(stderr,
                 "cshogi liberty move=%s piece=%d to=%d%d king=%d%d neighboring=%d liberty_mask=0x%02x liberty_count=%u file_delta=%d rank_delta=%d has_effect=%d base=%u attack=%d defense=%d additional=%d drop=%d sfen=%s\n",
                 move.toUSI().c_str(),
@@ -12694,8 +13197,8 @@ namespace {
                 rank_delta,
                 liberty.has_effect ? 1 : 0,
                 liberty.liberty,
-                effect_count(pos, attacker, to),
-                effect_count(pos, defender, to),
+                attacker_count,
+                defender_count,
                 has_additional_attack_effect(pos, attacker, move) ? 1 : 0,
                 move.isDrop() ? 1 : 0,
                 sfen.c_str());
@@ -12716,9 +13219,11 @@ namespace {
         if (!neighboring && liberty.has_effect) {
             ++value;
         }
-        value += effect_count(pos, defender, to);
+        const int defender_count = defender_effect_count_at_to();
+        value += defender_count;
         if (move.isDrop()) {
-            if (neighboring && effect_count(pos, attacker, to) > 0) {
+            const int attacker_count = neighboring ? attacker_effect_count_at_to() : 0;
+            if (neighboring && attacker_count > 0) {
                 --value;
             }
             if (trace_issue56_move || trace_zukou_r5e) {
@@ -12730,7 +13235,8 @@ namespace {
             }
             return std::max(value, 1);
         }
-        if (neighboring && (effect_count(pos, attacker, to) >= 2 || has_additional_attack_effect(pos, attacker, move))) {
+        const int attacker_count = neighboring ? attacker_effect_count_at_to() : 0;
+        if (neighboring && (attacker_count >= 2 || has_additional_attack_effect(pos, attacker, move))) {
             --value;
         }
         if (trace_issue56_move) {
@@ -12748,7 +13254,7 @@ namespace {
     }
 
     bool is_unattacked_drop_escape(const Position& pos, const Color attack_color, const Move move) {
-        return move.isDrop() && !pos.attackersToIsAny(oppositeColor(attack_color), move.to());
+        return move.isDrop() && !effect_has_at(pos, oppositeColor(attack_color), move.to());
     }
 
     enum class LongDropClass : uint8_t {
@@ -12810,7 +13316,7 @@ namespace {
             if ((ptype != Horse && ptype != Dragon)
                 || move.isCapture()
                 || move.isPromotion()
-                || pos.attackersToIsAny(oppositeColor(attack_color), move.to())) {
+                || effect_has_at(pos, oppositeColor(attack_color), move.to())) {
                 return LongDropClass::None;
             }
             effect_type = ptype;
@@ -12834,7 +13340,9 @@ namespace {
         return estimate_attack_liberty(pos, attacker, LibertyInfo{ info.liberty, info.liberty_count }, move);
     }
 
-    ProofDisproof estimate_attack_pdp(const Position& pos, const Color attacker, const King8RuntimeInfo& king8_info, const Move move) {
+    ProofDisproof estimate_attack_pdp_with_support(const Position& pos, const Color attacker,
+        const King8RuntimeInfo& king8_info, const Move move, const int attack_support_base,
+        const int defense_support) {
         const uint32_t base_proof_number = static_cast<uint32_t>(count_liberty_runtime(pos, attacker, king8_info, move));
         uint32_t proof_number = base_proof_number;
         uint32_t disproof_number = 1;
@@ -12846,12 +13354,11 @@ namespace {
         static const bool trace_zukou_root_est_env = CSHOGI_DFPN_TRACE_GETENV("CSHOGI_DFPN_ROOT_ATTACK_EST") != nullptr;
         const bool trace_zukou_root_est = trace_zukou_root_est_env
             && (move.toUSI() == "5a8d+" || move.toUSI() == "5a8d" || move.toUSI() == "7i8g" || move.toUSI() == "7i6g");
-        if (effect_count(pos, defender, move.to()) >= 2) {
+        if (defense_support >= 2) {
             ++proof_number;
         }
 
-        const int attack_support = effect_count(pos, attacker, move.to()) + (move.isDrop() ? 1 : 0);
-        const int defense_support = effect_count(pos, defender, move.to());
+        const int attack_support = attack_support_base + (move.isDrop() ? 1 : 0);
         if (attack_support > defense_support) {
             disproof_number = 2;
         }
@@ -12878,8 +13385,8 @@ namespace {
                 disproof_number,
                 attack_support,
                 defense_support,
-                effect_count(pos, defender, move.to()),
-                effect_count(pos, defender, move.to()) >= 2 ? 1 : 0,
+                defense_support,
+                defense_support >= 2 ? 1 : 0,
                 move.isCapture() ? 1 : 0,
                 move.isDrop() ? 1 : 0,
                 pos.toSFEN().c_str());
@@ -12900,7 +13407,7 @@ namespace {
                 static_cast<int>(osl_move_ptype(pos, move)),
                 attack_support,
                 defense_support,
-                effect_count(pos, defender, move.to()) >= 2 ? 1 : 0,
+                defense_support >= 2 ? 1 : 0,
                 move.isCapture() ? 1 : 0,
                 pos.toSFEN().c_str());
         }
@@ -12929,7 +13436,15 @@ namespace {
         return { proof_number, disproof_number };
     }
 
-    int attack_proof_cost(const Position& pos, const Color attacker, const Move move) {
+    ProofDisproof estimate_attack_pdp(const Position& pos, const Color attacker, const King8RuntimeInfo& king8_info, const Move move) {
+        const Square to = move.to();
+        const int attack_support_base = effect_count(pos, attacker, to);
+        const int defense_support = effect_count(pos, oppositeColor(attacker), to);
+        return estimate_attack_pdp_with_support(pos, attacker, king8_info, move, attack_support_base, defense_support);
+    }
+
+    int attack_proof_cost_with_support(const Position& pos, const Color attacker, const Move move,
+        const int attack_support, const int defense_support) {
         static constexpr std::array<int8_t, PieceTypeNum> kAttackSacrificeCost = {
             0,  // Occupied
             1,  // Pawn
@@ -12952,9 +13467,6 @@ namespace {
             return 0;
         }
 
-        const Square to = move.to();
-        const int attack_support = effect_count(pos, attacker, to) + (move.isDrop() ? 1 : 0);
-        const int defense_support = effect_count(pos, oppositeColor(attacker), to);
         if (dfpn_issue56_pv_target_trace_enabled()
             && pos.toSFEN().rfind("5+S1kl/4+R2gr/3p3p1/p2nppp1p/5ns2/3Pl3P/1PNK1PP2/1GGS2S2/5G1NL b 2BL4P2p ", 0) == 0
             && move.toUSI() == "B*4c") {
@@ -12989,8 +13501,110 @@ namespace {
         return proof;
     }
 
+    int attack_proof_cost(const Position& pos, const Color attacker, const Move move) {
+        const Square to = move.to();
+        const int attack_support = effect_count(pos, attacker, to) + (move.isDrop() ? 1 : 0);
+        const int defense_support = effect_count(pos, oppositeColor(attacker), to);
+        return attack_proof_cost_with_support(pos, attacker, move, attack_support, defense_support);
+    }
+
+    class EffectSetCache {
+    public:
+        void ensure_position(const Position& pos) {
+            const Key key = pos.getBoardKey();
+            if (valid_ && board_key_ == key) {
+                return;
+            }
+            valid_ = true;
+            board_key_ = key;
+            ++generation_;
+            if (generation_ == 0) {
+                known_generation_.fill(0);
+                known_count_generation_.fill(0);
+                generation_ = 1;
+            }
+        }
+
+        Bitboard get(const Position& pos, const Color c, const Square sq) {
+            ensure_position(pos);
+            const size_t offset = static_cast<size_t>(c) * static_cast<size_t>(SquareNum)
+                + static_cast<size_t>(sq);
+            ensure_effect(pos, c, sq, offset);
+            return effects_[offset];
+        }
+
+        int count(const Position& pos, const Color c, const Square sq) {
+            ensure_position(pos);
+            const size_t offset = static_cast<size_t>(c) * static_cast<size_t>(SquareNum)
+                + static_cast<size_t>(sq);
+            ensure_effect(pos, c, sq, offset);
+            if (known_count_generation_[offset] != generation_) {
+                known_count_generation_[offset] = generation_;
+                counts_[offset] = effects_[offset].popCount();
+            }
+            return counts_[offset];
+        }
+
+        bool any(const Position& pos, const Color c, const Square sq) {
+            ensure_position(pos);
+            const size_t offset = static_cast<size_t>(c) * static_cast<size_t>(SquareNum)
+                + static_cast<size_t>(sq);
+            ensure_effect(pos, c, sq, offset);
+            return effects_[offset].isAny();
+        }
+
+    private:
+        void ensure_effect(const Position& pos, const Color c, const Square sq, const size_t offset) {
+            if (known_generation_[offset] != generation_) {
+                known_generation_[offset] = generation_;
+                effects_[offset] = pos.attackersTo(c, sq);
+            }
+        }
+
+        bool valid_ = false;
+        Key board_key_ = 0;
+        uint16_t generation_ = 0;
+        std::array<uint16_t, static_cast<size_t>(ColorNum) * static_cast<size_t>(SquareNum)> known_generation_{};
+        std::array<uint16_t, static_cast<size_t>(ColorNum) * static_cast<size_t>(SquareNum)> known_count_generation_{};
+        std::array<Bitboard, static_cast<size_t>(ColorNum) * static_cast<size_t>(SquareNum)> effects_{};
+        std::array<int8_t, static_cast<size_t>(ColorNum) * static_cast<size_t>(SquareNum)> counts_{};
+    };
+
+    inline EffectSetCache& effect_cache() {
+        static thread_local EffectSetCache cache;
+        return cache;
+    }
+
+    inline Bitboard effect_set_at(const Position& pos, const Color c, const Square sq) {
+        DfpnProfileScope profile(DfpnProfileSlot::EffectSetAt);
+        EffectSetCache& cache = effect_cache();
+        return cache.get(pos, c, sq);
+    }
+
+    inline bool effect_has_at(const Position& pos, const Color c, const Square sq) {
+        DfpnProfileScope profile(DfpnProfileSlot::EffectHasAt);
+        EffectSetCache& cache = effect_cache();
+        return cache.any(pos, c, sq);
+    }
+
     inline int effect_count(const Position& pos, const Color c, const Square sq) {
-        return pos.attackersTo(c, sq).popCount();
+        DfpnProfileScope profile(DfpnProfileSlot::EffectCount);
+        EffectSetCache& cache = effect_cache();
+        return cache.count(pos, c, sq);
+    }
+
+    inline bool has_multiple_effect_at(const Position& pos, const Color c, const Square sq) {
+        DfpnProfileScope profile(DfpnProfileSlot::EffectCount);
+        EffectSetCache& cache = effect_cache();
+        const Bitboard effects = cache.get(pos, c, sq);
+        const uint64_t lo = effects.p(0);
+        const uint64_t hi = effects.p(1);
+        return (lo & (lo - 1)) != 0 || (hi & (hi - 1)) != 0 || (lo != 0 && hi != 0);
+    }
+
+    inline void do_known_check_move(Position& pos, const Move move, StateInfo& st) {
+        const CheckInfo ci(pos);
+        pos.doMove(move, st, ci, true);
     }
 
     template <Color THEM>
@@ -13277,6 +13891,13 @@ namespace {
             return board_number_[square];
         }
 
+        const PieceInfo* piece_of_number(const int num) const {
+            if (num < 0 || num >= static_cast<int>(pieces_.size()) || !pieces_[num].used) {
+                return nullptr;
+            }
+            return &pieces_[num];
+        }
+
         bool apply_move(const Move move, Undo* undo = nullptr) {
             return apply(move, undo);
         }
@@ -13454,6 +14075,35 @@ namespace {
         Color pieces_turn_ = Black;
     };
 
+    int immediate_osl_piece_number_from_state_or_position(
+        const Position& pos, const Square square, const OslPieceNumberState* current_piece_numbers) {
+        if (current_piece_numbers) {
+            const int number = current_piece_numbers->number_of_square(square);
+            if (number >= 0) {
+                return number;
+            }
+        }
+        return immediate_osl_piece_number_from_position(pos, square);
+    }
+
+    bool osl_piece_number_info(
+        const OslPieceNumberState* current_piece_numbers, const int number, Color* owner, Square* square) {
+        if (!current_piece_numbers) {
+            return false;
+        }
+        const OslPieceNumberState::PieceInfo* piece = current_piece_numbers->piece_of_number(number);
+        if (!piece) {
+            return false;
+        }
+        if (owner) {
+            *owner = piece->owner;
+        }
+        if (square) {
+            *square = piece->square;
+        }
+        return true;
+    }
+
     bool is_osl_bishop_number_ordered_move(const Position& pos, const Move move) {
         if (move.isDrop()) {
             return false;
@@ -13570,7 +14220,25 @@ namespace {
             return false;
         }
 
-        const auto raw_key = [&](const Move move) {
+        struct RawCheckKey {
+            int phase;
+            int subphase;
+            int primary;
+            int drop;
+            int secondary;
+            int promotion;
+
+            bool operator<(const RawCheckKey& rhs) const {
+                if (phase != rhs.phase) return phase < rhs.phase;
+                if (subphase != rhs.subphase) return subphase < rhs.subphase;
+                if (primary != rhs.primary) return primary < rhs.primary;
+                if (drop != rhs.drop) return drop < rhs.drop;
+                if (secondary != rhs.secondary) return secondary < rhs.secondary;
+                return promotion < rhs.promotion;
+            }
+        };
+
+        const auto raw_key = [&](const Move move) -> RawCheckKey {
             const int phase = dfpn_check_move_phase(pos, pos.turn(), move);
             const int subphase = dfpn_check_move_subphase(pos, pos.turn(), move, phase);
             int from_key = 0;
@@ -13590,45 +14258,59 @@ namespace {
                     }
                 }
             }
-            return std::make_tuple(
+            return RawCheckKey{
                 phase,
                 subphase,
                 long_piece_phase ? from_key : osl_square_index(move.to()),
                 move.isDrop() ? 1 : 0,
                 long_piece_phase ? osl_square_index(move.to()) : from_key,
-                move.isPromotion() ? 0 : 1);
+                move.isPromotion() ? 0 : 1
+            };
         };
 
         if (moves.size() < 2) {
             return false;
         }
-        std::vector<Move> ordered;
-        std::vector<Move> ignored_unpromotes;
-        ordered.reserve(moves.size());
-        ignored_unpromotes.reserve(moves.size());
+        struct RawKeyedMove {
+            Move move;
+            RawCheckKey key;
+        };
+
+        std::array<RawKeyedMove, kMoveBufferSize> ordered;
+        std::array<Move, kMoveBufferSize> ignored_unpromotes;
+        size_t ordered_size = 0;
+        size_t ignored_unpromotes_size = 0;
         for (const Move move : moves) {
             if (is_ignored_unpromote_check_variant(move, pos.turn())) {
-                ignored_unpromotes.push_back(move);
+                ignored_unpromotes[ignored_unpromotes_size++] = move;
             }
             else {
-                ordered.push_back(move);
+                ordered[ordered_size++] = RawKeyedMove{ move, raw_key(move) };
             }
         }
-        std::sort(ordered.begin(), ordered.end(),
-            [&](const Move lhs, const Move rhs) {
-                return raw_key(lhs) < raw_key(rhs);
+        std::sort(ordered.begin(), ordered.begin() + static_cast<std::ptrdiff_t>(ordered_size),
+            [](const RawKeyedMove& lhs, const RawKeyedMove& rhs) {
+                return lhs.key < rhs.key;
             });
-        ordered.insert(ordered.end(), ignored_unpromotes.begin(), ignored_unpromotes.end());
 
         bool changed = false;
-        if (ordered.size() != moves.size()) {
+        if (ordered_size + ignored_unpromotes_size != moves.size()) {
             return false;
         }
-        for (size_t i = 0; i < moves.size(); ++i) {
-            if (moves[i] != ordered[i]) {
+        size_t out = 0;
+        for (size_t i = 0; i < ordered_size; ++i) {
+            const RawKeyedMove& keyed = ordered[i];
+            if (moves[out] != keyed.move) {
                 changed = true;
             }
-            moves[i] = ordered[i];
+            moves[out++] = keyed.move;
+        }
+        for (size_t i = 0; i < ignored_unpromotes_size; ++i) {
+            const Move move = ignored_unpromotes[i];
+            if (moves[out] != move) {
+                changed = true;
+            }
+            moves[out++] = move;
         }
         return changed;
     }
@@ -13779,7 +14461,6 @@ namespace {
                     moves.push_back(it->move);
                 }
             }
-            complete_moves_for_position(pos, moves);
             append_ignored_unpromote_checks(pos, moves);
         }
         else {
@@ -13792,7 +14473,6 @@ namespace {
             for (ExtMove* it = candidate_buffer.data(); it != candidate_last; ++it) {
                 moves.push_back(it->move);
             }
-            complete_moves_for_position(pos, moves);
             append_ignored_unpromote_checks(pos, moves);
             trace_generate_check_for_sfen_prefix("raw", pos, pos.turn(), moves);
             trace_issue56_check_generation_moves("raw", pos, moves);
@@ -13845,10 +14525,6 @@ namespace {
             }
         }
 
-        // OSL Dfpn::generateCheck applies Dfpn::sort to complete Move objects.
-        // The in-check branch reaches here via GenerateEscape-derived moves,
-        // so normalize the final list before sorting and storing node.moves.
-        complete_moves_for_position(pos, moves);
         reorder_osl_numbered_check_moves(pos, moves, root_position, move_history, current_piece_numbers);
 
         // OSL Dfpn::generateCheck applies Dfpn::sort directly to the
@@ -13933,7 +14609,6 @@ namespace {
         for (ExtMove* it = buffer.data(); it != last; ++it) {
             moves.push_back(it->move);
         }
-        complete_moves_for_position(pos, moves);
         // OSL FixedDepthSearcher::attack consumes AddEffectWithEffect's raw
         // order, whose long-piece effects are enumerated by OSL piece number.
         reorder_osl_numbered_long_moves_impl(pos, moves, nullptr, nullptr, current_piece_numbers);
@@ -13965,7 +14640,6 @@ namespace {
         else {
             generate_cheap_escape_moves(pos, moves);
         }
-        complete_moves_for_position(pos, moves);
         const bool trace_4b5cp_defense = dfpn_trace_enabled()
             && (pos.toSFEN() == "8l/1R4kgr/3+S+B2p1/p2nlpp1p/5ns2/2+BPl3P/1PNK1PP2/1GGS2S2/5G1NL w 5P3p 6"
                 || pos.toSFEN() == "1+R2B3l/7gr/3+Sp1kp1/p2n+Bpp1p/5ns2/3Pl3P/1PNK1PP2/1GGS2S2/5G1NL w L4P3p 8");
@@ -13977,19 +14651,29 @@ namespace {
         if (need_full_width) {
             std::array<ExtMove, kMoveBufferSize> buffer;
             ExtMove* last = generateOslmateEscapeMoves(buffer.data(), pos, false, false);
-            std::vector<Move> others;
-            others.reserve(static_cast<size_t>(last - buffer.data()));
+            FixedMoveVector<kCheckOrEscapeMoveCapacity> others;
             for (ExtMove* it = buffer.data(); it != last; ++it) {
                 others.push_back(it->move);
             }
-            complete_moves_for_position(pos, others);
-            reorder_osl_numbered_escape_target_moves(current_piece_numbers, others);
+            reorder_osl_numbered_escape_target_moves_impl(current_piece_numbers, others);
             sort_moves(pos, pos.turn(), others);
 
             const size_t original_size = moves.size();
+            std::array<uint32_t, kCheckOrEscapeMoveCapacity> original_move_values{};
+            assert(original_size <= original_move_values.size());
+            for (size_t i = 0; i < original_size; ++i) {
+                original_move_values[i] = moves[i].value();
+            }
             for (const Move move : others) {
-                if (std::find(moves.begin(), moves.begin() + static_cast<std::ptrdiff_t>(original_size), move)
-                    == moves.begin() + static_cast<std::ptrdiff_t>(original_size)) {
+                bool found = false;
+                const uint32_t move_value = move.value();
+                for (size_t i = 0; i < original_size; ++i) {
+                    if (original_move_values[i] == move_value) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
                     moves.push_back(move);
                 }
             }
@@ -14290,7 +14974,7 @@ namespace {
         for (const Move move : moves) {
             trace_issue56_fixed_attack("try", pos, move);
             StateInfo st;
-            pos.doMove(move, st);
+            do_known_check_move(pos, move, st);
             if (trace_fixed_probe) {
                 const std::vector<Move> escape_moves = generate_escape_moves(pos);
                 std::fprintf(stderr, "cshogi issue56 fixed exact try move=%s child_sfen=%s escapes=%zu",
@@ -14366,7 +15050,7 @@ namespace {
         for (const Move move : moves) {
             trace_issue56_fixed_defense("try", pos, move);
             StateInfo st;
-            pos.doMove(move, st);
+            do_known_check_move(pos, move, st);
             const AttackRepetition rep = defense_repetition(NotRepetition);
             if (rep.handled) {
                 pos.undoMove(move);
@@ -14435,7 +15119,7 @@ namespace {
         const std::vector<Move> moves = generate_check_moves(pos);
         for (const Move move : moves) {
             StateInfo st;
-            pos.doMove(move, st);
+            do_known_check_move(pos, move, st);
             const AttackRepetition rep = attack_repetition(NotRepetition);
             if (rep.handled) {
                 pos.undoMove(move);
@@ -14474,7 +15158,7 @@ namespace {
 
         for (const Move move : moves) {
             StateInfo st;
-            pos.doMove(move, st);
+            do_known_check_move(pos, move, st);
             const AttackRepetition rep = defense_repetition(NotRepetition);
             if (rep.handled) {
                 pos.undoMove(move);
@@ -14498,7 +15182,8 @@ namespace {
     }
 
     ProofDisproof fixed_attack_may_unsafe_zero(Position& pos, const Color attack_color, Move* best_move = nullptr,
-        Hand* proof_pieces = nullptr, bool* searched_attack_node = nullptr) {
+        Hand* proof_pieces = nullptr, bool* searched_attack_node = nullptr,
+        OslPieceNumberState* current_piece_numbers = nullptr) {
         if (best_move) {
             *best_move = Move::moveNone();
         }
@@ -14517,9 +15202,9 @@ namespace {
                 "cshogi issue56 fixed-may enter sfen=%s inCheck=%d target_attacked=%d\n",
                 pos.toSFEN().c_str(),
                 pos.inCheck() ? 1 : 0,
-                (target_king && pos.attackersToIsAny(attack_color, target_king)) ? 1 : 0);
+                (target_king && effect_has_at(pos, attack_color, target_king)) ? 1 : 0);
         }
-        if (target_king && pos.attackersToIsAny(attack_color, target_king)) {
+        if (target_king && effect_has_at(pos, attack_color, target_king)) {
             return ProofDisproof::NoEscape();
         }
 
@@ -14527,7 +15212,7 @@ namespace {
             *searched_attack_node = true;
         }
         if (!pos.inCheck()) {
-            const Move mate1 = immediate_mate_move_in_1_osl(pos);
+            const Move mate1 = immediate_mate_move_in_1_osl(pos, current_piece_numbers);
             if (trace_fixed_probe) {
                 std::fprintf(stderr,
                     "cshogi issue56 fixed-may mate1=%s\n",
@@ -14562,7 +15247,7 @@ namespace {
 
         const Color defense_color = oppositeColor(attack_color);
         const Square target_king = pos.kingSquare(defense_color);
-        const King8RuntimeInfo king8_info = make_king8_runtime_info(pos, attack_color);
+        const King8RuntimeInfo king8_info = king8_runtime_info_at(pos, attack_color);
         int count = king8_info.liberty_count;
 
         Bitboard checkers = pos.checkersBB();
@@ -14613,7 +15298,7 @@ namespace {
 
         const Color defense_color = oppositeColor(attack_color);
         const Square target_king = pos.kingSquare(defense_color);
-        if (target_king && pos.attackersToIsAny(attack_color, target_king)) {
+        if (target_king && effect_has_at(pos, attack_color, target_king)) {
             return ProofDisproof::NoEscape();
         }
 
@@ -14621,7 +15306,8 @@ namespace {
             *searched_attack_node = true;
         }
         if (!pos.inCheck()) {
-            const Move mate1 = immediate_mate_move_in_1_osl(pos);
+            DfpnProfileScope immediate_profile(DfpnProfileSlot::FixedImmediate);
+            const Move mate1 = immediate_mate_move_in_1_osl(pos, current_piece_numbers);
             if (mate1) {
                 if (best_move) {
                     *best_move = mate1;
@@ -14635,7 +15321,10 @@ namespace {
 
         bool has_pawn_checkmate = false;
         FixedMoveVector<kCheckOrEscapeMoveCapacity> moves;
-        generate_fixed_depth_check_moves_into(pos, moves, &has_pawn_checkmate, current_piece_numbers);
+        {
+            DfpnProfileScope check_gen_profile(DfpnProfileSlot::FixedCheckGen);
+            generate_fixed_depth_check_moves_into(pos, moves, &has_pawn_checkmate, current_piece_numbers);
+        }
         if (g_trace_fixed_a3_window) {
             std::fprintf(stderr,
                 "cshogi fixed-a3 attack moves pawn=%d size=%zu sfen=%s\n",
@@ -14670,11 +15359,14 @@ namespace {
                 }
             }
             StateInfo st;
-            pos.doMove(move, st);
+            do_known_check_move(pos, move, st);
 
             Hand child_proof_storage = zero_hand();
             Hand* child_proof = proof_pieces ? proof_pieces : &child_proof_storage;
-            const ProofDisproof child = fixed_defense_estimation_zero(pos, attack_color, move, child_proof);
+            const ProofDisproof child = [&]() {
+                DfpnProfileScope estimate_profile(DfpnProfileSlot::FixedDefenseEstimate);
+                return fixed_defense_estimation_zero(pos, attack_color, move, child_proof);
+            }();
 
             pos.undoMove(move);
             if (piece_number_applied) {
@@ -14711,7 +15403,8 @@ namespace {
         }
 
         if (!pos.inCheck()) {
-            const Move mate1 = immediate_mate_move_in_1_osl(pos);
+            DfpnProfileScope immediate_profile(DfpnProfileSlot::FixedImmediate);
+            const Move mate1 = immediate_mate_move_in_1_osl(pos, current_piece_numbers);
             if (mate1) {
                 if (best_move) {
                     *best_move = mate1;
@@ -14725,7 +15418,10 @@ namespace {
 
         bool has_pawn_checkmate = false;
         FixedMoveVector<kCheckOrEscapeMoveCapacity> moves;
-        generate_fixed_depth_check_moves_into(pos, moves, &has_pawn_checkmate, current_piece_numbers);
+        {
+            DfpnProfileScope check_gen_profile(DfpnProfileSlot::FixedCheckGen);
+            generate_fixed_depth_check_moves_into(pos, moves, &has_pawn_checkmate, current_piece_numbers);
+        }
         if (g_trace_fixed_a3_window) {
             std::fprintf(stderr,
                 "cshogi fixed-a3 attack moves pawn=%d size=%zu sfen=%s\n",
@@ -14841,7 +15537,8 @@ namespace {
             && pos.toSFEN().rfind("2G6/1p+P6/pk7/n2sS4/1b2lR3/+B1lNl4/1N1p5/1S7/8K b SPr3gnl13p ", 0) == 0;
 
         if (!pos.inCheck()) {
-            const Move mate1 = immediate_mate_move_in_1_osl(pos);
+            DfpnProfileScope immediate_profile(DfpnProfileSlot::FixedImmediate);
+            const Move mate1 = immediate_mate_move_in_1_osl(pos, current_piece_numbers);
             if (trace_zukou_before4e_fixed_pv) {
                 std::fprintf(stderr,
                     "cshogi zukou before4e fixed-pv mate1=%s sfen=%s\n",
@@ -14858,7 +15555,10 @@ namespace {
 
         bool has_pawn_checkmate = false;
         FixedMoveVector<kCheckOrEscapeMoveCapacity> moves;
-        generate_fixed_depth_check_moves_into(pos, moves, &has_pawn_checkmate, current_piece_numbers);
+        {
+            DfpnProfileScope check_gen_profile(DfpnProfileSlot::FixedCheckGen);
+            generate_fixed_depth_check_moves_into(pos, moves, &has_pawn_checkmate, current_piece_numbers);
+        }
         if (trace_zukou_before4e_fixed_pv) {
             std::fprintf(stderr,
                 "cshogi zukou before4e fixed-pv moves pawn=%d size=%zu sfen=%s\n",
@@ -16997,7 +17697,7 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
     }
     ActiveNodeScope active_node(ctx, exact_record, moves, pos);
     const Square defender_king = pos.kingSquare(oppositeColor(ctx.attack_color));
-    const King8RuntimeInfo king8_info = reset_edge_from_liberty_runtime(defender_king, ctx.attack_color, make_king8_runtime_info(pos, ctx.attack_color));
+    const King8RuntimeInfo king8_info = reset_edge_from_liberty_runtime(defender_king, ctx.attack_color, king8_runtime_info_at(pos, ctx.attack_color));
     std::vector<ChildState>& children = ctx.children_for_current_depth();
     children.clear();
     children.resize(moves.size());
@@ -17006,32 +17706,46 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
     uint32_t frontier_count = 0;
         for (size_t i = 0; i < moves.size(); ++i) {
             DfpnProfileScope child_init_profile(DfpnProfileSlot::AttackChildInit);
-            children[i].move = moves[i];
+            children[i].reset_for_move(moves[i]);
             if (exact_record.solved & child_bit(i)) {
                 continue;
             }
-            const int8_t estimated_attack_proof_cost = static_cast<int8_t>(attack_proof_cost(pos, ctx.attack_color, moves[i]));
-            const std::string parent_sfen_for_issue56_lower_r3a =
-                (dfpn_issue56_target_trace_enabled()
-                    && trace_issue56_7f5d_5c5d_5b4ap_b5b_8b5bp_3b2a_b4c_2b3b_4c3bp_1b3b_5b3b_2a3b_attack_node(ctx.move_history)
-                    && moves[i].toUSI() == "R*3a")
-                ? pos.toSFEN()
-                : std::string();
-            const Move current_move_with_capture = complete_move_for_position(pos, moves[i]);
-            const Key child_board_index = board_index_key_after_move(
-                current_board_index, pos.turn(), current_move_with_capture);
-            const uint64_t child_board_secondary = secondary_board_key_after_move(
-                current_secondary, pos.turn(), current_move_with_capture);
-            const std::array<Hand, ColorNum> child_stands = stand_pair_after_move(
-                current_stands, pos.turn(), current_move_with_capture);
+            const Move current_move_with_capture = moves[i];
+            Key child_board_index = 0;
+            uint64_t child_board_secondary = 0;
+            std::array<Hand, ColorNum> child_stands{ Hand(0), Hand(0) };
+            {
+                DfpnProfileScope child_key_profile(DfpnProfileSlot::ChildKeyStand);
+                const OslBoardKeyParts child_keys = board_keys_after_move(
+                    current_board_index, current_secondary, pos.turn(), current_move_with_capture);
+                child_board_index = child_keys.board_index;
+                child_board_secondary = child_keys.board_secondary;
+                child_stands = stand_pair_after_move(
+                    current_stands, pos.turn(), current_move_with_capture);
+            }
             children[i].board_index = child_board_index;
             children[i].board_secondary = child_board_secondary;
             children[i].stands = child_stands;
             DfpnRecord child_record = table.probe(
                 child_board_index, child_board_secondary, child_stands, ctx.attack_color);
             const bool estimate_child = child_record.proof_disproof == ProofDisproof(1, 1);
+            const Color defender = oppositeColor(ctx.attack_color);
+            int attack_support_base = 0;
+            int defense_support_base = 0;
+            int attack_support_with_drop = 0;
+            if (estimate_child || !moves[i].isCapture()) {
+                const Square move_to = moves[i].to();
+                attack_support_base = effect_count(pos, ctx.attack_color, move_to);
+                defense_support_base = effect_count(pos, defender, move_to);
+                attack_support_with_drop = attack_support_base + (moves[i].isDrop() ? 1 : 0);
+            }
+            const int8_t estimated_attack_proof_cost = moves[i].isCapture()
+                ? 0
+                : static_cast<int8_t>(attack_proof_cost_with_support(
+                    pos, ctx.attack_color, moves[i], attack_support_with_drop, defense_support_base));
             const ProofDisproof estimated_child_pdp = estimate_child
-                ? estimate_attack_pdp(pos, ctx.attack_color, king8_info, moves[i])
+                ? estimate_attack_pdp_with_support(
+                    pos, ctx.attack_color, king8_info, moves[i], attack_support_base, defense_support_base)
                 : child_record.proof_disproof;
             static const bool trace_zukou_rpr_9e9d_raw_env =
                 CSHOGI_DFPN_TRACE_GETENV("CSHOGI_DFPN_ZUKOU_RPR_9E9D_RAW") != nullptr;
@@ -17039,12 +17753,8 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
                 && moves[i].toUSI() == "9e9d"
                 && (pos.toSFEN().rfind("1pG6/Gs+P6/pP7/n1lsS4/+B8/n1k3b2/1N1p5/1S7/8K b RPr2gn3l12p ", 0) == 0
                     || pos.toSFEN().rfind("1pG6/Gs+P6/pP7/n1lsS4/+B3p4/n1k1l1R1b/1N1p5/1S7/8K b Pr2gn2l11p ", 0) == 0)) {
-                const Color defender = oppositeColor(ctx.attack_color);
                 const uint32_t base_proof = static_cast<uint32_t>(
                     count_liberty_runtime(pos, ctx.attack_color, king8_info, moves[i]));
-                const int attack_support = effect_count(pos, ctx.attack_color, moves[i].to())
-                    + (moves[i].isDrop() ? 1 : 0);
-                const int defense_support = effect_count(pos, defender, moves[i].to());
                 std::fprintf(stderr,
                     "cshogi zukou rpr-9e9d raw-probe pdp=%u,%u best=%s last=%s nodes=%u exact=%d estimate=%d estimated=%u,%u liberty=0x%02x liberty_count=%u base=%u attack_support=%d defense_support=%d multiple_def=%d capture=%d drop=%d black=[%s] white=[%s] sfen=%s\n",
                     child_record.proof(),
@@ -17059,9 +17769,9 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
                     static_cast<unsigned>(king8_info.liberty),
                     static_cast<unsigned>(king8_info.liberty_count),
                     base_proof,
-                    attack_support,
-                    defense_support,
-                    effect_count(pos, defender, moves[i].to()) >= 2 ? 1 : 0,
+                    attack_support_with_drop,
+                    defense_support_base,
+                    defense_support_base >= 2 ? 1 : 0,
                     static_cast<int>(complete_move_for_position(pos, moves[i]).cap()),
                     moves[i].isDrop() ? 1 : 0,
                     hand_debug_string(child_record.stands[Black]).c_str(),
@@ -17073,12 +17783,8 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
             if (trace_zukou_2f3f_raw_env
                 && moves[i].toUSI() == "2f3f"
                 && pos.toSFEN().rfind("1pG6/Gs+P6/pP7/n1lsS4/+B6b1/n1k3rR1/1N1p5/1S7/8K b P2gn3l12p ", 0) == 0) {
-                const Color defender = oppositeColor(ctx.attack_color);
                 const uint32_t base_proof = static_cast<uint32_t>(
                     count_liberty_runtime(pos, ctx.attack_color, king8_info, moves[i]));
-                const int attack_support = effect_count(pos, ctx.attack_color, moves[i].to())
-                    + (moves[i].isDrop() ? 1 : 0);
-                const int defense_support = effect_count(pos, defender, moves[i].to());
                 std::fprintf(stderr,
                     "cshogi zukou 2f3f raw-probe pdp=%u,%u best=%s last=%s nodes=%u exact=%d estimate=%d estimated=%u,%u liberty=0x%02x liberty_count=%u base=%u attack_support=%d defense_support=%d multiple_def=%d capture=%d drop=%d black=[%s] white=[%s] sfen=%s\n",
                     child_record.proof(),
@@ -17093,9 +17799,9 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
                     static_cast<unsigned>(king8_info.liberty),
                     static_cast<unsigned>(king8_info.liberty_count),
                     base_proof,
-                    attack_support,
-                    defense_support,
-                    effect_count(pos, defender, moves[i].to()) >= 2 ? 1 : 0,
+                    attack_support_with_drop,
+                    defense_support_base,
+                    defense_support_base >= 2 ? 1 : 0,
                     static_cast<int>(complete_move_for_position(pos, moves[i]).cap()),
                     moves[i].isDrop() ? 1 : 0,
                     hand_debug_string(child_record.stands[Black]).c_str(),
@@ -17178,7 +17884,7 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
                         child_record.best_move.isAny() ? child_record.best_move.toUSI().c_str() : "-",
                         child_record.node_count,
                         static_cast<int>(child_record.proof_pieces_set),
-                        parent_sfen_for_issue56_lower_r3a.c_str(),
+                        pos.toSFEN().c_str(),
                         pos.toSFEN().c_str());
                     table.trace_bucket(pos, ctx.attack_color);
                 }
@@ -17289,24 +17995,27 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
                         pos.toSFEN().c_str());
                     table.trace_bucket(pos, ctx.attack_color);
                 }
-                children[i].pdp = child_record.proof_disproof;
-                if (estimate_child) {
-                    children[i].pdp = estimated_child_pdp;
+                {
+                    DfpnProfileScope child_assign_profile(DfpnProfileSlot::ChildRecordAssign);
+                    children[i].pdp = child_record.proof_disproof;
+                    if (estimate_child) {
+                        children[i].pdp = estimated_child_pdp;
+                    }
+                    pawn_drop_no_escape_child = is_pawn_drop_no_escape(moves[i], children[i].pdp);
+                    if (pawn_drop_no_escape_child) {
+                        children[i].pdp = ProofDisproof::PawnCheckmate();
+                        exact_record.solved |= child_bit(i);
+                        exact_record.min_pdp = std::min(exact_record.min_pdp, ProofDisproof::PAWN_CHECK_MATE_PROOF);
+                    }
+                    const bool trace_issue56_d2 = trace_issue56_7f5d_5c5d_attack_node(ctx.move_history);
+                    children[i].best_reply = child_record.best_move;
+                    children[i].last_move = child_record.last_move;
+                    children[i].proof_pieces_type = child_record.proof_pieces_set;
+                    children[i].proof_pieces = child_record.proof_pieces;
+                    children[i].node_count = child_record.node_count;
+                    children[i].need_full_width = child_record.need_full_width;
+                    copy_record_aux_to_child(children[i], child_record);
                 }
-                pawn_drop_no_escape_child = is_pawn_drop_no_escape(moves[i], children[i].pdp);
-                if (pawn_drop_no_escape_child) {
-                    children[i].pdp = ProofDisproof::PawnCheckmate();
-                    exact_record.solved |= child_bit(i);
-                    exact_record.min_pdp = std::min(exact_record.min_pdp, ProofDisproof::PAWN_CHECK_MATE_PROOF);
-                }
-                const bool trace_issue56_d2 = trace_issue56_7f5d_5c5d_attack_node(ctx.move_history);
-            children[i].best_reply = child_record.best_move;
-            children[i].last_move = child_record.last_move;
-            children[i].proof_pieces_type = child_record.proof_pieces_set;
-            children[i].proof_pieces = child_record.proof_pieces;
-            children[i].node_count = child_record.node_count;
-            children[i].need_full_width = child_record.need_full_width;
-            copy_record_aux_to_child(children[i], child_record);
         }
         if (children[i].pdp.isCheckmateFail() && !pawn_drop_no_escape_child) {
             set_no_checkmate_child_in_attack(exact_record, children[i], i);
@@ -17426,7 +18135,10 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
         children[i].path_record = probe_child_path(ctx, child_board_index, child_board_secondary, child_stands[Black]);
         children[i].proof_cost = estimated_attack_proof_cost;
         if (need_child_position_for_trace) {
-            pos.undoMove(moves[i]);
+            {
+                DfpnProfileScope child_position_profile(DfpnProfileSlot::ChildPosition);
+                pos.undoMove(moves[i]);
+            }
         }
     }
 
@@ -17867,6 +18579,9 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
         && ctx.move_history[2].toUSI() == "7i8g"
         && ctx.move_history[3].toUSI() == "7e8f";
     const auto trace_attack_exact_prefix = [&]() {
+#if !CSHOGI_ENABLE_DFPN_TRACE_CODE
+        return false;
+#else
         const uint32_t trace_limit =
             dfpn_observe_env_uint("CSHOGI_DFPN_TRACE_ATTACK_EXACT_PREFIX_LIMIT", 0u);
         if (trace_limit != 0u && trace_limit != ctx.node_limit) {
@@ -17893,6 +18608,7 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
             }
         }
         return true;
+#endif
     };
     const std::string trace_zukou_p7c_light_sfen =
         (trace_zukou_p7c_light_env || trace_zukou_r3e_parent_attack_env
@@ -18156,7 +18872,7 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
             || (ctx.node_limit >= 65536 && threshold.proof >= 44));
 #endif
     const bool trace_zukou001_pvcheck =
-#if 1
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
         trace_zukou001_pv_checkpoint_release(ctx.move_history);
 #else
         false;
@@ -18180,6 +18896,7 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
         && ctx.move_history[2].toUSI() == "9b8b"
         && ctx.move_history[3].toUSI() == "8a8b";
 #endif
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
     static const bool trace_zukou_r1e_l5e_attack_env =
         CSHOGI_DFPN_TRACE_GETENV("CSHOGI_DFPN_TRACE_ZUKOU_R1E_L5E_ATTACK") != nullptr;
     const auto is_zukou_r1e_l5e_attack_history = [&]() {
@@ -18200,6 +18917,9 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
     };
     const bool trace_zukou_r1e_l5e_attack =
         trace_zukou_r1e_l5e_attack_env && is_zukou_r1e_l5e_attack_history();
+#else
+    constexpr bool trace_zukou_r1e_l5e_attack = false;
+#endif
 #ifdef NDEBUG
     const bool trace_zukou001_attack =
 #if 1
@@ -18358,6 +19078,9 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
         return true;
     };
     const auto trace_root_exact_prefix_matches_release = [&]() {
+#if !CSHOGI_ENABLE_DFPN_TRACE_CODE
+        return false;
+#else
         char* value = nullptr;
         size_t value_len = 0;
         const errno_t env_err = _dupenv_s(&value, &value_len, "CSHOGI_DFPN_ROOT_ATTACK_EXACT_PREFIX");
@@ -18379,8 +19102,12 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
             }
         }
         return true;
+#endif
     };
     const auto trace_attack_prefix_any_matches_release = [&]() {
+#if !CSHOGI_ENABLE_DFPN_TRACE_CODE
+        return false;
+#else
         char* value = nullptr;
         size_t value_len = 0;
         const errno_t env_err = _dupenv_s(&value, &value_len, "CSHOGI_DFPN_TRACE_ATTACK_PREFIX_ANY");
@@ -18402,6 +19129,7 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
             }
         }
         return true;
+#endif
     };
     const bool trace_root_attack_general_release = dfpn_trace_root_attack_child_release_enabled();
     (void)trace_root_attack_general_release;
@@ -18861,6 +19589,7 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
     trace_zukou001_attack_children("init");
     trace_attack_board_key_children("init");
     trace_root_s5d_6e7e_attack_children_release("init");
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
     const auto trace_issue56_release_history_matches = [&](const std::vector<const char*>& expected) {
         if (!dfpn_issue56_target_trace_enabled() || ctx.move_history.size() != expected.size()) {
             return false;
@@ -18876,6 +19605,9 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
         trace_issue56_release_history_matches({
             "7f5d", "5c5d", "5b4a+", "P*7b", "8b7b+",
             "B*5b", "7b5b", "3b2a", "B*4c", "2b3b" });
+#else
+    constexpr bool trace_issue56_release_target_attack = false;
+#endif
     const bool trace_issue56_deep_target_attack =
         trace_issue56_release_target_attack
         || trace_issue56_7f5d_5c5d_5b4ap_b5b_attack_node(ctx.move_history)
@@ -18889,6 +19621,23 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
         || trace_issue56_7f5d_5c5d_5b4ap_p7b_8b7bp_b5b_7b5b_3b2a_b4c_2b3b_attack_node(ctx.move_history)
         || trace_issue56_7f5d_5c5d_5b4ap_p7b_8b7bp_b5b_7b5b_3b2a_b4c_2b3b_4c3b_1b3b_attack_node(ctx.move_history)
         || trace_issue56_7f5d_5c5d_5b4ap_p7b_8b7bp_b5b_7b5b_3b2a_b4c_2b3b_4c3b_2a2b_attack_node(ctx.move_history);
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
+    const auto trace_attack_scan_enabled = [&]() {
+        return (ctx.move_history.empty() && dfpn_trace_enabled())
+            || trace_mate11_2e2g_3h2g_attack_node(ctx.move_history)
+            || trace_issue56_7f5d_5c5d_attack_threshold(ctx.move_history, threshold)
+            || trace_issue56_5b5a_3b2a_b4c_2b3b_attack_node(ctx.move_history)
+            || trace_issue56_5b5a_3b3c_attack_threshold(ctx.move_history, threshold)
+            || trace_zukou001_attack
+            || trace_attack_board_key
+            || trace_zukou001_pvcheck_detail
+            || trace_issue56_deep_target_attack
+            || trace_issue56_5b4c_3b4c_7f5d_4c5d_b7f_prefix(ctx.move_history)
+            || trace_issue56_5b4cp_shallow_attack_threshold(ctx.move_history, threshold);
+    };
+#else
+    constexpr auto trace_attack_scan_enabled = []() { return false; };
+#endif
 
     size_t final_next_index = moves.size();
     for (int loop_iteration = 0;; ++loop_iteration) {
@@ -18904,17 +19653,8 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
         size_t next_index = moves.size();
 
         for (size_t i = 0; i < children.size(); ++i) {
-            if ((ctx.move_history.empty() && dfpn_trace_enabled())
-                || trace_mate11_2e2g_3h2g_attack_node(ctx.move_history)
-                || trace_issue56_7f5d_5c5d_attack_threshold(ctx.move_history, threshold)
-                || trace_issue56_5b5a_3b2a_b4c_2b3b_attack_node(ctx.move_history)
-                || trace_issue56_5b5a_3b3c_attack_threshold(ctx.move_history, threshold)
-                || trace_zukou001_attack
-                || trace_attack_board_key
-                || trace_zukou001_pvcheck_detail
-                || trace_issue56_deep_target_attack
-                || trace_issue56_5b4c_3b4c_7f5d_4c5d_b7f_prefix(ctx.move_history)
-                || trace_issue56_5b4cp_shallow_attack_threshold(ctx.move_history, threshold)) {
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
+            if (trace_attack_scan_enabled()) {
                 std::fprintf(stderr,
                     "cshogi %s attack scan begin threshold=%u,%u i=%zu move=%s solved=%d dag=%d path=%d raw=%u,%u nodes=%u cost=%d\n",
                     trace_mate11_2e2g_3h2g_attack_node(ctx.move_history) ? "mate11" : "issue56",
@@ -18930,23 +19670,16 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
                     children[i].node_count,
                     static_cast<int>(children[i].proof_cost));
             }
+#endif
             if (exact_record.solved & child_bit(i)) {
-                if ((ctx.move_history.empty() && dfpn_trace_enabled())
-                    || trace_mate11_2e2g_3h2g_attack_node(ctx.move_history)
-                    || trace_issue56_7f5d_5c5d_attack_threshold(ctx.move_history, threshold)
-                        || trace_issue56_5b5a_3b2a_b4c_2b3b_attack_node(ctx.move_history)
-                    || trace_issue56_5b5a_3b3c_attack_threshold(ctx.move_history, threshold)
-                    || trace_zukou001_attack
-                    || trace_attack_board_key
-                    || trace_zukou001_pvcheck_detail
-                    || trace_issue56_deep_target_attack
-                    || trace_issue56_5b4c_3b4c_7f5d_4c5d_b7f_prefix(ctx.move_history)
-                    || trace_issue56_5b4cp_shallow_attack_threshold(ctx.move_history, threshold)) {
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
+                if (trace_attack_scan_enabled()) {
                     std::fprintf(stderr, "cshogi %s attack scan skip-solved i=%zu move=%s\n",
                         trace_mate11_2e2g_3h2g_attack_node(ctx.move_history) ? "mate11" : "issue56",
                         i,
                         moves[i].toUSI().c_str());
                 }
+#endif
                 continue;
             }
             if (i > 0
@@ -19028,17 +19761,8 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
             }
 
             sum_disproof64 += disproof;
-            if ((ctx.move_history.empty() && dfpn_trace_enabled())
-                || trace_mate11_2e2g_3h2g_attack_node(ctx.move_history)
-                || trace_issue56_7f5d_5c5d_attack_threshold(ctx.move_history, threshold)
-                || trace_issue56_5b5a_3b2a_b4c_2b3b_attack_node(ctx.move_history)
-                || trace_issue56_5b5a_3b3c_attack_threshold(ctx.move_history, threshold)
-                || trace_zukou001_attack
-                || trace_attack_board_key
-                || trace_zukou001_pvcheck_detail
-                || trace_issue56_deep_target_attack
-                || trace_issue56_5b4c_3b4c_7f5d_4c5d_b7f_prefix(ctx.move_history)
-                || trace_issue56_5b4cp_shallow_attack_threshold(ctx.move_history, threshold)) {
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
+            if (trace_attack_scan_enabled()) {
                 std::fprintf(stderr,
                     "cshogi %s attack scan use i=%zu move=%s eff=%llu,%u contrib_disproof=%llu next=%d max_dag=%llu sum=%llu\n",
                     trace_mate11_2e2g_3h2g_attack_node(ctx.move_history) ? "mate11" : "issue56",
@@ -19051,6 +19775,7 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
                     static_cast<unsigned long long>(max_disproof_dag),
                     static_cast<unsigned long long>(sum_disproof64));
             }
+#endif
         }
 
         uint64_t sum_disproof_with_delays =
@@ -19109,17 +19834,8 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
                 ctx.node_count,
                 ctx.node_limit);
         }
-        if ((ctx.move_history.empty() && dfpn_trace_enabled())
-            || trace_mate11_2e2g_3h2g_attack_node(ctx.move_history)
-            || trace_issue56_7f5d_5c5d_attack_threshold(ctx.move_history, threshold)
-            || trace_issue56_5b5a_3b2a_b4c_2b3b_attack_node(ctx.move_history)
-            || trace_issue56_5b5a_3b3c_attack_threshold(ctx.move_history, threshold)
-            || trace_zukou001_attack
-            || trace_attack_board_key
-            || trace_zukou001_pvcheck_detail
-            || trace_issue56_deep_target_attack
-            || trace_issue56_5b4c_3b4c_7f5d_4c5d_b7f_prefix(ctx.move_history)
-            || trace_issue56_5b4cp_shallow_attack_threshold(ctx.move_history, threshold)) {
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
+        if (trace_attack_scan_enabled()) {
             std::fprintf(stderr,
                 "cshogi %s attack scan totals threshold=%u,%u min=%u second=%u sum64=%llu max_dag=%llu rook=%llu bishop=%llu lance=%llu sum=%llu\n",
                 trace_mate11_2e2g_3h2g_attack_node(ctx.move_history) ? "mate11" : "issue56",
@@ -19142,6 +19858,7 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
                 ctx.node_count,
                 ctx.node_limit);
         }
+#endif
         if (trace_attack_board_key) {
             std::fprintf(stderr,
                 "cshogi zukou board-key attack scan threshold=%u,%u min=%u second=%u sum=%llu next=%s next_i=%zu proof_average=%u node_count=%u limit=%u\n",
@@ -19741,7 +20458,7 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
         const uint64_t child_board_secondary = children[next_index].board_secondary;
         const std::array<Hand, ColorNum> child_stands = children[next_index].stands;
         StateInfo st;
-        pos.doMove(moves[next_index], st);
+        do_known_check_move(pos, moves[next_index], st);
         PathEncoding child_path_encoding = current_path;
         child_path_encoding.pushMove(moves[next_index]);
         ctx.path_encodings.push_back(child_path_encoding);
@@ -21146,10 +21863,10 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
             is_delay_escape_node(pos, delayed_to) ? 1u : 0u,
             static_cast<unsigned long long>(exact_record.solved),
             moves.size(),
-            pos.attackersToIsAny(Black, makeSquare(File6, Rank4)) ? 1 : 0,
-            pos.attackersToIsAny(White, makeSquare(File6, Rank4)) ? 1 : 0,
-            pos.attackersToIsAny(Black, makeSquare(File8, Rank4)) ? 1 : 0,
-            pos.attackersToIsAny(White, makeSquare(File8, Rank4)) ? 1 : 0);
+            effect_has_at(pos, Black, makeSquare(File6, Rank4)) ? 1 : 0,
+            effect_has_at(pos, White, makeSquare(File6, Rank4)) ? 1 : 0,
+            effect_has_at(pos, Black, makeSquare(File8, Rank4)) ? 1 : 0,
+            effect_has_at(pos, White, makeSquare(File8, Rank4)) ? 1 : 0);
     }
     if (trace_issue56_5b5a_3b2a_b4c_2b3b_4c3b_defense_node(ctx.move_history)
         || trace_issue56_target_child_defense) {
@@ -21247,8 +21964,8 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
         for (size_t i = 0; i < moves.size(); ++i) {
             DfpnProfileScope child_init_profile(DfpnProfileSlot::DefenseChildInit);
             const Move current_move = moves[i];
-            const Move current_move_with_capture = complete_move_for_position(pos, current_move);
-            children[i].move = current_move;
+            const Move current_move_with_capture = current_move;
+            children[i].reset_for_move(current_move);
             static const bool trace_zukou_r1e_d2_init_env =
                 CSHOGI_DFPN_TRACE_GETENV("CSHOGI_DFPN_ZUKOU_R1E_D2_INIT") != nullptr;
             static const uint32_t trace_zukou_r1e_d2_init_min_node = []() {
@@ -21293,12 +22010,18 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
             }
             continue;
         }
-        const Key child_board_index = board_index_key_after_move(
-            current_board_index, pos.turn(), current_move_with_capture);
-        const uint64_t child_board_secondary = secondary_board_key_after_move(
-            current_secondary, pos.turn(), current_move_with_capture);
-        const std::array<Hand, ColorNum> child_stands = stand_pair_after_move(
-            current_stands, pos.turn(), current_move_with_capture);
+        Key child_board_index = 0;
+        uint64_t child_board_secondary = 0;
+        std::array<Hand, ColorNum> child_stands{ Hand(0), Hand(0) };
+        {
+            DfpnProfileScope child_key_profile(DfpnProfileSlot::ChildKeyStand);
+            const OslBoardKeyParts child_keys = board_keys_after_move(
+                current_board_index, current_secondary, pos.turn(), current_move_with_capture);
+            child_board_index = child_keys.board_index;
+            child_board_secondary = child_keys.board_secondary;
+            child_stands = stand_pair_after_move(
+                current_stands, pos.turn(), current_move_with_capture);
+        }
         children[i].board_index = child_board_index;
         children[i].board_secondary = child_board_secondary;
         children[i].stands = child_stands;
@@ -21339,6 +22062,7 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
         bool child_position_made = false;
         const auto ensure_child_position = [&]() {
             if (!child_position_made) {
+                DfpnProfileScope child_position_profile(DfpnProfileSlot::ChildPosition);
                 pos.doMove(current_move, st);
                 assert(child_board_secondary == secondary_board_key(pos));
                 child_position_made = true;
@@ -21346,6 +22070,7 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
         };
         const auto undo_child_position = [&]() {
             if (child_position_made) {
+                DfpnProfileScope child_position_profile(DfpnProfileSlot::ChildPosition);
                 pos.undoMove(current_move);
                 child_position_made = false;
             }
@@ -21655,11 +22380,23 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
                 table.trace_bucket(pos, ctx.attack_color);
             }
             if (children[i].pdp == ProofDisproof(1, 1)) {
+                OslPieceNumberState::Undo fixed_piece_undo;
+                const OslPieceNumberState* fixed_piece_numbers = nullptr;
+                bool fixed_piece_number_applied = false;
+                if (ctx.piece_numbers) {
+                    fixed_piece_number_applied = ctx.piece_numbers->apply_move(current_move, &fixed_piece_undo);
+                    if (fixed_piece_number_applied) {
+                        fixed_piece_numbers = &*ctx.piece_numbers;
+                    }
+                }
                 ensure_child_position();
                 Move check_move = Move::moveNone();
                 Hand proof_pieces = zero_hand();
                 const ProofDisproof fixed_pdp = fixed_escape_by_move_zero(
-                    pos, ctx.attack_color, &check_move, &proof_pieces, false, true);
+                    pos, ctx.attack_color, &check_move, &proof_pieces, false, true, fixed_piece_numbers);
+                if (fixed_piece_number_applied) {
+                    ctx.piece_numbers->undo_move(fixed_piece_undo);
+                }
                 static const char* const trace_d2_child_board_key_env =
                     CSHOGI_DFPN_TRACE_GETENV("CSHOGI_DFPN_TRACE_DEFENSE_D2_CHILD_BOARD_KEY");
                 static const char* const trace_d2_child_board_secondary_env =
@@ -22634,6 +23371,20 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
             pos.toSFEN().c_str());
     }
     trace_zukou001_defense_children("init");
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
+    const auto trace_defense_scan_enabled = [&]() {
+        return trace_defense_board_key
+            || trace_defense_child_board_key
+            || trace_mate11_2e2g_3h2g_g3g_defense_node(ctx.move_history)
+            || trace_zukou001_defense
+            || trace_issue56_pv_r4b_defense
+            || trace_issue56_7f5d_5c5d_5b4ap_defense_node(ctx.move_history)
+            || trace_issue56_7f5d_5c5d_5b4cp_defense_threshold(ctx.move_history, threshold)
+            || trace_issue56_5b4c_3b4c_7f5d_4c5d_b7f_prefix(ctx.move_history);
+    };
+#else
+    constexpr auto trace_defense_scan_enabled = []() { return false; };
+#endif
     size_t final_next_index = moves.size();
     std::array<char, kMoveBufferSize> target{};
     for (int loop_iteration = 0;; ++loop_iteration) {
@@ -22650,15 +23401,8 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
         size_t next_index = moves.size();
 
         for (size_t i = 0; i < children.size(); ++i) {
-            const bool trace_issue56_b7f_defense_scan =
-                trace_issue56_5b4c_3b4c_7f5d_4c5d_b7f_prefix(ctx.move_history);
-            if (trace_defense_board_key || trace_defense_child_board_key
-                || trace_mate11_2e2g_3h2g_g3g_defense_node(ctx.move_history)
-                || trace_zukou001_defense
-                || trace_issue56_pv_r4b_defense
-                || trace_issue56_7f5d_5c5d_5b4ap_defense_node(ctx.move_history)
-                || trace_issue56_7f5d_5c5d_5b4cp_defense_threshold(ctx.move_history, threshold)
-                || trace_issue56_b7f_defense_scan) {
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
+            if (trace_defense_scan_enabled()) {
                 std::fprintf(stderr,
                     "cshogi %s defense scan begin threshold=%u,%u i=%zu move=%s solved=%d dag=%d raw=%u,%u nodes=%u path=%d unattacked_drop=%d\n",
                     (trace_defense_board_key || trace_defense_child_board_key) ? "board-key" :
@@ -22675,6 +23419,7 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
                     children[i].path_record ? 1 : 0,
                     is_unattacked_drop_escape(pos, ctx.attack_color, moves[i]) ? 1 : 0);
             }
+#endif
             if (exact_record.solved & child_bit(i)) {
                 if (trace_zukou_p7c_8g7e_false_branch) {
                     std::fprintf(stderr,
@@ -22688,19 +23433,15 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
                         children[i].best_reply ? children[i].best_reply.toUSI().c_str() : "-",
                         children[i].path_record ? 1 : 0);
                 }
-                if (trace_defense_board_key || trace_defense_child_board_key
-                    || trace_mate11_2e2g_3h2g_g3g_defense_node(ctx.move_history)
-                    || trace_zukou001_defense
-                    || trace_issue56_pv_r4b_defense
-                    || trace_issue56_7f5d_5c5d_5b4ap_defense_node(ctx.move_history)
-                    || trace_issue56_7f5d_5c5d_5b4cp_defense_threshold(ctx.move_history, threshold)
-                    || trace_issue56_b7f_defense_scan) {
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
+                if (trace_defense_scan_enabled()) {
                     std::fprintf(stderr, "cshogi %s defense scan skip-solved i=%zu move=%s\n",
                         (trace_defense_board_key || trace_defense_child_board_key) ? "board-key" :
                         (trace_mate11_2e2g_3h2g_g3g_defense_node(ctx.move_history) ? "mate11" : "issue56"),
                         i,
                         moves[i].toUSI().c_str());
                 }
+#endif
                 continue;
             }
             if (i > 0
@@ -22844,13 +23585,8 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
             }
             max_proof = std::max(max_proof, proof);
             sum_proof64 += proof;
-            if (trace_defense_board_key || trace_defense_child_board_key
-                || trace_mate11_2e2g_3h2g_g3g_defense_node(ctx.move_history)
-                || trace_zukou001_defense
-                || trace_issue56_pv_r4b_defense
-                || trace_issue56_7f5d_5c5d_5b4ap_defense_node(ctx.move_history)
-                || trace_issue56_7f5d_5c5d_5b4cp_defense_threshold(ctx.move_history, threshold)
-                || trace_issue56_b7f_defense_scan) {
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
+            if (trace_defense_scan_enabled()) {
                 std::fprintf(stderr,
                     "cshogi %s defense scan use i=%zu move=%s eff=%u,%u contrib_proof=%llu next=%d max_dag=%llu max_drop=%llu sum=%llu\n",
                     (trace_defense_board_key || trace_defense_child_board_key) ? "board-key" :
@@ -22865,6 +23601,7 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
                     static_cast<unsigned long long>(max_drop_proof),
                     static_cast<unsigned long long>(sum_proof64));
             }
+#endif
         }
 
         uint64_t sum_proof = sum_proof64;
@@ -22951,11 +23688,8 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
                 path_record ? path_record->distance : -1,
                 max_children_depth);
         }
-        if (trace_mate11_2e2g_3h2g_g3g_defense_node(ctx.move_history)
-            || trace_zukou001_defense
-            || trace_issue56_pv_r4b_defense
-            || trace_issue56_7f5d_5c5d_5b4ap_defense_node(ctx.move_history)
-            || trace_issue56_7f5d_5c5d_5b4cp_defense_threshold(ctx.move_history, threshold)) {
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
+        if (trace_defense_scan_enabled()) {
             std::fprintf(stderr,
                 "cshogi %s defense scan totals threshold=%u,%u min=%u second=%u sum64=%llu max_dag=%llu max_drop=%llu sum=%llu false_branch=%d\n",
                 trace_mate11_2e2g_3h2g_g3g_defense_node(ctx.move_history) ? "mate11" : "issue56",
@@ -22969,6 +23703,7 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
                 static_cast<unsigned long long>(sum_proof),
                 false_branch_candidate ? 1 : 0);
         }
+#endif
         if (trace_zukou_after_p7c_compare_defense || trace_zukou_main_defense_4c7cp) {
             std::fprintf(stderr,
                 "%s defense scan threshold=%u,%u min_disproof=%u second=%u sum_proof=%llu next=%s next_i=%zu node_count=%u limit=%u false_branch=%u\n",
@@ -23468,6 +24203,7 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
                     ctx.node_count,
                     ctx.node_limit);
             }
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
             bool trace_zukou_root_post_child = false;
             std::vector<Move> trace_zukou_root_parent_history;
             if (!ctx.move_history.empty()) {
@@ -23491,6 +24227,7 @@ ProofDisproof DfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold th
                     ctx.node_count,
                     ctx.node_limit);
             }
+#endif
             if (dfpn_trace_enabled()
                 && (trace_issue56_5b4c_3b4c_7f5d_4c5d_b7f_prefix(ctx.move_history)
                     || trace_zukou001_defense)) {
@@ -24299,7 +25036,7 @@ ProofDisproof DfPn::Impl::proof_oracle_attack(Position& pos, const OracleState& 
     oracle_active_node.set_children(oracle_children);
     const auto set_oracle_child_from_record = [&](const DfpnRecord& child_record, const PathRecord* child_path_record) {
         ChildState& child_state = oracle_children[0];
-        child_state.move = check_move;
+        child_state.reset_for_move(check_move);
         child_state.pdp = child_record.proof_disproof;
         child_state.best_reply = child_record.best_move;
         child_state.last_move = child_record.last_move;
@@ -24311,14 +25048,20 @@ ProofDisproof DfPn::Impl::proof_oracle_attack(Position& pos, const OracleState& 
         copy_record_aux_to_child(child_state, child_record);
     };
 
-    const Key child_board_index = ctx.child_board_index(pos, check_move);
-    const uint64_t child_board_secondary = ctx.child_board_secondary(pos, check_move);
-    const std::array<Hand, ColorNum> child_stands = ctx.child_stands(pos, check_move);
+    Key child_board_index = 0;
+    uint64_t child_board_secondary = 0;
+    std::array<Hand, ColorNum> child_stands{ Hand(0), Hand(0) };
+    {
+        DfpnProfileScope child_key_profile(DfpnProfileSlot::ChildKeyStand);
+        child_board_index = ctx.child_board_index(pos, check_move);
+        child_board_secondary = ctx.child_board_secondary(pos, check_move);
+        child_stands = ctx.child_stands(pos, check_move);
+    }
     oracle_children[0].board_index = child_board_index;
     oracle_children[0].board_secondary = child_board_secondary;
     oracle_children[0].stands = child_stands;
     StateInfo current_state;
-    pos.doMove(check_move, current_state);
+    do_known_check_move(pos, check_move, current_state);
     const OracleState child_oracle = oracle_state_after_move(oracle, mover, check_move);
 
     DfpnRecord child_exact;
@@ -24672,7 +25415,7 @@ ProofDisproof DfPn::Impl::proof_oracle_defense(Position& pos, const OracleState&
     }
     const Square attacker_king = pos.kingSquare(ctx.attack_color);
     if (!pos.inCheck()
-        || (attacker_king != SquareNum && pos.attackersToIsAny(pos.turn(), attacker_king))) {
+        || (attacker_king != SquareNum && effect_has_at(pos, pos.turn(), attacker_king))) {
         DfpnRecord no_check_record;
         no_check_record.proof_disproof = ProofDisproof::NoCheckmate();
         store_out_record(no_check_record);
@@ -24836,7 +25579,7 @@ ProofDisproof DfPn::Impl::proof_oracle_defense(Position& pos, const OracleState&
     ActiveNodeScope active_node(ctx, exact_record, moves, pos);
     active_node.set_children(children);
     for (size_t i = 0; i < moves.size(); ++i) {
-        children[i].move = moves[i];
+        children[i].reset_for_move(moves[i]);
         if (exact_record.solved & child_bit(i)) {
             if (trace_oracle_defense_detail) {
                 std::fprintf(stderr,
@@ -24848,15 +25591,33 @@ ProofDisproof DfPn::Impl::proof_oracle_defense(Position& pos, const OracleState&
             }
             continue;
         }
-        const Key child_board_index = ctx.child_board_index(pos, moves[i]);
-        const uint64_t child_board_secondary = ctx.child_board_secondary(pos, moves[i]);
-        const std::array<Hand, ColorNum> child_stands = ctx.child_stands(pos, moves[i]);
+        Key child_board_index = 0;
+        uint64_t child_board_secondary = 0;
+        std::array<Hand, ColorNum> child_stands{ Hand(0), Hand(0) };
+        {
+            DfpnProfileScope child_key_profile(DfpnProfileSlot::ChildKeyStand);
+            child_board_index = ctx.child_board_index(pos, moves[i]);
+            child_board_secondary = ctx.child_board_secondary(pos, moves[i]);
+            child_stands = ctx.child_stands(pos, moves[i]);
+        }
         children[i].board_index = child_board_index;
         children[i].board_secondary = child_board_secondary;
         children[i].stands = child_stands;
+        OslPieceNumberState::Undo piece_undo;
+        const OslPieceNumberState* child_piece_numbers = nullptr;
+        bool piece_number_applied = false;
+        if (ctx.piece_numbers) {
+            piece_number_applied = ctx.piece_numbers->apply_move(moves[i], &piece_undo);
+            if (piece_number_applied) {
+                child_piece_numbers = &*ctx.piece_numbers;
+            }
+        }
         StateInfo st;
-        pos.doMove(moves[i], st);
-        assert(child_board_secondary == secondary_board_key(pos));
+        {
+            DfpnProfileScope child_position_profile(DfpnProfileSlot::ChildPosition);
+            pos.doMove(moves[i], st);
+            assert(child_board_secondary == secondary_board_key(pos));
+        }
         DfpnRecord child_record;
         {
             DfpnProfileScope child_probe_profile(DfpnProfileSlot::OracleDefenseChildProbe);
@@ -24864,14 +25625,17 @@ ProofDisproof DfPn::Impl::proof_oracle_defense(Position& pos, const OracleState&
                 ? table.probe(child_board_index, child_board_secondary, child_stands, ctx.attack_color)
                 : DfpnRecord();
         }
-        children[i].pdp = child_record.proof_disproof;
-        children[i].best_reply = child_record.best_move;
-        children[i].last_move = child_record.last_move;
-        children[i].proof_pieces_type = child_record.proof_pieces_set;
-        children[i].proof_pieces = child_record.proof_pieces;
-        children[i].node_count = child_record.node_count;
-        children[i].need_full_width = child_record.need_full_width;
-        copy_record_aux_to_child(children[i], child_record);
+        {
+            DfpnProfileScope child_assign_profile(DfpnProfileSlot::ChildRecordAssign);
+            children[i].pdp = child_record.proof_disproof;
+            children[i].best_reply = child_record.best_move;
+            children[i].last_move = child_record.last_move;
+            children[i].proof_pieces_type = child_record.proof_pieces_set;
+            children[i].proof_pieces = child_record.proof_pieces;
+            children[i].node_count = child_record.node_count;
+            children[i].need_full_width = child_record.need_full_width;
+            copy_record_aux_to_child(children[i], child_record);
+        }
         if (trace_zukou_oracle_defense) {
             std::fprintf(stderr,
                 "cshogi zukou001 oracle-defense child-probe i=%zu move=%s raw=%u,%u best=%s last=%s nodes=%u path=%d sfen=%s\n",
@@ -24895,7 +25659,7 @@ ProofDisproof DfPn::Impl::proof_oracle_defense(Position& pos, const OracleState&
             {
                 DfpnProfileScope d2_profile(DfpnProfileSlot::OracleDefenseD2);
                 children[i].pdp = fixed_escape_by_move_zero(
-                    pos, ctx.attack_color, &check_move, &proof_pieces, false, true);
+                    pos, ctx.attack_color, &check_move, &proof_pieces, false, true, child_piece_numbers);
             }
             if (trace_zukou_oracle_defense) {
                 std::fprintf(stderr,
@@ -24957,6 +25721,9 @@ ProofDisproof DfPn::Impl::proof_oracle_defense(Position& pos, const OracleState&
         children[i].path_record = use_table ? probe_child_path(ctx, child_board_index, child_board_secondary, child_stands[Black]) : nullptr;
 
         if (children[i].pdp.isCheckmateFail()) {
+            if (piece_number_applied) {
+                ctx.piece_numbers->undo_move(piece_undo);
+            }
             pos.undoMove(moves[i]);
             exact_record.proof_disproof = children[i].pdp;
             exact_record.best_move = moves[i];
@@ -24979,7 +25746,13 @@ ProofDisproof DfPn::Impl::proof_oracle_defense(Position& pos, const OracleState&
             return exact_record.proof_disproof;
         }
 
-        pos.undoMove(moves[i]);
+        {
+            DfpnProfileScope child_position_profile(DfpnProfileSlot::ChildPosition);
+            pos.undoMove(moves[i]);
+        }
+        if (piece_number_applied) {
+            ctx.piece_numbers->undo_move(piece_undo);
+        }
     }
 
     for (size_t i = 0; i < moves.size(); ++i) {
@@ -25030,9 +25803,12 @@ ProofDisproof DfPn::Impl::proof_oracle_defense(Position& pos, const OracleState&
             bool skip_by_effect = false;
             {
                 DfpnProfileScope effect_profile(DfpnProfileSlot::OracleDefenseEffect);
-                skip_by_effect = pos.attackersToIsAny(ctx.attack_color, next_to)
-                    && (!pos.attackersToIsAny(pos.turn(), next_to)
-                        || (effect_count(pos, pos.turn(), next_to) == 1 && !move.isDrop()));
+                const Bitboard attack_effect = effect_set_at(pos, ctx.attack_color, next_to);
+                if (attack_effect.isAny()) {
+                    const Bitboard defense_effect = effect_set_at(pos, pos.turn(), next_to);
+                    skip_by_effect = !defense_effect.isAny()
+                        || (defense_effect.popCount() == 1 && !move.isDrop());
+                }
             }
             if (skip_by_effect) {
                 if (trace_oracle_defense_detail) {
@@ -25466,6 +26242,7 @@ ProofDisproof DfPn::Impl::proof_oracle_defense(Position& pos, const OracleState&
 
 void DfPn::Impl::grand_parent_simulation(Position& pos, SearchContext& ctx, DfpnRecord& exact_record,
     const std::vector<Move>& moves, std::vector<ChildState>& children, const size_t child_index) {
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
     const auto trace_grandparent_prefix = [&]() {
         const uint32_t trace_limit = dfpn_observe_env_uint("CSHOGI_DFPN_TRACE_GRANDPARENT_PREFIX_LIMIT", 0u);
         if (trace_limit != 0u && trace_limit != ctx.node_limit) {
@@ -25545,7 +26322,15 @@ void DfPn::Impl::grand_parent_simulation(Position& pos, SearchContext& ctx, Dfpn
             child_index < children.size() ? children[child_index].pdp.disproof : 0,
             child_index < children.size() ? children[child_index].node_count : 0);
     }
+#else
+    constexpr bool trace_issue56_b7f_grandparent = false;
+    constexpr bool trace_zukou_iso_gp = false;
+    constexpr bool trace_zukou_after_4c7cp_gp = false;
+    constexpr bool trace_zukou_prefix13_gp = false;
+    constexpr bool trace_prefix_gp = false;
+#endif
     if (!ctx.root_position || !grand_parent_simulation_suitable(ctx.move_history) || ctx.move_history.size() < 3) {
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
         if (trace_zukou_after_4c7cp_gp || trace_prefix_gp) {
             std::fprintf(stderr,
                 "cshogi zukou001 grand-parent skip reason=unsuitable root=%d suitable=%d history_size=%zu\n",
@@ -25553,6 +26338,7 @@ void DfPn::Impl::grand_parent_simulation(Position& pos, SearchContext& ctx, Dfpn
                 grand_parent_simulation_suitable(ctx.move_history) ? 1 : 0,
                 ctx.move_history.size());
         }
+#endif
         return;
     }
     if (child_index >= moves.size() || child_index >= children.size()) {
@@ -25569,6 +26355,7 @@ void DfPn::Impl::grand_parent_simulation(Position& pos, SearchContext& ctx, Dfpn
     }
     const SearchContext::ActiveNode& grandparent_node = ctx.active_nodes[ctx.active_nodes.size() - 3];
     if (!grandparent_node.record || !grandparent_node.moves || !grandparent_node.children) {
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
         if (trace_issue56_b7f_grandparent || trace_zukou_prefix13_gp || trace_prefix_gp) {
             std::fprintf(stderr,
                 "cshogi %s grand-parent skip reason=missing-active record=%d moves=%d children=%d\n",
@@ -25577,16 +26364,26 @@ void DfPn::Impl::grand_parent_simulation(Position& pos, SearchContext& ctx, Dfpn
                 grandparent_node.moves ? 1 : 0,
                 grandparent_node.children ? 1 : 0);
         }
+#endif
         return;
     }
     const std::vector<Move>& grandparent_moves = *grandparent_node.moves;
     const std::vector<ChildState>& grandparent_children = *grandparent_node.children;
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
     const size_t grandparent_ply = ctx.move_history.size() - 2;
+#endif
     const uint32_t grandparent_proof_limit = grandparent_node.threshold.proof;
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
     Position grandparent_pos = replay_position(ctx, grandparent_ply);
+#endif
     const DfpnRecord& grandparent_record = *grandparent_node.record;
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
     const bool trace_issue56_5b4ap_defense = trace_issue56_7f5d_5c5d_5b4ap_defense_node(ctx.move_history);
+#else
+    constexpr bool trace_issue56_5b4ap_defense = false;
+#endif
 
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
     if (trace_issue56_5b4ap_defense) {
         std::fprintf(stderr,
             "cshogi issue56 grand-parent enter history=7f5d 5c5d 5b4a+ gp_ply=%zu gp_limit=%u gp_sfen=%s active_moves=%zu active_children=%zu\n",
@@ -25596,6 +26393,7 @@ void DfPn::Impl::grand_parent_simulation(Position& pos, SearchContext& ctx, Dfpn
             grandparent_moves.size(),
             grandparent_children.size());
     }
+#endif
 
     const size_t i = child_index;
     const auto grandparent_it = std::find(grandparent_moves.begin(), grandparent_moves.end(), moves[i]);
@@ -25633,6 +26431,7 @@ void DfPn::Impl::grand_parent_simulation(Position& pos, SearchContext& ctx, Dfpn
         (grandparent_record.solved & child_bit(grandparent_index)) != 0;
     const bool grandparent_success = grandparent_solved
         || grandparent_children[grandparent_index].pdp.isCheckmateSuccess();
+#if CSHOGI_ENABLE_DFPN_TRACE_CODE
     if (trace_issue56_b7f_grandparent || trace_zukou_iso_gp || trace_zukou_after_4c7cp_gp || trace_zukou_prefix13_gp || trace_prefix_gp) {
         std::fprintf(stderr,
             "cshogi %s grand-parent candidate move=%s before=%u,%u gp_index=%zu gp_solved=%d gp_child=%u,%u success=%d gp_limit=%u gp_sfen=%s\n",
@@ -25648,6 +26447,7 @@ void DfPn::Impl::grand_parent_simulation(Position& pos, SearchContext& ctx, Dfpn
             grandparent_proof_limit,
             grandparent_pos.toSFEN().c_str());
     }
+#endif
     if (trace_issue56_5b4ap_defense && moves[i].toUSI() == "3b4c") {
         std::fprintf(stderr,
             "cshogi issue56 grand-parent candidate move=%s before=%u,%u gp_index=%zu gp_solved=%d gp_child=%u,%u success=%d\n",
@@ -25665,14 +26465,15 @@ void DfPn::Impl::grand_parent_simulation(Position& pos, SearchContext& ctx, Dfpn
     }
 
     const std::array<Hand, ColorNum> grandparent_stands{ grandparent_node.black_stand, grandparent_node.white_stand };
+    const Color mover = pos.turn();
     const OracleState grandparent_oracle = oracle_state_from_current_node(
         grandparent_node.board_index, grandparent_node.board_secondary, grandparent_stands);
     const OracleState oracle = grandparent_solved
-        ? oracle_state_after_move(grandparent_oracle, grandparent_pos.turn(), grandparent_move)
+        ? oracle_state_after_move(grandparent_oracle, mover, grandparent_move)
         : oracle_state_from_current_node(
-            board_index_key_after_move(grandparent_node.board_index, grandparent_pos.turn(), grandparent_move),
-            secondary_board_key_after_move(grandparent_node.board_secondary, grandparent_pos.turn(), grandparent_move),
-            stand_pair_after_move(grandparent_stands, grandparent_pos.turn(), grandparent_move));
+            board_index_key_after_move(grandparent_node.board_index, mover, grandparent_move),
+            secondary_board_key_after_move(grandparent_node.board_secondary, mover, grandparent_move),
+            stand_pair_after_move(grandparent_stands, mover, grandparent_move));
 
     const Key child_board_index = children[i].board_index;
     const uint64_t child_board_secondary = children[i].board_secondary;
@@ -26933,7 +27734,7 @@ std::vector<ns_dfpn::AttackEstimateDebugRecord> DfPn::debug_attack_estimates(Pos
     const Color attack_color = pos.turn();
     const Square defender_king = pos.kingSquare(oppositeColor(attack_color));
     const King8RuntimeInfo king8_info = reset_edge_from_liberty_runtime(
-        defender_king, attack_color, make_king8_runtime_info(pos, attack_color));
+        defender_king, attack_color, king8_runtime_info_at(pos, attack_color));
 
     std::vector<ns_dfpn::AttackEstimateDebugRecord> records;
     records.reserve(moves.size());
