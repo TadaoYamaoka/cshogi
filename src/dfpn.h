@@ -62,35 +62,6 @@ namespace ns_dfpn {
         bool dag_terminal = false;
     };
 
-    struct FixedEscapeDebugRecord {
-        Move escape_move;
-        ProofDisproof proof_disproof;
-        Move best_move;
-        Hand proof_pieces = Hand(0);
-        bool searched_attack_node = false;
-    };
-
-    struct AttackEstimateDebugRecord {
-        Move move;
-        ProofDisproof proof_disproof;
-        int proof_cost = 0;
-        int attack_support = 0;
-        int defense_support = 0;
-        PieceType ptype = Occupied;
-    };
-
-    struct FixedCheckDebugRecord {
-        struct Child {
-            Move check_move;
-            ProofDisproof proof_disproof;
-            Move best_move;
-            Hand proof_pieces = Hand(0);
-        };
-        ProofDisproof proof_disproof;
-        Move best_move;
-        Hand proof_pieces = Hand(0);
-        std::vector<Child> children;
-    };
 }
 
 class DfPn {
@@ -111,11 +82,6 @@ public:
     ns_dfpn::ProofDisproof dfpn_probe(Position& pos, Move* best_move = nullptr);
     ns_dfpn::ProbeRecord dfpn_probe_record(Position& pos);
     ns_dfpn::ProbeRecord dfpn_probe_exact_record(Position& pos);
-    std::vector<ns_dfpn::ProbeRecord> debug_bucket_records(Position& pos);
-    ns_dfpn::FixedCheckDebugRecord debug_fixed_check(Position& pos);
-    std::vector<ns_dfpn::FixedEscapeDebugRecord> debug_fixed_escapes(Position& pos);
-    std::vector<ns_dfpn::AttackEstimateDebugRecord> debug_attack_estimates(Position& pos);
-    std::vector<Move> debug_check_moves(Position& pos);
     void get_pv(Position& pos, std::vector<u32>& pv);
     void get_pv(Position& pos, bool is_or_node, std::vector<u32>& pv);
     int pv_depth(Position& pos, bool is_or_node);

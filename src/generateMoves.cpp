@@ -2585,40 +2585,8 @@ namespace {
         }
 
         const Square checker = checkers.firstOneFromSQ11();
-        const auto trace_issue56_escape_stage = [&](const char* phase) {
-#ifndef NDEBUG
-            const char* enabled = std::getenv("CSHOGI_DFPN_DEBUG");
-            if (!enabled || !*enabled) {
-                return;
-            }
-            bool has_2b3b = false;
-            bool has_s4c = false;
-            for (const ExtMove* it = first; it != last; ++it) {
-                has_2b3b = has_2b3b || it->move.toUSI() == "2b3b";
-                has_s4c = has_s4c || it->move.toUSI() == "S*4c";
-            }
-            if (!has_2b3b && !has_s4c) {
-                return;
-            }
-            std::fprintf(stderr,
-                "cshogi issue56 escape gen phase=%s sfen=%s checker=%s count=%zu cheap=%d sort=%d\n",
-                phase,
-                pos.toSFEN().c_str(),
-                squareToStringUSI(checker).c_str(),
-                static_cast<size_t>(last - first),
-                CheapOnly ? 1 : 0,
-                sortMoves ? 1 : 0);
-            for (const ExtMove* it = first; it != last; ++it) {
-                std::fprintf(stderr, "  %s\n", it->move.toUSI().c_str());
-            }
-#else
-            (void)phase;
-#endif
-        };
         append_escape_moves_to_target<US>(pos, pinned, checker, king, first, last);
-        trace_issue56_escape_stage("capture-checker");
         append_escape_king_moves<US>(pos, pinned, first, last);
-        trace_issue56_escape_stage("king");
 
         const int king_file = static_cast<int>(makeFile(king));
         const int king_rank = static_cast<int>(makeRank(king));
@@ -2645,12 +2613,10 @@ namespace {
             // for CheapOnly; only drops are reduced to the cheapest piece.
             append_escape_moves_to_target<US>(pos, pinned, block_sq, king, first, last);
             append_escape_drops_to_target<US, CheapOnly>(pos, pinned, block_sq, first, last);
-            trace_issue56_escape_stage("block");
         }
 
         if (sortMoves) {
             sort_oslmate_escape_moves(pos, US, moveList, last);
-            trace_issue56_escape_stage("sort");
         }
 
         return last;
