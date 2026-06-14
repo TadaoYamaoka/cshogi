@@ -1,4 +1,4 @@
-﻿from libcpp.string cimport string
+from libcpp.string cimport string
 from libcpp.vector cimport vector
 from libcpp cimport bool
 
@@ -1647,7 +1647,7 @@ cdef class DfPn:
 
     cdef __DfPn __dfpn
 
-    def __cinit__(self, depth=31, nodes=1048576, draw_ply=32767):
+    def __cinit__(self, depth=1600, nodes=4294967295, draw_ply=2147483646):
         self.__dfpn = __DfPn(depth, nodes, draw_ply)
 
     def search(self, Board board):
