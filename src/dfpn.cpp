@@ -4,8 +4,6 @@
 #include <array>
 #include <bitset>
 #include <climits>
-#include <chrono>
-#include <cstdio>
 #include <fstream>
 #include <forward_list>
 #include <memory>
@@ -33,9 +31,6 @@
 
 using ns_dfpn::ProofDisproof;
 
-#ifndef CSHOGI_ENABLE_DFPN_PROFILE_CODE
-#define CSHOGI_ENABLE_DFPN_PROFILE_CODE 0
-#endif
 
 namespace {
     constexpr size_t kMoveBufferSize = MaxLegalMoves;
@@ -10316,9 +10311,3 @@ void DfPn::set_hash(const uint64_t hashMB) {
     impl_->reserve_by_hash(hashMB);
     impl_->table.clear();
 }
-
-
-
-
-
-
