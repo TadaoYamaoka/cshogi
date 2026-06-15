@@ -1932,6 +1932,13 @@ namespace {
             table_.reserve(growth_limit_ + growth_limit_ / 128 + 1);
         }
 
+        void reset_for_new_search(const size_t growth_limit) {
+            table_.clear();
+            total_size_ = 0;
+            gc_threshold_ = 10;
+            set_growth_limit(growth_limit);
+        }
+
         size_t growth_limit() const { return growth_limit_; }
         size_t size() const { return total_size_; }
 
@@ -2534,6 +2541,12 @@ namespace {
         }
 
         void reserve(const size_t n) { table_.reserve(n); }
+        void reset_for_new_search(const size_t n) {
+            table_.clear();
+            total_size_ = 0;
+            gc_threshold_ = 10;
+            table_.reserve(n);
+        }
         size_t size() const { return total_size_; }
 
         size_t run_gc() {
@@ -7084,17 +7097,29 @@ struct DfPn::Impl {
         reserve_by_hash(reserved_hash_mb);
     }
 
-    void reserve_by_hash(const uint64_t hash_mb) {
-        reserved_hash_mb = std::max<uint64_t>(1, hash_mb);
-        const uint64_t bytes = reserved_hash_mb * 1024ull * 1024ull;
+    size_t growth_limit_from_hash(const uint64_t hash_mb) const {
+        const uint64_t reserved_mb = std::max<uint64_t>(1, hash_mb);
+        const uint64_t bytes = reserved_mb * 1024ull * 1024ull;
         const uint64_t approx_entry = std::max<uint64_t>(
             1024,
             bytes / kOslmateHashGrowthUnitSize);
-        const size_t growth_limit = static_cast<size_t>(
+        return static_cast<size_t>(
             std::min<uint64_t>(approx_entry, std::numeric_limits<size_t>::max()));
+    }
+
+    void reserve_by_hash(const uint64_t hash_mb) {
+        reserved_hash_mb = std::max<uint64_t>(1, hash_mb);
+        const size_t growth_limit = growth_limit_from_hash(reserved_hash_mb);
         table.set_growth_limit(growth_limit);
         path_table.reserve(growth_limit);
         oracle_path_table.reserve(growth_limit / 4 + 1);
+    }
+
+    void clear_root_search_state() {
+        const size_t growth_limit = growth_limit_from_hash(reserved_hash_mb);
+        table.reset_for_new_search(growth_limit);
+        path_table.reset_for_new_search(growth_limit);
+        oracle_path_table.reset_for_new_search(growth_limit / 4 + 1);
     }
 
     void run_gc_if_needed(SearchContext& ctx) {
@@ -10020,14 +10045,14 @@ void DfPn::reset_config_from(const DfPn& other) {
     set_max_search_node(other.impl_->max_search_node);
     impl_->draw_ply = other.impl_->draw_ply;
     impl_->reserve_by_hash(other.impl_->reserved_hash_mb);
-    impl_->table.clear();
-    impl_->path_table.clear();
+    impl_->clear_root_search_state();
     searchedNode = 0;
 }
 
 bool DfPn::dfpn(Position& pos) {
     impl_->stop = false;
     impl_->root_attack_color = pos.turn();
+    impl_->clear_root_search_state();
     searchedNode = 0;
     if (impl_->max_search_node == 0) {
         return false;
@@ -10092,6 +10117,7 @@ bool DfPn::dfpn_with_history(Position& root, const std::vector<Move>& history) {
 
 bool DfPn::dfpn_with_history(Position& root, const std::vector<Move>& history, ProofDisproof threshold) {
     impl_->stop = false;
+    impl_->clear_root_search_state();
     searchedNode = 0;
 
     if (impl_->max_search_node == 0) {
@@ -10179,6 +10205,7 @@ bool DfPn::dfpn_with_history(Position& root, const std::vector<Move>& history, P
 bool DfPn::dfpn_andnode(Position& pos) {
     impl_->stop = false;
     impl_->root_attack_color = oppositeColor(pos.turn());
+    impl_->clear_root_search_state();
     ProofDisproof result = ProofDisproof::Unknown();
     impl_->path_table.clear();
     uint32_t searched_nodes = 0;
@@ -10309,5 +10336,5 @@ void DfPn::set_max_search_node(const uint32_t max_search_node) {
 
 void DfPn::set_hash(const uint64_t hashMB) {
     impl_->reserve_by_hash(hashMB);
-    impl_->table.clear();
+    impl_->clear_root_search_state();
 }
