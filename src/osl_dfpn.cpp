@@ -221,7 +221,9 @@ namespace {
             { HPawn, Pawn }, { HLance, Lance }, { HKnight, Knight }, { HSilver, Silver },
             { HGold, Gold }, { HBishop, Bishop }, { HRook, Rook }
         } };
-        for (const auto& [hand_piece, piece_type] : pieces) {
+        for (const auto& piece : pieces) {
+            const HandPiece hand_piece = piece.first;
+            const PieceType piece_type = piece.second;
             const int count = static_cast<int>(hand.numOf(hand_piece));
             for (int i = 0; i < count; ++i) {
                 callback(piece_type);
@@ -1284,7 +1286,9 @@ namespace {
             { 1, 2 }, { -1, 2 }
         } };
 
-        for (const auto& [file_delta, rank_delta] : kOslKnightOrder) {
+        for (const auto& delta : kOslKnightOrder) {
+            const int file_delta = delta.first;
+            const int rank_delta = delta.second;
             const auto to = offset_square(
                 target_king,
                 orient_for_attacker(attack_color, file_delta),
@@ -4372,7 +4376,9 @@ namespace {
         std::array<bool, 40> used{};
 
         const auto assign_piece = [&](const Color owner, const Square sq, const PieceType ptype) {
-            const auto [begin, end] = number_range(ptype);
+            const auto range = number_range(ptype);
+            const int begin = range.first;
+            const int end = range.second;
             for (int num = begin; num < end; ++num) {
                 if (used[static_cast<size_t>(num)]) {
                     continue;
@@ -5334,7 +5340,9 @@ namespace {
         }
 
         bool set_piece(const Color owner, const Square square, const PieceType ptype) {
-            const auto [begin, end] = number_range(ptype);
+            const auto range = number_range(ptype);
+            const int begin = range.first;
+            const int end = range.second;
             for (int num = begin; num < end; ++num) {
                 if (pieces_[num].used) {
                     continue;
@@ -5381,7 +5389,9 @@ namespace {
         }
 
         int lowest_stand_piece(const Color owner, const PieceType ptype) const {
-            const auto [begin, end] = number_range(ptype);
+            const auto range = number_range(ptype);
+            const int begin = range.first;
+            const int end = range.second;
             for (int num = begin; num < end; ++num) {
                 if (pieces_[num].used
                     && pieces_[num].owner == owner

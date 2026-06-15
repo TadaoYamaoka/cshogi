@@ -2548,7 +2548,9 @@ namespace {
             { 1, 1 }, { -1, -1 }, { -1, 0 }, { 1, 0 }
         } };
         const auto& order = US == Black ? kBlackOrder : kWhiteOrder;
-        for (const auto& [file_delta, rank_delta] : order) {
+        for (const auto& delta : order) {
+            const int file_delta = delta.first;
+            const int rank_delta = delta.second;
             const int file = static_cast<int>(makeFile(king)) + file_delta;
             const int rank = static_cast<int>(makeRank(king)) + rank_delta;
             if (!isInSquare(static_cast<File>(file), static_cast<Rank>(rank))) {
