@@ -1,9 +1,7 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "../src/cshogi.h"
-#include "../src/generateMoves.hpp"
 #include <array>
-#include <chrono>
 
 namespace {
 std::string join_pv_usi(const std::vector<u32>& pv) {
@@ -15,137 +13,6 @@ std::string join_pv_usi(const std::vector<u32>& pv) {
         pv_usi += Move(pv[i]).toUSI();
     }
     return pv_usi;
-}
-
-std::string join_moves_usi(const std::vector<Move>& moves) {
-    std::string out;
-    for (size_t i = 0; i < moves.size(); ++i) {
-        if (i > 0) {
-            out += ' ';
-        }
-        out += moves[i].toUSI();
-    }
-    return out;
-}
-
-int dfpn_effect_count_for_test(const Position& pos, const Color color, const Square sq) {
-    return pos.attackersTo(color, sq).popCount();
-}
-
-int dfpn_osl_sort_ptype_for_test(const PieceType piece_type) {
-    switch (piece_type) {
-    case ProPawn: return 2;
-    case ProLance: return 3;
-    case ProKnight: return 4;
-    case ProSilver: return 5;
-    case Horse: return 6;
-    case Dragon: return 7;
-    case King: return 8;
-    case Gold: return 9;
-    case Pawn: return 10;
-    case Lance: return 11;
-    case Knight: return 12;
-    case Silver: return 13;
-    case Bishop: return 14;
-    case Rook: return 15;
-    default: return 0;
-    }
-}
-
-int dfpn_osl_square_index_for_test(const Square square) {
-    if (square == SquareNum) {
-        return 0;
-    }
-    const int x = static_cast<int>(makeFile(square)) + 1;
-    const int y = static_cast<int>(makeRank(square)) + 1;
-    return x * 16 + y + 1;
-}
-
-std::tuple<bool, int, bool> dfpn_move_sort_key_for_test(const Position& pos, const Color turn, const Move move) {
-    const int attack_support = dfpn_effect_count_for_test(pos, turn, move.to()) + (move.isDrop() ? 1 : 0);
-    const int defense_support = dfpn_effect_count_for_test(pos, oppositeColor(turn), move.to());
-    const int move_sort_turn_sign = turn == Black ? 1 : -1;
-    const int file = static_cast<int>(makeFile(move.to())) + 1;
-    const int to_y = move_sort_turn_sign * (static_cast<int>(makeRank(move.to())) + 1);
-    const int to_x = (5 - std::abs(5 - file)) * 2 + (file > 5 ? 1 : 0);
-    int from_to = (to_y * 16 + to_x) * 256;
-    if (move.isDrop()) {
-        from_to += dfpn_osl_sort_ptype_for_test(move.pieceTypeDropped());
-    }
-    else {
-        from_to += dfpn_osl_square_index_for_test(move.from());
-    }
-    return std::make_tuple(attack_support > defense_support, from_to, move.isPromotion());
-}
-
-std::vector<Move> sort_like_dfpn_for_test(const Position& pos, std::vector<Move> moves) {
-    size_t last_sorted = 0;
-    size_t cur = 0;
-    PieceType last_piece_type = Occupied;
-    for (; cur < moves.size(); ++cur) {
-        const PieceType piece_type = moves[cur].isDrop()
-            ? Occupied
-            : moves[cur].pieceTypeFrom();
-        if (moves[cur].isDrop() || piece_type == last_piece_type) {
-            continue;
-        }
-        std::sort(moves.begin() + static_cast<std::ptrdiff_t>(last_sorted), moves.begin() + static_cast<std::ptrdiff_t>(cur),
-            [&](const Move lhs, const Move rhs) {
-                return dfpn_move_sort_key_for_test(pos, pos.turn(), lhs) > dfpn_move_sort_key_for_test(pos, pos.turn(), rhs);
-            });
-        last_sorted = cur;
-        last_piece_type = piece_type;
-    }
-    std::sort(moves.begin() + static_cast<std::ptrdiff_t>(last_sorted), moves.begin() + static_cast<std::ptrdiff_t>(cur),
-        [&](const Move lhs, const Move rhs) {
-            return dfpn_move_sort_key_for_test(pos, pos.turn(), lhs) > dfpn_move_sort_key_for_test(pos, pos.turn(), rhs);
-        });
-    return moves;
-}
-
-std::string format_dfpn_sort_key_for_test(const Position& pos, const Move move) {
-    const auto key = dfpn_move_sort_key_for_test(pos, pos.turn(), move);
-    std::ostringstream out;
-    out << std::get<0>(key) << ',' << std::get<1>(key) << ',' << std::get<2>(key);
-    return out.str();
-}
-
-template <MoveType MoveTypeValue>
-std::vector<Move> generate_check_moves_for_test(const Position& pos) {
-    CheckInfo ci(pos);
-    std::array<ExtMove, MaxLegalMoves> buffer{};
-    ExtMove* last = generateMoves<MoveTypeValue>(buffer.data(), pos);
-
-    std::vector<Move> moves;
-    moves.reserve(static_cast<size_t>(last - buffer.data()));
-    for (ExtMove* it = buffer.data(); it != last; ++it) {
-        if (pos.moveIsLegal(it->move) && pos.moveGivesCheck(it->move, ci)) {
-            moves.push_back(it->move);
-        }
-    }
-    return moves;
-}
-
-std::vector<Move> generate_oslmate_escape_moves_for_test(const Position& pos, const bool cheap_only, const bool sort_moves = true) {
-    std::array<ExtMove, MaxLegalMoves> buffer{};
-    ExtMove* last = generateOslmateEscapeMoves(buffer.data(), pos, cheap_only, sort_moves);
-
-    std::vector<Move> moves;
-    moves.reserve(static_cast<size_t>(last - buffer.data()));
-    for (ExtMove* it = buffer.data(); it != last; ++it) {
-        moves.push_back(it->move);
-    }
-    return moves;
-}
-
-std::vector<Move> generate_legal_moves_for_test(const Position& pos) {
-    MoveList<LegalAll> moves(pos);
-    std::vector<Move> out;
-    out.reserve(moves.size());
-    for (ExtMove* it = moves.begin(); it != moves.begin() + static_cast<std::ptrdiff_t>(moves.size()); ++it) {
-        out.push_back(it->move);
-    }
-    return out;
 }
 
 void expect_checkmate_pv(__Board& board, const std::vector<u32>& pv) {
@@ -263,7 +130,7 @@ TEST(TestDfPn, get_pv_issue56) {
     initTable();
     Position::initZobrist();
 
-    __DfPn dfpn;
+    __OslDfPn dfpn;
 
     auto board = __Board("8l/1R2S1kgr/3pp2p1/p2nlpp1p/5ns2/2+BPl3P/1PNK1PP2/1GGS2S2/5G1NL b B3P3p 1");
 
@@ -294,7 +161,7 @@ TEST(TestDfPn, mate3) {
     initTable();
     Position::initZobrist();
 
-    __DfPn dfpn;
+    __OslDfPn dfpn;
 
     auto board = __Board("+B+R5n1/5gk2/p1pps1gp1/4ppnsK/6pP1/1PPSP3L/PR1P1PP2/6S2/L2G1G3 w B2N2LP2p 1");
 
@@ -322,7 +189,7 @@ TEST(TestDfPn, mate7) {
     initTable();
     Position::initZobrist();
 
-    __DfPn dfpn;
+    __OslDfPn dfpn;
 
     auto board = __Board("ln1g3+Rl/2sk1s+P2/2ppppb1p/p1b3p2/8P/P4P3/2PPP1P2/1+r2GS3/LN+p2KGNL w GN2Ps 36");
 
@@ -350,7 +217,7 @@ TEST(TestDfPn, mate9) {
     initTable();
     Position::initZobrist();
 
-    __DfPn dfpn;
+    __OslDfPn dfpn;
 
     auto board = __Board("ln6l/4g1G2/2s1pk3/3p1s2p/p1P4b1/2pPPbp1P/PP1S3K1/3g2RP1/4+r2NL w N2Pgsnl3p 98");
 
@@ -370,7 +237,7 @@ TEST(TestDfPn, mate9_2) {
     initTable();
     Position::initZobrist();
 
-    __DfPn dfpn;
+    __OslDfPn dfpn;
 
     auto board = __Board("ln5kl/2r6/p1ps2+N1p/4p1pg1/3l3p1/P1P1PPP1P/1P1P1G3/2GS2+n2/+b2K1s2L b RGS2Pbn2p 101");
 
@@ -386,7 +253,7 @@ TEST(TestDfPn, mate11) {
     initTable();
     Position::initZobrist();
 
-    __DfPn dfpn;
+    __OslDfPn dfpn;
 
     auto board = __Board("l6nl/3kPs3/5p2p/p1ppg2P1/7+r1/P1G3p1P/1pNbSP1GL/2+n1S1K2/L1r3P2 w BGS3Pn2p 110");
 
@@ -415,7 +282,7 @@ TEST(TestDfPn, zukou001) {
     initTable();
     Position::initZobrist();
 
-    __DfPn dfpn;
+    __OslDfPn dfpn;
 
     auto board = __Board("1pG1B4/Gs+P6/pP7/n1ls5/3k5/nL4+r1b/1+p1p+R4/1S7/2N5K b SP2gn2l11p 1");
 
@@ -457,7 +324,7 @@ TEST(TestDfPn, no_mate) {
     };
 
     for (const auto* sfen : sfens) {
-        __DfPn dfpn(15, 10000, 32767);
+        __OslDfPn dfpn(15, 10000, 32767);
         auto board = __Board(sfen);
         EXPECT_FALSE(dfpn.search(board)) << sfen;
     }

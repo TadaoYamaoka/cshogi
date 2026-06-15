@@ -8,6 +8,7 @@
 #include "book.hpp"
 #include "mate.h"
 #include "dfpn.h"
+#include "osl_dfpn.h"
 
 // 入力特徴量のための定数(dlshogi互換)
 constexpr int PIECETYPE_NUM = 14; // 駒の種類
@@ -848,9 +849,50 @@ public:
     bool search_andnode(__Board& board) {
         return dfpn.dfpn_andnode(board.pos);
     }
-    bool search_with_history(__Board& root, const std::vector<Move>& history) {
+    void stop(bool is_stop) {
+        dfpn.dfpn_stop(is_stop);
+    }
+    int get_move(__Board& board) {
+        return dfpn.dfpn_move(board.pos).value();
+    }
+    void get_pv(__Board& board) {
         pv.clear();
-        return dfpn.dfpn_with_history(root.pos, history);
+        dfpn.get_pv(board.pos, pv);
+    }
+
+    void set_draw_ply(const int draw_ply) {
+        dfpn.set_draw_ply(draw_ply);
+    }
+    void set_maxdepth(const int depth) {
+        dfpn.set_maxdepth(depth);
+    }
+    void set_max_search_node(const uint32_t max_search_node) {
+        dfpn.set_max_search_node(max_search_node);
+    }
+    uint32_t get_searched_node() {
+        return dfpn.searchedNode;
+    }
+
+    std::vector<u32> pv;
+private:
+    DfPn dfpn;
+};
+
+class __OslDfPn
+{
+public:
+    __OslDfPn() {}
+    __OslDfPn(const int max_depth, const uint32_t max_search_node, const int draw_ply) : dfpn(max_depth, max_search_node, draw_ply) {}
+    bool search(__Board& board) {
+        pv.clear();
+        const bool result = dfpn.dfpn(board.pos);
+        if (result) {
+            dfpn.get_pv(board.pos, pv);
+        }
+        return result;
+    }
+    bool search_andnode(__Board& board) {
+        return dfpn.dfpn_andnode(board.pos);
     }
     void stop(bool is_stop) {
         dfpn.dfpn_stop(is_stop);
@@ -882,7 +924,7 @@ public:
 
     std::vector<u32> pv;
 private:
-    DfPn dfpn;
+    OslDfPn dfpn;
 };
 
 #endif

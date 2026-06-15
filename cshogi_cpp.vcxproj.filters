@@ -78,6 +78,9 @@
     <ClInclude Include="src\dfpn.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\osl_dfpn.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\bitboard.cpp">
@@ -122,5 +125,13 @@
     <ClCompile Include="src\dfpn.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\osl_dfpn.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\osl_hash.txt">
+      <Filter>ソース ファイル</Filter>
+    </None>
   </ItemGroup>
 </Project>

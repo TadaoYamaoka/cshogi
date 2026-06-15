@@ -78,6 +78,7 @@ ext_modules = [
             "src/book.cpp",
             "src/mate.cpp",
             "src/dfpn.cpp",
+            "src/osl_dfpn.cpp",
         ],
         language="c++",
         include_dirs=["src"],

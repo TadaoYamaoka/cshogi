@@ -1,2 +1,3 @@
 include src/*.hpp
 include src/*.h
+include src/*.txt

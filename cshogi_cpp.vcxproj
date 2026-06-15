@@ -90,6 +90,7 @@
     <ClInclude Include="src\common.hpp" />
     <ClInclude Include="src\cshogi.h" />
     <ClInclude Include="src\dfpn.h" />
+    <ClInclude Include="src\osl_dfpn.h" />
     <ClInclude Include="src\generateMoves.hpp" />
     <ClInclude Include="src\hand.hpp" />
     <ClInclude Include="src\ifdef.hpp" />
@@ -109,6 +110,7 @@
     <ClCompile Include="src\book.cpp" />
     <ClCompile Include="src\common.cpp" />
     <ClCompile Include="src\dfpn.cpp" />
+    <ClCompile Include="src\osl_dfpn.cpp" />
     <ClCompile Include="src\generateMoves.cpp" />
     <ClCompile Include="src\hand.cpp" />
     <ClCompile Include="src\init.cpp" />
@@ -119,6 +121,9 @@
     <ClCompile Include="src\search.cpp" />
     <ClCompile Include="src\square.cpp" />
     <ClCompile Include="src\usi.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\osl_hash.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

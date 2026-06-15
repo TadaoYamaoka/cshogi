@@ -1618,10 +1618,26 @@ cdef class Parser:
         return self.__parser.comment.decode('utf-8')
 
 
-cdef extern from "dfpn.h":
+cdef extern from "cshogi.h":
     cdef cppclass __DfPn:
         __DfPn() except +
         __DfPn(const int max_depth, const unsigned int max_search_node, const int draw_ply) except +
+        bool search(__Board& board)
+        bool search_andnode(__Board& board)
+        void stop(const bool stop)
+        int get_move(__Board& board)
+        void get_pv(__Board& board)
+        vector[unsigned int] pv
+        void set_draw_ply(const int draw_ply)
+        void set_maxdepth(const int depth)
+        void set_max_search_node(int max_search_node)
+        unsigned int get_searched_node()
+
+
+cdef extern from "cshogi.h":
+    cdef cppclass __OslDfPn:
+        __OslDfPn() except +
+        __OslDfPn(const int max_depth, const unsigned int max_search_node, const int draw_ply) except +
         bool search(__Board& board)
         bool search_andnode(__Board& board)
         void stop(const bool stop)
@@ -1730,4 +1746,42 @@ cdef class DfPn:
         :return: Number of nodes searched.
         :rtype: unsigned int
         """
+        return self.__dfpn.get_searched_node()
+
+
+cdef class OslDfPn:
+    """Class to perform mate search using the OSL-based df-pn algorithm."""
+
+    cdef __OslDfPn __dfpn
+
+    def __cinit__(self, depth=1600, nodes=4294967295, draw_ply=2147483646):
+        self.__dfpn = __OslDfPn(depth, nodes, draw_ply)
+
+    def search(self, Board board):
+        return self.__dfpn.search(board.__board)
+
+    def search_andnode(self, Board board):
+        return self.__dfpn.search_andnode(board.__board)
+
+    def stop(self, bool stop):
+        self.__dfpn.stop(stop)
+
+    def get_move(self, Board board):
+        return self.__dfpn.get_move(board.__board)
+
+    def get_pv(self, Board board):
+        self.__dfpn.get_pv(board.__board)
+        return self.__dfpn.pv
+
+    def set_draw_ply(self, int draw_ply):
+        self.__dfpn.set_draw_ply(draw_ply)
+
+    def set_max_depth(self, int max_depth):
+        self.__dfpn.set_maxdepth(max_depth)
+
+    def set_max_search_node(self, int max_search_node):
+        self.__dfpn.set_max_search_node(max_search_node)
+
+    @property
+    def searched_node(self):
         return self.__dfpn.get_searched_node()
