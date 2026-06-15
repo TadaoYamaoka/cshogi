@@ -1750,7 +1750,15 @@ cdef class DfPn:
 
 
 cdef class OslDfPn:
-    """Class to perform mate search using the OSL-based df-pn algorithm."""
+    """Class to perform mate search using the OSL-based df-pn algorithm.
+
+    :param int depth: Depth of the search.
+    :type depth: int, optional
+    :param nodes: Number of nodes in the search.
+    :type nodes: int, optional
+    :param draw_ply: The number of plies to consider as a draw.
+    :type draw_ply: int, optional
+    """
 
     cdef __OslDfPn __dfpn
 
@@ -1758,30 +1766,83 @@ cdef class OslDfPn:
         self.__dfpn = __OslDfPn(depth, nodes, draw_ply)
 
     def search(self, Board board):
+        """Perform a checkmate search on the given board.
+
+        :param board: Board state.
+        :type board: Board
+        :return: True if checkmate is found, False otherwise.
+        :rtype: bool
+        """
         return self.__dfpn.search(board.__board)
 
     def search_andnode(self, Board board):
+        """Perform a checkmate search at the AND node.
+
+        :param board: Board state.
+        :type board: Board
+        :return: True if checkmate is found, False otherwise.
+        :rtype: bool
+        """
         return self.__dfpn.search_andnode(board.__board)
 
     def stop(self, bool stop):
+        """Stop the search.
+
+        :param stop: Flag to stop the search.
+        :type stop: bool
+        """
         self.__dfpn.stop(stop)
 
     def get_move(self, Board board):
+        """Gets the mating move found by the search.
+
+        :param board: Current board position.
+        :type board: Board
+        :return: The mating move.
+        :rtype: int
+        """
         return self.__dfpn.get_move(board.__board)
 
     def get_pv(self, Board board):
+        """Gets the principal variation (PV) of the mating sequence found by the search.
+
+        :param board: Current board position.
+        :type board: Board
+        :return: The PV of the mating sequence.
+        :rtype: list of unsigned int
+        """
         self.__dfpn.get_pv(board.__board)
         return self.__dfpn.pv
 
     def set_draw_ply(self, int draw_ply):
+        """Sets the number of plies for a draw.
+
+        :param draw_ply: Number of plies for a draw.
+        :type draw_ply: int
+        """
         self.__dfpn.set_draw_ply(draw_ply)
 
     def set_max_depth(self, int max_depth):
+        """Sets the maximum search depth.
+
+        :param max_depth: Maximum search depth.
+        :type max_depth: int
+        """
         self.__dfpn.set_maxdepth(max_depth)
 
     def set_max_search_node(self, int max_search_node):
+        """Sets the maximum number of search nodes.
+
+        :param max_search_node: Maximum number of search nodes.
+        :type max_search_node: int
+        """
         self.__dfpn.set_max_search_node(max_search_node)
 
     @property
     def searched_node(self):
+        """Gets the number of nodes searched.
+
+        :return: Number of nodes searched.
+        :rtype: unsigned int
+        """
         return self.__dfpn.get_searched_node()
