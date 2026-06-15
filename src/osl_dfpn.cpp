@@ -7,7 +7,20 @@
 #include <fstream>
 #include <forward_list>
 #include <memory>
+#ifndef CSHOGI_OSL_DFPN_HAS_STD_OPTIONAL
+#if defined(__has_include)
+#if __has_include(<optional>)
+#define CSHOGI_OSL_DFPN_HAS_STD_OPTIONAL 1
+#else
+#define CSHOGI_OSL_DFPN_HAS_STD_OPTIONAL 0
+#endif
+#else
+#define CSHOGI_OSL_DFPN_HAS_STD_OPTIONAL 0
+#endif
+#endif
+#if CSHOGI_OSL_DFPN_HAS_STD_OPTIONAL
 #include <optional>
+#endif
 #include <random>
 #include <sstream>
 #include <string>
@@ -70,6 +83,55 @@ namespace {
     constexpr bool kEnableBlockingSimulation = true;
     constexpr bool kEnableGrandParentSimulation = true;
     constexpr bool kEnableReleaseZukouTrace = false;
+
+#if CSHOGI_OSL_DFPN_HAS_STD_OPTIONAL
+    template <typename T>
+    using Optional = std::optional<T>;
+    constexpr std::nullopt_t null_optional = std::nullopt;
+#else
+    struct NullOptional {};
+    constexpr NullOptional null_optional{};
+
+    template <typename T>
+    class Optional {
+    public:
+        Optional() : has_value_(false), value_() {}
+        Optional(NullOptional) : has_value_(false), value_() {}
+        Optional(const T& value) : has_value_(true), value_(value) {}
+        Optional(T&& value) : has_value_(true), value_(std::move(value)) {}
+
+        Optional& operator=(NullOptional) {
+            has_value_ = false;
+            return *this;
+        }
+
+        Optional& operator=(const T& value) {
+            value_ = value;
+            has_value_ = true;
+            return *this;
+        }
+
+        Optional& operator=(T&& value) {
+            value_ = std::move(value);
+            has_value_ = true;
+            return *this;
+        }
+
+        void reset() { has_value_ = false; }
+
+        explicit operator bool() const { return has_value_; }
+        bool has_value() const { return has_value_; }
+
+        T& operator*() { return value_; }
+        const T& operator*() const { return value_; }
+        T* operator->() { return &value_; }
+        const T* operator->() const { return &value_; }
+
+    private:
+        bool has_value_;
+        T value_;
+    };
+#endif
 
     template <size_t Capacity>
     class FixedMoveVector {
@@ -647,11 +709,11 @@ namespace {
     void add_monopolized_pieces(const Hand& us, const Hand& them, const Hand& max, Hand& out);
     bool has_unblockable_effect_to_king(PieceType piece_type, Color attack_color, Square from, Square king);
     bool is_unblockable_check(const Position& pos);
-    std::optional<Square> offset_square(Square sq, int file_delta, int rank_delta);
+    Optional<Square> offset_square(Square sq, int file_delta, int rank_delta);
     int orient_for_attacker(Color attacker, int delta);
     Bitboard pinned_pieces_of(const Position& pos, Color pinned_color);
     int dir_index_from_delta(Color attacker, int file_delta, int rank_delta);
-    std::optional<Square> king8_square(Square king, int dir_index, Color attack_color);
+    Optional<Square> king8_square(Square king, int dir_index, Color attack_color);
     King8RuntimeInfo make_king8_runtime_info(const Position& pos, Color attack_color);
     King8RuntimeInfo king8_runtime_info_at(const Position& pos, Color attack_color);
     King8RuntimeInfo reset_edge_from_liberty_runtime(Square king, Color attack_color, King8RuntimeInfo info);
@@ -2678,9 +2740,7 @@ namespace {
         if (n <= 1) {
             return 1;
         }
-        unsigned long index = 0;
-        _BitScanReverse(&index, n);
-        return static_cast<uint32_t>(index + 1);
+        return static_cast<uint32_t>(msb(n) + 1);
     }
 
     inline uint32_t oslmate_attack_child_proof_threshold(const uint32_t threshold_proof,
@@ -2793,11 +2853,11 @@ namespace {
         return file == File1 || file == File9 || rank == Rank1 || rank == Rank9;
     }
 
-    std::optional<Square> offset_square(const Square sq, const int file_delta, const int rank_delta) {
+    Optional<Square> offset_square(const Square sq, const int file_delta, const int rank_delta) {
         const int file = static_cast<int>(makeFile(sq)) + file_delta;
         const int rank = static_cast<int>(makeRank(sq)) + rank_delta;
         if (!isInSquare(static_cast<File>(file), static_cast<Rank>(rank))) {
-            return std::nullopt;
+            return null_optional;
         }
         return makeSquare(static_cast<File>(file), static_cast<Rank>(rank));
     }
@@ -2834,7 +2894,7 @@ namespace {
         return -1;
     }
 
-    std::optional<Square> king8_square(const Square king, const int dir_index, const Color attack_color) {
+    Optional<Square> king8_square(const Square king, const int dir_index, const Color attack_color) {
         return offset_square(
             king,
             -orient_for_attacker(attack_color, kDirFileDelta[static_cast<size_t>(dir_index)]),
@@ -2847,7 +2907,7 @@ namespace {
         const Square king_sq = pos.kingSquare(pinned_color);
 
         for (size_t dir = 0; dir < kDirFileDelta.size(); ++dir) {
-            std::optional<Square> first = offset_square(
+            Optional<Square> first = offset_square(
                 king_sq,
                 -kDirFileDelta[dir],
                 -kDirRankDelta[dir]);
@@ -2863,7 +2923,7 @@ namespace {
                 continue;
             }
 
-            std::optional<Square> slider = offset_square(*first, -kDirFileDelta[dir], -kDirRankDelta[dir]);
+            Optional<Square> slider = offset_square(*first, -kDirFileDelta[dir], -kDirRankDelta[dir]);
             while (slider && pos.piece(*slider) == Empty) {
                 slider = offset_square(*slider, -kDirFileDelta[dir], -kDirRankDelta[dir]);
             }
@@ -2917,7 +2977,7 @@ namespace {
 
             Bitboard occupied_without_direct = pos.occupiedBB();
             occupied_without_direct.clearBit(from);
-            std::optional<Square> scan = offset_square(from, -file_step, -rank_step);
+            Optional<Square> scan = offset_square(from, -file_step, -rank_step);
             while (scan) {
                 const Piece candidate = pos.piece(*scan);
                 if (candidate != Empty) {
@@ -3658,10 +3718,10 @@ namespace {
         return -1;
     }
 
-    std::optional<Square> dfpn_check_long_generator_square(
+    Optional<Square> dfpn_check_long_generator_square(
         const Position& pos, const Color attacker, const Move move, const int phase) {
         if (move.isDrop()) {
-            return std::nullopt;
+            return null_optional;
         }
 
         const PieceType moving_type = pieceToPieceType(pos.piece(move.from()));
@@ -3676,7 +3736,7 @@ namespace {
 
         const Square king = pos.kingSquare(oppositeColor(attacker));
         if ((betweenBB(move.from(), king) & pos.occupiedBB()).isAny()) {
-            return std::nullopt;
+            return null_optional;
         }
 
         Bitboard occupied_without_blocker = pos.occupiedBB();
@@ -3691,7 +3751,7 @@ namespace {
                 & bishopAttack(king, occupied_without_blocker);
         }
         else {
-            return std::nullopt;
+            return null_optional;
         }
 
         while (pinners) {
@@ -3701,7 +3761,7 @@ namespace {
                 return pinner;
             }
         }
-        return std::nullopt;
+        return null_optional;
     }
 
     int dfpn_check_move_phase(const Position& pos, const Color attacker, const Move move) {
@@ -4086,7 +4146,7 @@ namespace {
         const auto is_osl_major_basic_or_pawn = [](const PieceType piece_type) {
             return piece_type == Pawn || piece_type == Bishop || piece_type == Rook;
         };
-        std::optional<Bitboard> pinned_attack;
+        Optional<Bitboard> pinned_attack;
         const auto king_open_move = [&](const Move move) {
             if (!pinned_attack) {
                 pinned_attack = pinned_pieces_of(pos, attack_color);
@@ -4329,7 +4389,7 @@ namespace {
         // OSL checks longEffectNumTable()[moving_piece][direction(from,to)].
         // That table is keyed by the moving piece's current square; it does
         // not inspect opponent long effects beyond the destination square.
-        std::optional<Square> scan = offset_square(move.from(), -file_step, -rank_step);
+        Optional<Square> scan = offset_square(move.from(), -file_step, -rank_step);
         while (scan) {
             const Piece piece = pos.piece(*scan);
             if (piece == Empty) {
@@ -4429,7 +4489,7 @@ namespace {
         const auto from_effect = Position::attacksFrom(move.pieceTypeFrom(), attack_color, from, pos.occupiedBB());
         const auto moved_effect = Position::attacksFrom(move.pieceTypeTo(), attack_color, to, occupied_after);
 
-        const auto rejects_by_escape_square = [&](const std::optional<Square>& pos2) {
+        const auto rejects_by_escape_square = [&](const Optional<Square>& pos2) {
             if (!pos2) {
                 return false;
             }
@@ -5236,24 +5296,24 @@ namespace {
             PieceInfo captured_before{};
         };
 
-        static std::optional<OslPieceNumberState> from_position(const Position& position) {
+        static Optional<OslPieceNumberState> from_position(const Position& position) {
             OslPieceNumberState state;
             if (!state.initialize(position)) {
-                return std::nullopt;
+                return null_optional;
             }
             return state;
         }
 
-        static std::optional<OslPieceNumberState> from_history(
+        static Optional<OslPieceNumberState> from_history(
             const Position& root_position,
             const std::vector<Move>& history) {
             OslPieceNumberState state;
             if (!state.initialize(root_position)) {
-                return std::nullopt;
+                return null_optional;
             }
             for (const Move move : history) {
                 if (!state.apply_move(move)) {
-                    return std::nullopt;
+                    return null_optional;
                 }
             }
             return state;
@@ -5525,7 +5585,7 @@ namespace {
         if (!move_history || move_history->empty()) {
             return false;
         }
-        std::optional<OslPieceNumberState> reconstructed_state;
+        Optional<OslPieceNumberState> reconstructed_state;
         const auto piece_numbers = [&]() -> const OslPieceNumberState* {
             if (current_piece_numbers) {
                 return current_piece_numbers;
@@ -5594,7 +5654,7 @@ namespace {
         if (moves.size() < 2) {
             return false;
         }
-        std::optional<OslPieceNumberState> reconstructed_state;
+        Optional<OslPieceNumberState> reconstructed_state;
         const auto piece_numbers = [&]() -> const OslPieceNumberState* {
             if (current_piece_numbers) {
                 return current_piece_numbers;
@@ -5639,7 +5699,7 @@ namespace {
                 phase == static_cast<int>(DfpnCheckGenerationPhase::BishopLong)
                 || phase == static_cast<int>(DfpnCheckGenerationPhase::RookLong);
             if (long_piece_phase) {
-                if (const std::optional<Square> generator_square =
+                if (const Optional<Square> generator_square =
                     dfpn_check_long_generator_square(pos, pos.turn(), move, phase)) {
                     const int piece_number = state->number_of_square(*generator_square);
                     if (piece_number >= 0) {
@@ -6923,7 +6983,7 @@ struct OslDfPn::Impl {
         std::vector<Threshold> threshold_history;
         std::vector<PathRecord*> path_records;
         std::unique_ptr<Position> root_position;
-        std::optional<OslPieceNumberState> piece_numbers;
+        Optional<OslPieceNumberState> piece_numbers;
         std::vector<OslPieceNumberState::Undo> piece_number_undos;
         std::vector<Key> board_index_history;
         std::vector<uint64_t> board_secondary_history;
@@ -8472,7 +8532,7 @@ ProofDisproof OslDfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold
         uint64_t sum_proof = sum_proof64;
         if (false_branch_candidate) {
             exact_record.false_branch = true;
-            std::optional<OslmatePositionKey> goal;
+            Optional<OslmatePositionKey> goal;
             for (size_t i = 0; i < children.size(); ++i) {
                 if (!target[i]) {
                     continue;
@@ -9745,7 +9805,7 @@ bool OslDfPn::Impl::linked_pv_attack_move(Position& pos, Move& best_move, const 
 
     if (kEnableFixedDepthShortcut) {
         Hand fixed_proof_pieces = zero_hand();
-        std::optional<OslPieceNumberState> piece_numbers = OslPieceNumberState::from_position(pos);
+        Optional<OslPieceNumberState> piece_numbers = OslPieceNumberState::from_position(pos);
         if (fixed_attack_osl_shortcut(
             pos, root_attack_color, &best_move, &fixed_proof_pieces,
             piece_numbers ? &*piece_numbers : nullptr).isCheckmateSuccess()) {
@@ -9993,7 +10053,7 @@ void OslDfPn::Impl::retrieve_pv(Position& pos, const bool attack_node, std::vect
 
     Key current_board_index = board_index_key(pos);
     uint64_t current_board_secondary = secondary_board_key(pos);
-    std::optional<OslPieceNumberState> piece_numbers = OslPieceNumberState::from_position(pos);
+    Optional<OslPieceNumberState> piece_numbers = OslPieceNumberState::from_position(pos);
     for (int i = 0; i < max_depth; ++i) {
         Move next = Move::moveNone();
         const bool attack_turn = attack_node ^ ((i % 2) != 0);
@@ -10233,7 +10293,7 @@ int OslDfPn::pv_depth(Position& pos, const bool is_or_node) {
     Move best = Move::moveNone();
     const Key board_index = board_index_key(pos);
     const uint64_t board_secondary = secondary_board_key(pos);
-    std::optional<OslPieceNumberState> piece_numbers = OslPieceNumberState::from_position(pos);
+    Optional<OslPieceNumberState> piece_numbers = OslPieceNumberState::from_position(pos);
     return is_or_node
         ? impl_->pv_attack(pos, table, best, 0, Move::moveNone(), board_index, board_secondary,
             piece_numbers ? &*piece_numbers : nullptr)
