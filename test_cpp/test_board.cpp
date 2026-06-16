@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "../src/cshogi.h"
 #include <array>
@@ -275,6 +275,38 @@ TEST(TestDfPn, mate11) {
     );
 }
 
+TEST(TestDfPn, no_king) {
+    using namespace ns_dfpn;
+
+    initTable();
+    Position::initZobrist();
+
+    __DfPn dfpn;
+
+    auto board = __Board("4k4/9/3P1P3/9/9/9/9/9/9 b GS 1");
+
+    auto ret = dfpn.search(board);
+    EXPECT_TRUE(ret);
+
+    expect_checkmate_pv(board, dfpn.pv);
+}
+
+TEST(TestDfPn, osl_no_king) {
+    using namespace ns_dfpn;
+
+    initTable();
+    Position::initZobrist();
+
+    __OslDfPn dfpn;
+
+    auto board = __Board("4k4/9/3P1P3/9/9/9/9/9/9 b GS 1");
+
+    auto ret = dfpn.search(board);
+    EXPECT_TRUE(ret);
+
+    expect_checkmate_pv(board, dfpn.pv);
+}
+
 #ifdef NDEBUG
 TEST(TestDfPn, zukou001) {
     using namespace ns_dfpn;
@@ -298,6 +330,33 @@ TEST(TestDfPn, zukou001) {
     EXPECT_EQ(3143631u, dfpn.get_searched_node());
     EXPECT_EQ(
         "S*5d 6e7e 7i8g 7e8f 5g6f 3f6f 5a9e+ 8f7f P*7g 6f7g 9e7g 7f8e R*1e R*2e 1e2e 1f2e 7g9e 8e7f R*2f R*3f 2f3f 2e3f 9e7g 7f8e R*3e R*4e 3e4e 3f4e 7g9e 8e7f R*4f L*5f 9e7g 7f8e 4f4e L*5e B*7f 7d7f 7g9e 8e7d 9e9f B*8e N*6f 7d8c 9b8b 8a8b 4e4c P*7c 4c7c+ 6d7c 7b7c 8c7c 9f9e L*8d P*7d 7c6b 9e8d 6b7a S*7b 7a7b 7d7c+ 7b8a 7c8b 8a8b L*8c 8b9b S*8a 9b9a 8d7c P*8b 8c8b+",
+        join_pv_usi(dfpn.pv)
+    );
+
+}
+
+TEST(TestDfPn, zukou001_no_king) {
+    using namespace ns_dfpn;
+
+    initTable();
+    Position::initZobrist();
+
+    __OslDfPn dfpn;
+
+    auto board = __Board("1pG1B4/Gs+P6/pP7/n1ls5/3k5/nL4+r1b/1+p1p+R4/1S7/2N6 b SP2gn2l11p 1");
+
+    auto ret = dfpn.search(board);
+    EXPECT_TRUE(ret);
+
+    EXPECT_NO_THROW(
+        dfpn.get_pv(board)
+    );
+
+    expect_checkmate_pv(board, dfpn.pv);
+
+    EXPECT_EQ(3713302u, dfpn.get_searched_node());
+    EXPECT_EQ(
+        "S*5d 6e7e 7i8g 7e8f 5g6f 3f6f 5a9e+ 8f7f P*7g 6f7g 9e7g 7f8e R*1e R*2e 1e2e 1f2e 7g9e 8e7f R*2f R*3f 2f3f 2e3f 9e7g 7f8e R*3e R*4e 3e4e 3f4e 7g9e 8e7f R*4f L*5f 9e7g 7f8e 4f4e L*5e B*7f 7d7f 7g9e 8e7d 9e9f B*8e N*6f 7d8c 9b8b 8a8b 4e4c P*7c 7b7c 6d7c 4c7c+ 8c7c 9f9e L*8d P*7d 7c6b 9e8d 6b7a S*7b 7a7b 7d7c+ 7b8a 7c8b 8a8b L*8c 8b9b S*8a 9b9a 8d7c P*8b 8c8b+",
         join_pv_usi(dfpn.pv)
     );
 

@@ -27,6 +27,12 @@
 Key Position::zobrist_[PieceTypeNum][SquareNum][ColorNum];
 Key Position::zobHand_[HandPieceNum][ColorNum];
 
+namespace {
+    Square king_square_or_square_num(const Bitboard& king_bb) {
+        return king_bb ? king_bb.constFirstOneFromSQ11() : SquareNum;
+    }
+}
+
 const HuffmanCode HuffmanCodedPos::boardCodeTable[PieceNone] = {
     {Binary<         0>::value, 1}, // Empty
     {Binary<         1>::value, 4}, // BPawn
@@ -204,6 +210,13 @@ CheckInfo::CheckInfo(const Position& pos) {
 
     pinned = pos.pinnedBB();
     dcBB = pos.discoveredCheckBB();
+
+    if (!isInSquare(ksq)) {
+        for (PieceType pt = Occupied; pt < PieceTypeNum; ++pt) {
+            checkBB[pt] = allZeroBB();
+        }
+        return;
+    }
 
     checkBB[Pawn     ] = pos.attacksFrom<Pawn  >(them, ksq);
     checkBB[Lance    ] = pos.attacksFrom<Lance >(them, ksq);
@@ -3121,12 +3134,12 @@ bool Position::isOK() const {
 
     ++failedStep;
     if (debugKingCount) {
-        int kingCount[ColorNum] = {0, 0};
-        if (bbOf(King).popCount() != 2)
+        int kingCount[ColorNum] = { 0, 0 };
+        if (bbOf(King).popCount() == 0 || 2 < bbOf(King).popCount())
             goto incorrect_position;
-        if (!bbOf(King, Black).isOneBit())
+        if (1 < bbOf(King, Black).popCount())
             goto incorrect_position;
-        if (!bbOf(King, White).isOneBit())
+        if (1 < bbOf(King, White).popCount())
             goto incorrect_position;
         for (Square sq = SQ11; sq < SquareNum; ++sq) {
             if (piece(sq) == BKing)
@@ -3134,7 +3147,8 @@ bool Position::isOK() const {
             if (piece(sq) == WKing)
                 ++kingCount[White];
         }
-        if (kingCount[Black] != 1 || kingCount[White] != 1)
+        if (kingCount[Black] != static_cast<int>(bbOf(King, Black).popCount())
+            || kingCount[White] != static_cast<int>(bbOf(King, White).popCount()))
             goto incorrect_position;
     }
 
@@ -3143,8 +3157,9 @@ bool Position::isOK() const {
         // 相手玉を取れないことを確認
         const Color us = turn();
         const Color them = oppositeColor(us);
-        const Square ksq = kingSquare(them);
-        if (attackersTo(us, ksq))
+        const Square us_king = kingSquare(us);
+        const Square them_king = kingSquare(them);
+        if (isInSquare(us_king) && isInSquare(them_king) && attackersTo(us, them_king))
             goto incorrect_position;
     }
 
@@ -3341,8 +3356,8 @@ void Position::set(const std::string& sfen) {
         else
             goto INCORRECT;
     }
-    kingSquare_[Black] = bbOf(King, Black).constFirstOneFromSQ11();
-    kingSquare_[White] = bbOf(King, White).constFirstOneFromSQ11();
+    kingSquare_[Black] = king_square_or_square_num(bbOf(King, Black));
+    kingSquare_[White] = king_square_or_square_num(bbOf(King, White));
     goldsBB_ = bbOf(Gold, ProPawn, ProLance, ProKnight, ProSilver);
 
     // 手番
@@ -3406,8 +3421,8 @@ void Position::set(const Piece pieces[SquareNum], const int pieces_in_hand[Color
     // 手番
     turn_ = turn;
 
-    kingSquare_[Black] = bbOf(King, Black).constFirstOneFromSQ11();
-    kingSquare_[White] = bbOf(King, White).constFirstOneFromSQ11();
+    kingSquare_[Black] = king_square_or_square_num(bbOf(King, Black));
+    kingSquare_[White] = king_square_or_square_num(bbOf(King, White));
     goldsBB_ = bbOf(Gold, ProPawn, ProLance, ProKnight, ProSilver);
 
     gamePly_ = ply;
@@ -3467,8 +3482,8 @@ void Position::set_hcp(const char* hcp_data) {
             goto INCORRECT_HUFFMAN_CODE;
     }
 
-    kingSquare_[Black] = bbOf(King, Black).constFirstOneFromSQ11();
-    kingSquare_[White] = bbOf(King, White).constFirstOneFromSQ11();
+    kingSquare_[Black] = king_square_or_square_num(bbOf(King, Black));
+    kingSquare_[White] = king_square_or_square_num(bbOf(King, White));
     goldsBB_ = bbOf(Gold, ProPawn, ProLance, ProKnight, ProSilver);
 
     gamePly_ = 1; // ply の情報は持っていないので 1 にしておく。
@@ -3533,8 +3548,8 @@ void Position::set_psfen(const char* psfen_data) {
             goto INCORRECT_HUFFMAN_CODE;
     }
 
-    kingSquare_[Black] = bbOf(King, Black).constFirstOneFromSQ11();
-    kingSquare_[White] = bbOf(King, White).constFirstOneFromSQ11();
+    kingSquare_[Black] = king_square_or_square_num(bbOf(King, Black));
+    kingSquare_[White] = king_square_or_square_num(bbOf(King, White));
     goldsBB_ = bbOf(Gold, ProPawn, ProLance, ProKnight, ProSilver);
 
     gamePly_ = 1; // ply の情報は持っていないので 1 にしておく。

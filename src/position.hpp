@@ -323,7 +323,8 @@ public:
     bool inCheck() const            { return checkersBB().isAny(); }
 
     FORCE_INLINE Square kingSquare(const Color c) const {
-        assert(kingSquare_[c] == bbOf(King, c).constFirstOneFromSQ11());
+        const Bitboard king_bb = bbOf(King, c);
+        assert(kingSquare_[c] == (king_bb ? king_bb.constFirstOneFromSQ11() : SquareNum));
         return kingSquare_[c];
     }
 
@@ -470,7 +471,10 @@ private:
 
     // 手番側の玉へ check している駒を全て探して checkersBB_ にセットする。
     // 最後の手が何か覚えておけば、attackersTo() を使用しなくても良いはずで、処理が軽くなる。
-    void findCheckers() { st_->checkersBB = attackersToExceptKing(oppositeColor(turn()), kingSquare(turn())); }
+    void findCheckers() {
+        const Square ksq = kingSquare(turn());
+        st_->checkersBB = isInSquare(ksq) ? attackersToExceptKing(oppositeColor(turn()), ksq) : allZeroBB();
+    }
 
     void xorBBs(const PieceType pt, const Square sq, const Color c);
     // turn() 側が
@@ -486,6 +490,9 @@ private:
         Bitboard pinners = bbOf(FindPinned ? them : us);
 
         const Square ksq = kingSquare(FindPinned ? us : them);
+        if (!isInSquare(ksq)) {
+            return result;
+        }
 
         // 障害物が無ければ玉に到達出来る駒のBitboardだけ残す。
         pinners &= (bbOf(Lance) & lanceAttackToEdge((FindPinned ? us : them), ksq)) |

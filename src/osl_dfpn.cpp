@@ -904,7 +904,7 @@ namespace {
         }
 
         const Square target_king = pos.kingSquare(oppositeColor(attack_color));
-        const bool still_checking = target_king && effect_has_at(pos, attack_color, target_king);
+        const bool still_checking = isInSquare(target_king) && effect_has_at(pos, attack_color, target_king);
         if (may_unsafe && still_checking) {
             return ProofDisproof::NoEscape();
         }
@@ -942,7 +942,7 @@ namespace {
 
         const Color defense_color = oppositeColor(attack_color);
         const Square attacker_king = pos.kingSquare(attack_color);
-        if (attacker_king && effect_has_at(pos, defense_color, attacker_king)) {
+        if (isInSquare(attacker_king) && effect_has_at(pos, defense_color, attacker_king)) {
             return ProofDisproof::NoCheckmate();
         }
 
@@ -2905,6 +2905,9 @@ namespace {
         Bitboard result = allZeroBB();
         const Color attacker = oppositeColor(pinned_color);
         const Square king_sq = pos.kingSquare(pinned_color);
+        if (!isInSquare(king_sq)) {
+            return result;
+        }
 
         for (size_t dir = 0; dir < kDirFileDelta.size(); ++dir) {
             Optional<Square> first = offset_square(
@@ -4196,7 +4199,10 @@ namespace {
             }
 
             Bitboard attackers = effect_at_to & pos.bbOf(attack_color);
-            attackers.clearBit(pos.kingSquare(attack_color));
+            const Square attack_king = pos.kingSquare(attack_color);
+            if (isInSquare(attack_king)) {
+                attackers.clearBit(attack_king);
+            }
             if (current_piece_numbers) {
                 for (int num = 0; num < 40; ++num) {
                     Color owner = ColorNum;
@@ -5835,6 +5841,9 @@ namespace {
 
     bool osl_pin_or_open_shadow(const Position& pos, const Color attacker, const Square blocker) {
         const Square king = pos.kingSquare(oppositeColor(attacker));
+        if (!isInSquare(king)) {
+            return false;
+        }
         if ((betweenBB(blocker, king) & pos.occupiedBB()).isAny()) {
             return false;
         }
@@ -5876,7 +5885,7 @@ namespace {
         constexpr SquareDelta black_pawn_check_delta = DeltaS;
         constexpr SquareDelta white_pawn_check_delta = DeltaN;
         const Rank last_rank = us == Black ? Rank9 : Rank1;
-        if (!king || makeRank(king) == last_rank) {
+        if (!isInSquare(king) || makeRank(king) == last_rank) {
             return false;
         }
         const Square to = king + (us == Black ? black_pawn_check_delta : white_pawn_check_delta);
@@ -6354,7 +6363,7 @@ namespace {
             return false;
         }
         const Square king = pos.kingSquare(oppositeColor(attack_color));
-        if (!king) {
+        if (!isInSquare(king)) {
             return false;
         }
         const int file = static_cast<int>(makeFile(king)) + 1;
@@ -6449,7 +6458,7 @@ namespace {
         const Color defense_color = oppositeColor(attack_color);
         const Square target_king = pos.kingSquare(defense_color);
         const bool fixed_probe_enabled = false;
-        if (target_king && effect_has_at(pos, attack_color, target_king)) {
+        if (isInSquare(target_king) && effect_has_at(pos, attack_color, target_king)) {
             return ProofDisproof::NoEscape();
         }
 
@@ -6532,7 +6541,7 @@ namespace {
 
         const Color defense_color = oppositeColor(attack_color);
         const Square target_king = pos.kingSquare(defense_color);
-        if (target_king && effect_has_at(pos, attack_color, target_king)) {
+        if (isInSquare(target_king) && effect_has_at(pos, attack_color, target_king)) {
             return ProofDisproof::NoEscape();
         }
 
@@ -9259,7 +9268,7 @@ ProofDisproof OslDfPn::Impl::proof_oracle_defense(Position& pos, const OracleSta
     ++ctx.node_count;
     const Square attacker_king = pos.kingSquare(ctx.attack_color);
     if (!pos.inCheck()
-        || (attacker_king != SquareNum && effect_has_at(pos, pos.turn(), attacker_king))) {
+        || (isInSquare(attacker_king) && effect_has_at(pos, pos.turn(), attacker_king))) {
         DfpnRecord no_check_record;
         no_check_record.proof_disproof = ProofDisproof::NoCheckmate();
         store_out_record(no_check_record);
