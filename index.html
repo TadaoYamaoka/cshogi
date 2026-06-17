@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
@@ -5,19 +7,15 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Welcome to cshogi’s documentation! &mdash; cshogi  documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=5929fcd5"></script>
-        <script src="_static/doctools.js?v=888ff710"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="author" title="About these documents" href="about.html" />
     <link rel="index" title="Index" href="genindex.html" />
@@ -169,6 +167,8 @@
 <li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.PseudoLegalMoveList"><code class="docutils literal notranslate"><span class="pre">PseudoLegalMoveList</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.SvgWrapper"><code class="docutils literal notranslate"><span class="pre">SvgWrapper</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.hand_piece_to_piece_type"><code class="docutils literal notranslate"><span class="pre">hand_piece_to_piece_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.make_file"><code class="docutils literal notranslate"><span class="pre">make_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.make_rank"><code class="docutils literal notranslate"><span class="pre">make_rank()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.move16"><code class="docutils literal notranslate"><span class="pre">move16()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.move16_from_psv"><code class="docutils literal notranslate"><span class="pre">move16_from_psv()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.move16_to_psv"><code class="docutils literal notranslate"><span class="pre">move16_to_psv()</span></code></a></li>
@@ -184,11 +184,27 @@
 <li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.move_to_usi"><code class="docutils literal notranslate"><span class="pre">move_to_usi()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.opponent"><code class="docutils literal notranslate"><span class="pre">opponent()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.piece_to_piece_type"><code class="docutils literal notranslate"><span class="pre">piece_to_piece_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.rotate_sfen"><code class="docutils literal notranslate"><span class="pre">rotate_sfen()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.to_csa"><code class="docutils literal notranslate"><span class="pre">to_csa()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.to_usi"><code class="docutils literal notranslate"><span class="pre">to_usi()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="cshogi.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cshogi.html#module-cshogi.osl">cshogi.osl module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.osl.DfPn"><code class="docutils literal notranslate"><span class="pre">DfPn</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.osl.DfPn.search"><code class="docutils literal notranslate"><span class="pre">DfPn.search()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.osl.DfPn.search_andnode"><code class="docutils literal notranslate"><span class="pre">DfPn.search_andnode()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.osl.DfPn.stop"><code class="docutils literal notranslate"><span class="pre">DfPn.stop()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.osl.DfPn.get_move"><code class="docutils literal notranslate"><span class="pre">DfPn.get_move()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.osl.DfPn.get_pv"><code class="docutils literal notranslate"><span class="pre">DfPn.get_pv()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.osl.DfPn.set_draw_ply"><code class="docutils literal notranslate"><span class="pre">DfPn.set_draw_ply()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.osl.DfPn.set_max_depth"><code class="docutils literal notranslate"><span class="pre">DfPn.set_max_depth()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.osl.DfPn.set_max_search_node"><code class="docutils literal notranslate"><span class="pre">DfPn.set_max_search_node()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.osl.DfPn.searched_node"><code class="docutils literal notranslate"><span class="pre">DfPn.searched_node</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="cshogi.html#module-cshogi.CSA">cshogi.CSA module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.CSA.Exporter"><code class="docutils literal notranslate"><span class="pre">Exporter</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.CSA.Exporter.close"><code class="docutils literal notranslate"><span class="pre">Exporter.close()</span></code></a></li>
@@ -307,7 +323,7 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="cshogi.gym_shogi.html">cshogi.gym_shogi package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="cshogi.gym_shogi.html#subpackages">Subpackages</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cshogi.gym_shogi.html#module-cshogi.gym_shogi">Module contents</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.gym_shogi.html#module-contents">Module contents</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="cshogi.usi.html">cshogi.usi package</a><ul>
@@ -316,7 +332,7 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="cshogi.web.html">cshogi.web package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="cshogi.web.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cshogi.web.html#module-cshogi.web.app">cshogi.web.app module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.web.html#cshogi-web-app-module">cshogi.web.app module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="cshogi.web.html#module-cshogi.web">Module contents</a></li>
 </ul>
 </li>

@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
@@ -5,19 +7,15 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>cshogi.usi package &mdash; cshogi  documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=5929fcd5"></script>
-        <script src="_static/doctools.js?v=888ff710"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="author" title="About these documents" href="about.html" />
     <link rel="index" title="Index" href="genindex.html" />
@@ -56,6 +54,7 @@
 <li class="toctree-l1 current"><a class="reference internal" href="cshogi.html">cshogi package</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="cshogi.html#module-cshogi">Module contents</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cshogi.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cshogi.html#module-cshogi.osl">cshogi.osl module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cshogi.html#module-cshogi.CSA">cshogi.CSA module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cshogi.html#module-cshogi.KI2">cshogi.KI2 module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cshogi.html#module-cshogi.KIF">cshogi.KIF module</a></li>
@@ -107,7 +106,7 @@
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-cshogi.usi" title="Link to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="cshogi.usi.Engine">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.usi.</span></span><span class="sig-name descname"><span class="pre">Engine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cmd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connect</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/usi/Engine.html#Engine"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.usi.Engine" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">cshogi.usi.</span></span><span class="sig-name descname"><span class="pre">Engine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cmd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connect</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/usi/Engine.html#Engine"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.usi.Engine" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A class to interface with a USI (Universal Shogi Interface) engine.</p>
 <dl class="field-list simple">
@@ -290,7 +289,7 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="cshogi.usi.InfoListener">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.usi.</span></span><span class="sig-name descname"><span class="pre">InfoListener</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mate_score</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">listner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/usi/Engine.html#InfoListener"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.usi.InfoListener" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">cshogi.usi.</span></span><span class="sig-name descname"><span class="pre">InfoListener</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mate_score</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">listner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/usi/Engine.html#InfoListener"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.usi.InfoListener" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Listener class to obtain the content of the info command returned by the USI engine.</p>
 <dl class="field-list simple">
@@ -298,7 +297,7 @@
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mate_score</strong> (<em>int</em>) – The score representing a mate condition, default is 100000.</p></li>
 <li><p><strong>listener</strong> – A callable that may be provided to interact with the listener, default is None.</p></li>
-<li><p><strong>listner</strong> (<em>Callable</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>listner</strong> (<em>Callable</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Example<span class="colon">:</span></dt>
@@ -313,7 +312,7 @@
 </div>
 <dl class="py property">
 <dt class="sig sig-object py" id="cshogi.usi.InfoListener.bestmove">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">bestmove</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#cshogi.usi.InfoListener.bestmove" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">bestmove</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#cshogi.usi.InfoListener.bestmove" title="Link to this definition"></a></dt>
 <dd><p>Gets the best move from the USI engine information.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -324,7 +323,7 @@
 
 <dl class="py property">
 <dt class="sig sig-object py" id="cshogi.usi.InfoListener.info">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">info</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span></em><a class="headerlink" href="#cshogi.usi.InfoListener.info" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">info</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span></span><a class="headerlink" href="#cshogi.usi.InfoListener.info" title="Link to this definition"></a></dt>
 <dd><p>Gets detailed information regarding the best move from the USI engine.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -349,7 +348,7 @@
 
 <dl class="py property">
 <dt class="sig sig-object py" id="cshogi.usi.InfoListener.mate_score">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">mate_score</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#cshogi.usi.InfoListener.mate_score" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">mate_score</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#cshogi.usi.InfoListener.mate_score" title="Link to this definition"></a></dt>
 <dd><p>Gets the mate score.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -360,7 +359,7 @@
 
 <dl class="py property">
 <dt class="sig sig-object py" id="cshogi.usi.InfoListener.pv">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pv</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#cshogi.usi.InfoListener.pv" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">pv</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#cshogi.usi.InfoListener.pv" title="Link to this definition"></a></dt>
 <dd><p>Gets the Principal Variation (PV) for the best move.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -371,17 +370,17 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.usi.InfoListener.re_bestmove">
-<span class="sig-name descname"><span class="pre">re_bestmove</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('bestmove</span> <span class="pre">([^</span> <span class="pre">]+).*$')</span></em><a class="headerlink" href="#cshogi.usi.InfoListener.re_bestmove" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">re_bestmove</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('bestmove</span> <span class="pre">([^</span> <span class="pre">]+).*$')</span></span><a class="headerlink" href="#cshogi.usi.InfoListener.re_bestmove" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.usi.InfoListener.re_info">
-<span class="sig-name descname"><span class="pre">re_info</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('^info</span> <span class="pre">(.*</span> <span class="pre">|)score</span> <span class="pre">(cp|mate)</span> <span class="pre">([+\\-0-9]+)</span> <span class="pre">(.*</span> <span class="pre">|)pv</span> <span class="pre">([^</span> <span class="pre">]+)(.*)$')</span></em><a class="headerlink" href="#cshogi.usi.InfoListener.re_info" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">re_info</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('^info</span> <span class="pre">(.*</span> <span class="pre">|)pv</span> <span class="pre">(\\S+)(.*)$')</span></span><a class="headerlink" href="#cshogi.usi.InfoListener.re_info" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="cshogi.usi.InfoListener.score">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">score</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#cshogi.usi.InfoListener.score" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">score</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#cshogi.usi.InfoListener.score" title="Link to this definition"></a></dt>
 <dd><p>Gets the score for the best move.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -394,14 +393,14 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="cshogi.usi.MultiPVListener">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cshogi.usi.</span></span><span class="sig-name descname"><span class="pre">MultiPVListener</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">listner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/usi/Engine.html#MultiPVListener"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.usi.MultiPVListener" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">cshogi.usi.</span></span><span class="sig-name descname"><span class="pre">MultiPVListener</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">listner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/usi/Engine.html#MultiPVListener"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.usi.MultiPVListener" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Listener class to obtain the content of the MultiPV info command returned by the USI engine.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>listener</strong> – A callable to interact with the listener, default is None.</p></li>
-<li><p><strong>listner</strong> (<em>Callable</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>listner</strong> (<em>Callable</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Example<span class="colon">:</span></dt>
@@ -414,7 +413,7 @@
 </div>
 <dl class="py property">
 <dt class="sig sig-object py" id="cshogi.usi.MultiPVListener.info">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">info</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#cshogi.usi.MultiPVListener.info" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">info</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#cshogi.usi.MultiPVListener.info" title="Link to this definition"></a></dt>
 <dd><p>Gets detailed information regarding all captured MultiPVs from the USI engine.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -439,7 +438,7 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.usi.MultiPVListener.re_multipv">
-<span class="sig-name descname"><span class="pre">re_multipv</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('^info.*</span> <span class="pre">multipv</span> <span class="pre">([0-9]+).*</span> <span class="pre">pv</span> <span class="pre">.*$')</span></em><a class="headerlink" href="#cshogi.usi.MultiPVListener.re_multipv" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">re_multipv</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('^info.*</span> <span class="pre">multipv</span> <span class="pre">([0-9]+).*</span> <span class="pre">pv</span> <span class="pre">.*$')</span></span><a class="headerlink" href="#cshogi.usi.MultiPVListener.re_multipv" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
