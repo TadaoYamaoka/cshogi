@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         python-major-version: [3]
-        python-minor-version: [10, 11, 12, 13]
+        python-minor-version: [10, 11, 12, 13, 14]
     env:
       python-version: ${{ format('{0}.{1}', matrix.python-major-version, matrix.python-minor-version) }}
     steps:
@@ -78,7 +78,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version: ["cp311-cp311", "cp312-cp312", "cp313-cp313"]
+        python-version: ["cp311-cp311", "cp312-cp312", "cp313-cp313", "cp314-cp314"]
     steps:
       - name: Check out repository code
         uses: actions/checkout@v5
@@ -96,7 +96,7 @@ jobs:
           docker run --rm -v $(pwd):/work \
             -w /work quay.io/pypa/manylinux_2_28_x86_64 \
             /bin/sh -c "\
-              $PYTHON_BIN/pip install setuptools numpy 'Cython<3.1' && \
+              $PYTHON_BIN/pip install setuptools numpy 'Cython>=3.1.4' && \
               $PYTHON_BIN/python setup.py bdist_wheel && \
               cd dist && auditwheel repair *.whl"
       - name: Publish
