@@ -224,10 +224,13 @@ namespace parser {
                     }
                 }
                 else if (line[0] == 'T') {
-                    if (endgame == "")
-                        times[moves.size() - 1] = std::stoi(line.substr(1));
-                    else
+                    if (endgame == "") {
+                        if (!times.empty())
+                            times.back() = std::stoi(line.substr(1));
+                    }
+                    else {
                         times.emplace_back(std::stoi(line.substr(1)));
+                    }
                 }
                 else if (line[0] == '%') {
                     // End of the game

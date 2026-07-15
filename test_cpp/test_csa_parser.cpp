@@ -61,3 +61,31 @@ P-00KA00KE00KE00KY00KY
     EXPECT_EQ("7g7f", Move(parser.moves[0]).toUSI());
     EXPECT_EQ("8c8d", Move(parser.moves[1]).toUSI());
 }
+
+TEST(TestCsaParser, ignores_time_without_a_preceding_move) {
+    initTable();
+
+    __Parser parser;
+    EXPECT_NO_THROW(parser.parse_csa_str(R"(V2.2
+PI
++
+'+2726FU
+T1
+)") );
+    EXPECT_TRUE(parser.moves.empty());
+    EXPECT_TRUE(parser.times.empty());
+}
+
+TEST(TestCsaParser, records_time_after_endgame) {
+    initTable();
+
+    __Parser parser;
+    parser.parse_csa_str(R"(V2.2
+PI
++
+%TORYO
+T1
+)");
+    ASSERT_EQ(1, parser.times.size());
+    EXPECT_EQ(1, parser.times[0]);
+}
