@@ -87,6 +87,72 @@ TEST(TestBoard, set_position_issue48) {
     );
 }
 
+TEST(TestBoard, copy_relinks_stateinfo_history) {
+    initTable();
+
+    auto board = __Board();
+    board.push(board.move_from_usi("7g7f"));
+
+    auto copied = __Board(board);
+    EXPECT_FALSE(copied.inCheck());
+
+    board.set("4k4/4r4/9/9/9/9/9/9/4K4 b - 1");
+    EXPECT_TRUE(board.inCheck());
+
+    copied.pop();
+
+    const auto expected = __Board();
+    EXPECT_EQ(expected.toSFEN(), copied.toSFEN());
+    EXPECT_FALSE(copied.inCheck());
+}
+
+TEST(TestBoard, copy_assignment_relinks_stateinfo_history) {
+    initTable();
+
+    auto board = __Board();
+    board.push(board.move_from_usi("7g7f"));
+
+    auto copied = __Board();
+    copied = __Board(board);
+
+    board.set("4k4/4r4/9/9/9/9/9/9/4K4 b - 1");
+    copied.pop();
+
+    const auto expected = __Board();
+    EXPECT_EQ(expected.toSFEN(), copied.toSFEN());
+    EXPECT_FALSE(copied.inCheck());
+}
+
+TEST(TestBoard, copy_relinks_mixed_move_and_pass_history) {
+    initTable();
+
+    auto board = __Board();
+    board.push(board.move_from_usi("7g7f"));
+    board.push(board.move_from_usi("3c3d"));
+    board.push_pass();
+
+    auto copied = __Board(board);
+    board.set("4k4/4r4/9/9/9/9/9/9/4K4 b - 1");
+
+    auto expected = __Board();
+    expected.push(expected.move_from_usi("7g7f"));
+    expected.push(expected.move_from_usi("3c3d"));
+
+    copied.pop_pass();
+    EXPECT_EQ(expected.toSFEN(), copied.toSFEN());
+    EXPECT_EQ(expected.inCheck(), copied.inCheck());
+
+    copied.pop();
+    expected.pop();
+    EXPECT_EQ(expected.toSFEN(), copied.toSFEN());
+    EXPECT_EQ(expected.inCheck(), copied.inCheck());
+
+    copied.pop();
+    expected.pop();
+    EXPECT_EQ(expected.toSFEN(), copied.toSFEN());
+    EXPECT_EQ(expected.inCheck(), copied.inCheck());
+}
+
 TEST(TestBoard, mateMove_issue45) {
     initTable();
 

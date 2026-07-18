@@ -241,8 +241,10 @@ struct PackedSfenValue
 void initMate1Ply();
 
 class Move;
+class __Board;
 
 class Position {
+    friend class __Board;
 public:
     Position() {}
     Position(const Position& pos) { *this = pos; }

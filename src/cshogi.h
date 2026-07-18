@@ -88,6 +88,17 @@ class __Board
 public:
     __Board() : pos(DefaultStartPositionSFEN) {}
     __Board(const std::string& sfen) : pos(sfen) {}
+    __Board(const __Board& other) : pos(other.pos), history(other.history) {
+        relinkStateInfo(other);
+    }
+    __Board& operator = (const __Board& other) {
+        if (this != &other) {
+            pos = other.pos;
+            history = other.history;
+            relinkStateInfo(other);
+        }
+        return *this;
+    }
     ~__Board() {}
 
     void set(const std::string& sfen) {
@@ -462,6 +473,32 @@ public:
 
 private:
     std::deque<std::pair<Move, StateInfo>> history;
+
+    void relinkStateInfo(const __Board& other) {
+        pos.startState_ = other.pos.startState_;
+
+        std::unordered_map<const StateInfo*, StateInfo*> copiedStates;
+        copiedStates.reserve(history.size() + 1);
+        copiedStates.emplace(&other.pos.startState_, &pos.startState_);
+
+        auto source = other.history.begin();
+        auto destination = history.begin();
+        for (; source != other.history.end(); ++source, ++destination) {
+            copiedStates.emplace(&source->second, &destination->second);
+        }
+
+        const auto remap = [&copiedStates](const StateInfo* state) -> StateInfo* {
+            return state == nullptr ? nullptr : copiedStates.at(state);
+        };
+
+        pos.startState_.previous = remap(other.pos.startState_.previous);
+        source = other.history.begin();
+        destination = history.begin();
+        for (; source != other.history.end(); ++source, ++destination) {
+            destination->second.previous = remap(source->second.previous);
+        }
+        pos.st_ = remap(other.pos.st_);
+    }
 
     void bbToVector(PieceType pt, Color c, Piece piece, std::vector<int>& board) const {
         Bitboard bb = pos.bbOf(pt, c);
