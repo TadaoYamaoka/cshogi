@@ -33,6 +33,40 @@ void expect_checkmate_pv(__Board& board, const std::vector<u32>& pv) {
         board.pop();
     }
 }
+
+void expect_mate_move_in_1(const std::string& sfen, const std::string& usi) {
+    auto board = __Board(sfen);
+    const int expected = board.move_from_usi(usi);
+    const int actual = board.mateMoveIn1Ply();
+    const Move actualMove(actual);
+
+    ASSERT_EQ(expected, actual) << "Expected " << usi;
+    ASSERT_TRUE(board.moveIsLegal(actual));
+    if (!actualMove.isDrop()) {
+        EXPECT_EQ(board.piece(actualMove.from()),
+            colorAndPieceTypeToPiece(static_cast<Color>(board.turn()), actualMove.pieceTypeFrom()));
+    }
+
+    board.push(actual);
+    EXPECT_TRUE(board.inCheck());
+    EXPECT_TRUE(board.is_game_over());
+}
+
+void expect_any_mate_move_in_1(const std::string& sfen) {
+    auto board = __Board(sfen);
+    const int move = board.mateMoveIn1Ply();
+
+    ASSERT_NE(Move::moveNone().value(), move);
+    ASSERT_TRUE(board.moveIsLegal(move));
+    if (!Move(move).isDrop()) {
+        EXPECT_EQ(board.piece(Move(move).from()),
+            colorAndPieceTypeToPiece(static_cast<Color>(board.turn()), Move(move).pieceTypeFrom()));
+    }
+
+    board.push(move);
+    EXPECT_TRUE(board.inCheck());
+    EXPECT_TRUE(board.is_game_over());
+}
 }
 
 
@@ -170,6 +204,218 @@ TEST(TestBoard, mateMove_issue46) {
     auto move = board.mateMove(3);
     EXPECT_EQ(Move::moveNone(), Move(move));
 }
+
+TEST(TestBoard, mateMoveIn1Ply_additional_preserves_gold_like_piece_type) {
+    initTable();
+
+    const std::array<const char*, 5> goldLikePieces = { "G", "+P", "+L", "+N", "+S" };
+    for (const char* goldLikePiece : goldLikePieces) {
+        const std::string blackSfen = "9/9/9/9/9/9/4K4/9/4k1" + std::string(goldLikePiece) + "1R b - 1";
+        expect_mate_move_in_1(blackSfen, "3i3h");
+
+        const std::string whiteSfen = __rotate_sfen(blackSfen);
+        expect_any_mate_move_in_1(whiteSfen);
+    }
+}
+
+TEST(TestBoard, mateMoveIn1Ply_normal_gold_like_double_check) {
+    initTable();
+
+    const std::array<const char*, 5> goldLikePieces = { "G", "+P", "+L", "+N", "+S" };
+    for (const char* goldLikePiece : goldLikePieces) {
+        const std::string blackSfen = "9/3p1p3/3pkp3/3p2G2/4"
+            + std::string(goldLikePiece) + "4/9/4R4/9/K8 b - 1";
+        auto board = __Board(blackSfen);
+        const Move expected(board.move_from_usi("5e4d"));
+        const Move actual = board.pos.mateMoveIn1Ply<false>();
+
+        ASSERT_EQ(expected, actual);
+        ASSERT_TRUE(board.moveIsLegal(actual.value()));
+        board.push(actual.value());
+        EXPECT_EQ(2, board.pos.checkersBB().popCount());
+        EXPECT_TRUE(board.is_game_over());
+
+        auto alternativeBoard = __Board(blackSfen);
+        const int alternative = alternativeBoard.move_from_usi("5e5d");
+        ASSERT_TRUE(alternativeBoard.moveIsLegal(alternative));
+        alternativeBoard.push(alternative);
+        EXPECT_TRUE(alternativeBoard.inCheck());
+        EXPECT_FALSE(alternativeBoard.is_game_over());
+        EXPECT_TRUE(alternativeBoard.moveIsLegal(alternativeBoard.move_from_usi("5c5b")));
+    }
+}
+
+TEST(TestBoard, mateMoveIn1Ply_discovered_check_support_revealed_by_move) {
+    initTable();
+
+    const std::string blackSfen = "9/9/9/3p1pP2/3pk4/3pBp3/3BRP3/9/K8 b - 1";
+    auto board = __Board(blackSfen);
+    const Move expected(board.move_from_usi("5f4e"));
+    const Bitboard from = setMaskBB(expected.from());
+    const Bitboard occupiedAfterMove = (board.pos.occupiedBB() ^ from) | setMaskBB(expected.to());
+
+    EXPECT_FALSE(board.pos.attackersTo(Black, expected.to()) & ~from);
+    EXPECT_TRUE(board.pos.attackersTo(Black, expected.to(), occupiedAfterMove) & ~from);
+
+    expect_mate_move_in_1(blackSfen, "5f4e");
+    expect_any_mate_move_in_1(__rotate_sfen(blackSfen));
+}
+
+TEST(TestBoard, mateMoveIn1Ply_discovered_check_allows_non_pawn_interposition) {
+    initTable();
+
+    auto board = __Board("9/9/9/3p1pP2/3pk4/3pBp3/3BRP3/9/K8 b g 1");
+    const int candidate = board.move_from_usi("5f4e");
+
+    ASSERT_TRUE(board.moveIsLegal(candidate));
+    EXPECT_NE(candidate, board.pos.mateMoveIn1Ply<false>().value());
+    EXPECT_NE(candidate, board.mateMoveIn1Ply());
+
+    board.push(candidate);
+    EXPECT_TRUE(board.inCheck());
+    EXPECT_FALSE(board.is_game_over());
+    EXPECT_TRUE(board.moveIsLegal(board.move_from_usi("G*5f")));
+}
+
+TEST(TestBoard, mateMoveIn1Ply_additional_rejects_last_rank_pawn_interposition) {
+    initTable();
+
+    const std::string blackSfen = "9/9/9/9/9/9/4K4/9/4k4 b Rp 1";
+    expect_mate_move_in_1(blackSfen, "R*3i");
+    expect_any_mate_move_in_1(__rotate_sfen(blackSfen));
+}
+
+TEST(TestBoard, mateMoveIn1Ply_additional_pawn_capture_requires_defender_hand_pawn) {
+    initTable();
+
+    const std::string blackSfen = "9/9/9/9/9/4K4/6p2/4k1G1R/R8 b - 1";
+    expect_mate_move_in_1(blackSfen, "3h3g");
+    expect_mate_move_in_1(__rotate_sfen(blackSfen), "7b7c");
+
+    auto withPawnInHand = __Board("9/9/9/9/9/4K4/6p2/4k1G1R/R8 b p 1");
+    const int capture = withPawnInHand.move_from_usi("3h3g");
+    ASSERT_TRUE(withPawnInHand.moveIsLegal(capture));
+    EXPECT_NE(capture, withPawnInHand.mateMoveIn1Ply());
+    withPawnInHand.push(capture);
+    EXPECT_TRUE(withPawnInHand.inCheck());
+    EXPECT_FALSE(withPawnInHand.is_game_over());
+    EXPECT_TRUE(withPawnInHand.moveIsLegal(withPawnInHand.move_from_usi("P*3h")));
+}
+
+TEST(TestBoard, mateMoveIn1Ply_additional_pawn_capture_on_defender_last_rank) {
+    initTable();
+
+    const std::string blackSfen = "9/9/9/9/9/9/4K4/6p2/4k1G1R b p 1";
+    expect_mate_move_in_1(blackSfen, "3i3h");
+    expect_mate_move_in_1(__rotate_sfen(blackSfen), "7a7b");
+}
+
+TEST(TestBoard, mateMoveIn1Ply_silver_double_check) {
+    initTable();
+
+    const std::string blackSfen = "9/9/9/9/9/9/4K4/9/4k1S1R b - 1";
+    expect_mate_move_in_1(blackSfen, "3i4h");
+    expect_mate_move_in_1(__rotate_sfen(blackSfen), "7a6b");
+}
+
+TEST(TestBoard, mateMoveIn1Ply_knight_double_check) {
+    initTable();
+
+    const std::string nonPromotionSfen = "9/9/2G1k1G2/9/2GG2G2/9/4N4/9/K3R4 b - 1";
+    expect_mate_move_in_1(nonPromotionSfen, "5g4e");
+    expect_mate_move_in_1(__rotate_sfen(nonPromotionSfen), "5c6e");
+
+    const std::string promotionSfen = "2K6/4k4/6G2/2G1N4/9/9/9/9/4R4 b - 1";
+    expect_mate_move_in_1(promotionSfen, "5d4b+");
+    expect_mate_move_in_1(__rotate_sfen(promotionSfen), "5f6h+");
+}
+
+#ifdef CSHOGI_ENABLE_EXHAUSTIVE_MATE_TESTS
+TEST(TestBoard, AllMate5Positions) {
+    // 詰将棋500万問の5手詰め局面集
+    // https://yaneuraou.yaneu.com/2020/12/25/christmas-present/
+    constexpr const char* Mate5Path = R"(E:\game\shogi\mate3_5_7_9_11\mate5.sfen)";
+    constexpr size_t ExpectedPositionCount = 998824;
+
+    std::ifstream input(Mate5Path);
+    ASSERT_TRUE(input) << Mate5Path;
+
+    initTable();
+    Position::initZobrist();
+
+    __Board board;
+    std::string sfen;
+    size_t positionCount = 0;
+    size_t failureCount = 0;
+    std::string firstFailure;
+    std::chrono::steady_clock::duration totalMateSearchTime{};
+
+    while (std::getline(input, sfen)) {
+        if (sfen.empty())
+            continue;
+
+        ++positionCount;
+        board.set(sfen);
+        const auto start = std::chrono::steady_clock::now();
+        const auto move = board.mateMove(5);
+        totalMateSearchTime += std::chrono::steady_clock::now() - start;
+        if (move == 0) {
+            ++failureCount;
+            if (firstFailure.empty())
+                firstFailure = sfen;
+        }
+    }
+
+    std::cout << "mateMove(5) total: "
+        << std::chrono::duration_cast<std::chrono::milliseconds>(totalMateSearchTime).count()
+        << " ms" << std::endl;
+    EXPECT_EQ(ExpectedPositionCount, positionCount);
+    EXPECT_EQ(0u, failureCount) << "first failed position: " << firstFailure;
+}
+
+TEST(TestBoard, AllNoMate5Positions) {
+    // 詰将棋500万問の7手詰め局面集
+    // https://yaneuraou.yaneu.com/2020/12/25/christmas-present/
+    // 12局面は5手で詰む局面のため除外
+    constexpr const char* Mate5Path = R"(E:\game\shogi\mate3_5_7_9_11\mate7_filtered.sfen)";
+    constexpr size_t ExpectedPositionCount = 999059;
+
+    std::ifstream input(Mate5Path);
+    ASSERT_TRUE(input) << Mate5Path;
+
+    initTable();
+    Position::initZobrist();
+
+    __Board board;
+    std::string sfen;
+    size_t positionCount = 0;
+    size_t failureCount = 0;
+    std::string firstFailure;
+    std::chrono::steady_clock::duration totalMateSearchTime{};
+
+    while (std::getline(input, sfen)) {
+        if (sfen.empty())
+            continue;
+
+        ++positionCount;
+        board.set(sfen);
+        const auto start = std::chrono::steady_clock::now();
+        const auto move = board.mateMove(5);
+        totalMateSearchTime += std::chrono::steady_clock::now() - start;
+        if (move != 0) {
+            ++failureCount;
+            if (firstFailure.empty())
+                firstFailure = sfen;
+        }
+    }
+
+    std::cout << "mateMove(5) total: "
+        << std::chrono::duration_cast<std::chrono::milliseconds>(totalMateSearchTime).count()
+        << " ms" << std::endl;
+    EXPECT_EQ(ExpectedPositionCount, positionCount);
+    EXPECT_EQ(0u, failureCount) << "first failed position: " << firstFailure;
+}
+#endif
 
 TEST(TestSfen, rotate_sfen) {
     {
