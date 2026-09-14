@@ -339,6 +339,7 @@ public:
     Bitboard attackersTo(const Color c, const Square sq) const { return attackersTo(c, sq, occupiedBB()); }
     Bitboard attackersTo(const Color c, const Square sq, const Bitboard& occupied) const;
     Bitboard attackersToExceptKing(const Color c, const Square sq) const;
+    Bitboard attackersToExceptKing(const Color c, const Square sq, const Bitboard& occupied) const;
     // todo: 利きをデータとして持ったとき、attackersToIsAny() を高速化すること。
     bool attackersToIsAny(const Color c, const Square sq) const { return attackersTo(c, sq).isAny(); }
     bool attackersToIsAny(const Color c, const Square sq, const Bitboard& occupied) const {
@@ -368,11 +369,11 @@ public:
     }
     Bitboard attacksFrom(const PieceType pt, const Color c, const Square sq) const { return attacksFrom(pt, c, sq, occupiedBB()); }
     static Bitboard attacksFrom(const PieceType pt, const Color c, const Square sq, const Bitboard& occupied);
-    Bitboard attacksSlider(const Color us, const Bitboard& slide) const;
-    Bitboard attacksSlider(const Color us, const Square avoid_from, const Bitboard& occ) const;
     template <Color US> Bitboard attacksAroundKingNonSlider() const;
     template <Color US> Bitboard attacksAroundKingSlider() const;
+    template <Color US> Bitboard attacksAroundKingSlider(const Bitboard& occ) const;
     template <Color US> Bitboard attacksAroundKingNonSliderInAvoiding(Square avoid_from) const;
+    template <Color US> Bitboard attacksAroundKingSliderInAvoiding(Square avoid_from, const Bitboard& occ) const;
     // avoidの駒の利きだけは無視して玉周辺の敵の利きを考えるバージョン。
     // この関数ではわからないため、toの地点から発生する利きはこの関数では感知しない。
     // 王手がかかっている局面において逃げ場所を見るときに裏側からのpinnerによる攻撃を考慮して、玉はいないものとして
@@ -380,13 +381,17 @@ public:
     // avoidの駒の利きだけは無視して玉周辺の利きを考えるバージョン。
     template <Color US> Bitboard attacksAroundKingInAvoiding(const Square from, const Bitboard& occ) const
     {
-        return attacksAroundKingNonSliderInAvoiding<US>(from) | attacksSlider(~US, from, occ);
+        return attacksAroundKingNonSliderInAvoiding<US>(from)
+            | attacksAroundKingSliderInAvoiding<US>(from, occ);
     }
     // 歩が打てるかの判定用。
     // 歩を持っているかの判定も含む。
     template<Color US> bool canPawnDrop(const Square sq) const {
-        // 歩を持っていて、二歩ではない。
-        return hand(US).exists<HPawn>() > 0 && !(bbOf(Pawn, US) & fileMask(makeFile(sq)));
+        // 歩を持っていて、行き所があり、二歩ではない。
+        constexpr Rank LastRank = (US == Black ? Rank1 : Rank9);
+        return hand(US).exists<HPawn>() > 0
+            && makeRank(sq) != LastRank
+            && !(bbOf(Pawn, US) & fileMask(makeFile(sq)));
     }
     Bitboard pinnedPieces(const Color us, const Square from, const Square to) const;
 
