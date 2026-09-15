@@ -119,9 +119,6 @@
     <ClCompile Include="src\usi.cpp">
       <Filter>ソース ファイル\Apery</Filter>
     </ClCompile>
-    <ClCompile Include="src\mate.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="src\dfpn.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>

@@ -222,11 +222,18 @@ namespace {
     }
 }
 
-CheckInfo::CheckInfo(const Position& pos) {
+CheckInfo::CheckInfo(const Position& pos)
+    : CheckInfo(pos, pos.pinnedBB()) {
+}
+
+CheckInfo::CheckInfo(const Position& pos, const Bitboard& knownPinned) {
+    // knownPinned must belong to this exact position. Recompute only in debug builds.
+    assert(knownPinned == pos.pinnedBB());
+
     const Color them = oppositeColor(pos.turn());
     const Square ksq = pos.kingSquare(them);
 
-    pinned = pos.pinnedBB();
+    pinned = knownPinned;
     dcBB = pos.discoveredCheckBB();
 
     if (!isInSquare(ksq)) {
