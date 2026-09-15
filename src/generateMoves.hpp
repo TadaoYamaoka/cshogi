@@ -53,6 +53,10 @@ ExtMove* generateMoves(ExtMove* moveList, const Position& pos);
 template <MoveType MT>
 ExtMove* generateMoves(ExtMove* moveList, const Position& pos, const Square to);
 
+// CheckAll using pinned/dcBB already computed for this same position.
+struct CheckInfo;
+ExtMove* generateCheckAllMoves(ExtMove* moveList, const Position& pos, const CheckInfo& ci);
+
 // OSLmate DFPN escape generation equivalent.
 ExtMove* generateOslmateEscapeMoves(ExtMove* moveList, const Position& pos, bool cheapOnly, bool sortMoves = true);
 ExtMove* generateOslmateCheapKingEscapeMoves(ExtMove* moveList, const Position& pos, bool sortMoves = true);

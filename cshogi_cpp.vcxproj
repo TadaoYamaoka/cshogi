@@ -114,7 +114,6 @@
     <ClCompile Include="src\generateMoves.cpp" />
     <ClCompile Include="src\hand.cpp" />
     <ClCompile Include="src\init.cpp" />
-    <ClCompile Include="src\mate.cpp" />
     <ClCompile Include="src\move.cpp" />
     <ClCompile Include="src\mt64bit.cpp" />
     <ClCompile Include="src\position.cpp" />

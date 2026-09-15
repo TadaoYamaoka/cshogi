@@ -76,7 +76,6 @@ ext_modules = [
             "src/square.cpp",
             "src/usi.cpp",
             "src/book.cpp",
-            "src/mate.cpp",
             "src/dfpn.cpp",
             "src/osl_dfpn.cpp",
         ],
