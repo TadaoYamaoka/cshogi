@@ -67,6 +67,48 @@ void expect_any_mate_move_in_1(const std::string& sfen) {
     EXPECT_TRUE(board.inCheck());
     EXPECT_TRUE(board.is_game_over());
 }
+
+template <MoveType MT>
+std::vector<std::string> generated_move_usi(const Position& pos) {
+    std::vector<std::string> moves;
+    for (MoveList<MT> moveList(pos); !moveList.end(); ++moveList) {
+        moves.push_back(moveList.move().toUSI());
+    }
+    std::sort(moves.begin(), moves.end());
+    return moves;
+}
+
+void expect_check_all_matches_legal(const std::string& sfen) {
+    for (const std::string& currentSfen : { sfen, __rotate_sfen(sfen) }) {
+        const __Board board(currentSfen);
+        const CheckInfo ci(board.pos);
+        std::array<ExtMove, MaxLegalMoves> defaultMoves;
+        std::array<ExtMove, MaxLegalMoves> cachedMoves;
+        ExtMove* defaultLast = generateMoves<CheckAll>(defaultMoves.data(), board.pos);
+        ExtMove* cachedLast = generateCheckAllMoves(cachedMoves.data(), board.pos, ci);
+        const size_t defaultCount = static_cast<size_t>(defaultLast - defaultMoves.data());
+        const size_t cachedCount = static_cast<size_t>(cachedLast - cachedMoves.data());
+        ASSERT_EQ(defaultCount, cachedCount) << currentSfen;
+        for (size_t i = 0; i < defaultCount; ++i) {
+            EXPECT_EQ(defaultMoves[i].move.value(), cachedMoves[i].move.value())
+                << "index " << i << " in " << currentSfen;
+        }
+
+        std::vector<u32> expected;
+        for (MoveList<LegalAll> legalMoves(board.pos); !legalMoves.end(); ++legalMoves) {
+            if (board.pos.moveGivesCheck(legalMoves.move(), ci)) {
+                expected.push_back(legalMoves.move().value());
+            }
+        }
+        std::vector<u32> actual;
+        for (size_t i = 0; i < defaultCount; ++i) {
+            actual.push_back(defaultMoves[i].move.value());
+        }
+        std::sort(expected.begin(), expected.end());
+        std::sort(actual.begin(), actual.end());
+        EXPECT_EQ(expected, actual) << currentSfen;
+    }
+}
 }
 
 
@@ -119,6 +161,253 @@ TEST(TestBoard, set_position_issue48) {
     EXPECT_NO_THROW(
         board.set_position("startpos moves 2g2f")
     );
+}
+
+TEST(TestBoard, check_generation_with_check_info_matches_default) {
+    initTable();
+
+    __Board board;
+    for (size_t ply = 0; ply < 200; ++ply) {
+        std::array<ExtMove, MaxLegalMoves> defaultMoves;
+        std::array<ExtMove, MaxLegalMoves> cachedMoves;
+        ExtMove* defaultLast = generateMoves<CheckAll>(defaultMoves.data(), board.pos);
+        const CheckInfo ci(board.pos);
+        ExtMove* cachedLast = generateCheckAllMoves(cachedMoves.data(), board.pos, ci);
+
+        const size_t defaultCount = static_cast<size_t>(defaultLast - defaultMoves.data());
+        const size_t cachedCount = static_cast<size_t>(cachedLast - cachedMoves.data());
+        ASSERT_EQ(defaultCount, cachedCount) << board.toSFEN();
+        for (size_t i = 0; i < defaultCount; ++i) {
+            EXPECT_EQ(defaultMoves[i].move, cachedMoves[i].move)
+                << "index " << i << " in " << board.toSFEN();
+        }
+
+        if (!board.pos.inCheck()) {
+            std::vector<u32> expectedChecks;
+            std::vector<u32> actualChecks;
+            for (MoveList<LegalAll> legalMoves(board.pos); !legalMoves.end(); ++legalMoves) {
+                if (board.pos.moveGivesCheck(legalMoves.move(), ci)) {
+                    expectedChecks.push_back(legalMoves.move().value());
+                }
+            }
+            for (size_t i = 0; i < defaultCount; ++i) {
+                actualChecks.push_back(defaultMoves[i].move.value());
+            }
+            std::sort(expectedChecks.begin(), expectedChecks.end());
+            std::sort(actualChecks.begin(), actualChecks.end());
+            EXPECT_EQ(expectedChecks, actualChecks) << board.toSFEN();
+        }
+
+        MoveList<LegalAll> legalMoves(board.pos);
+        if (legalMoves.size() == 0) {
+            break;
+        }
+        const size_t selected = (ply * 17 + 5) % legalMoves.size();
+        for (size_t i = 0; i < selected; ++i) {
+            ++legalMoves;
+        }
+        board.push(legalMoves.move().value());
+    }
+}
+
+TEST(TestBoard, pawn_drop_check_boundaries) {
+    initTable();
+
+    const std::string available = "4k4/9/9/9/9/9/9/9/4K4 b P 1";
+    EXPECT_EQ(std::vector<std::string>{ "P*5b" }, generated_move_usi<CheckAll>(__Board(available).pos));
+    EXPECT_EQ(std::vector<std::string>{ "P*5h" }, generated_move_usi<CheckAll>(__Board(__rotate_sfen(available)).pos));
+
+    const std::string sameFilePawn = "4k4/9/9/9/9/9/4P4/9/4K4 b P 1";
+    const std::string otherFilePawn = "4k4/9/9/9/9/9/5P3/9/4K4 b P 1";
+    const std::string sameFileProPawn = "4k4/9/9/9/9/9/4+P4/9/4K4 b P 1";
+    const std::string occupied = "4k4/4s4/9/9/9/9/9/9/4K4 b P 1";
+    const std::string pawnDropMate = "4k4/9/3LGL3/9/9/9/9/9/4K4 b P 1";
+    const std::string edgeRank = "8K/9/9/9/9/9/9/9/4k4 b P 1";
+
+    EXPECT_EQ(std::vector<std::string>{}, generated_move_usi<CheckAll>(__Board(sameFilePawn).pos));
+    EXPECT_EQ(std::vector<std::string>{ "P*5b" }, generated_move_usi<CheckAll>(__Board(otherFilePawn).pos));
+    EXPECT_EQ(std::vector<std::string>{ "P*5b" }, generated_move_usi<CheckAll>(__Board(sameFileProPawn).pos));
+    EXPECT_EQ(std::vector<std::string>{}, generated_move_usi<CheckAll>(__Board(occupied).pos));
+    const auto pawnDropMateChecks = generated_move_usi<CheckAll>(__Board(pawnDropMate).pos);
+    EXPECT_EQ(pawnDropMateChecks.end(),
+        std::find(pawnDropMateChecks.begin(), pawnDropMateChecks.end(), "P*5b"));
+    EXPECT_EQ(std::vector<std::string>{}, generated_move_usi<CheckAll>(__Board(edgeRank).pos));
+
+    for (const std::string& sfen : {
+        available, sameFilePawn, otherFilePawn, sameFileProPawn, occupied, pawnDropMate, edgeRank }) {
+        expect_check_all_matches_legal(sfen);
+    }
+}
+
+TEST(TestBoard, pawn_move_check_boundaries) {
+    initTable();
+
+    const std::string sameFile = "9/4k4/9/4P4/9/9/9/9/4K4 b - 1";
+    const auto sameFileCheck = generated_move_usi<Check>(__Board(sameFile).pos);
+    const auto sameFileAll = generated_move_usi<CheckAll>(__Board(sameFile).pos);
+    EXPECT_NE(sameFileCheck.end(), std::find(sameFileCheck.begin(), sameFileCheck.end(), "5d5c+"));
+    EXPECT_EQ(sameFileCheck.end(), std::find(sameFileCheck.begin(), sameFileCheck.end(), "5d5c"));
+    EXPECT_NE(sameFileAll.end(), std::find(sameFileAll.begin(), sameFileAll.end(), "5d5c+"));
+    EXPECT_NE(sameFileAll.end(), std::find(sameFileAll.begin(), sameFileAll.end(), "5d5c"));
+
+    const std::string differentFile = "5k3/4P4/9/9/9/9/9/9/4K4 b - 1";
+    const auto differentFileChecks = generated_move_usi<CheckAll>(__Board(differentFile).pos);
+    EXPECT_NE(differentFileChecks.end(),
+        std::find(differentFileChecks.begin(), differentFileChecks.end(), "5b5a+"));
+    EXPECT_EQ(differentFileChecks.end(),
+        std::find(differentFileChecks.begin(), differentFileChecks.end(), "5b5a"));
+
+    const std::string blocked = "9/4k4/4N4/4P4/9/9/9/9/4K4 b - 1";
+    const auto blockedChecks = generated_move_usi<CheckAll>(__Board(blocked).pos);
+    EXPECT_EQ(blockedChecks.end(), std::find(blockedChecks.begin(), blockedChecks.end(), "5d5c+"));
+    EXPECT_EQ(blockedChecks.end(), std::find(blockedChecks.begin(), blockedChecks.end(), "5d5c"));
+
+    const std::string capture = "9/4k4/4s4/4P4/9/9/9/9/4K4 b - 1";
+    const __Board captureBoard(capture);
+    const Move expectedCapture(captureBoard.move_from_usi("5d5c+"));
+    bool foundExpectedCapture = false;
+    for (MoveList<CheckAll> checks(captureBoard.pos); !checks.end(); ++checks) {
+        foundExpectedCapture |= checks.move().value() == expectedCapture.value();
+    }
+    EXPECT_TRUE(foundExpectedCapture);
+
+    for (const std::string& sfen : { sameFile, differentFile, blocked, capture }) {
+        expect_check_all_matches_legal(sfen);
+    }
+}
+
+TEST(TestBoard, check_and_check_all_promotion_boundaries) {
+    initTable();
+
+    const std::string bishopPromotionOnly = "9/4k4/9/5B3/9/9/9/9/4K4 b - 1";
+    const std::string bishopDirect = "4k4/9/9/5B3/9/9/9/9/4K4 b - 1";
+    const std::string bishopLeavingPromotionZone = "9/9/6B2/4k4/9/9/9/9/4K4 b - 1";
+    const std::string rookPromotionOnly = "9/4k4/9/5R3/9/9/9/9/4K4 b - 1";
+    const std::string rookDirect = "4k4/9/5R3/9/9/9/9/9/4K4 b - 1";
+
+    const auto bishopPromotionOnlyCheck = generated_move_usi<Check>(__Board(bishopPromotionOnly).pos);
+    EXPECT_NE(bishopPromotionOnlyCheck.end(),
+        std::find(bishopPromotionOnlyCheck.begin(), bishopPromotionOnlyCheck.end(), "4d5c+"));
+    EXPECT_EQ(bishopPromotionOnlyCheck.end(),
+        std::find(bishopPromotionOnlyCheck.begin(), bishopPromotionOnlyCheck.end(), "4d5c"));
+
+    const auto bishopDirectCheck = generated_move_usi<Check>(__Board(bishopDirect).pos);
+    const auto bishopDirectAll = generated_move_usi<CheckAll>(__Board(bishopDirect).pos);
+    EXPECT_NE(bishopDirectCheck.end(), std::find(bishopDirectCheck.begin(), bishopDirectCheck.end(), "4d3c+"));
+    EXPECT_EQ(bishopDirectCheck.end(), std::find(bishopDirectCheck.begin(), bishopDirectCheck.end(), "4d3c"));
+    EXPECT_NE(bishopDirectAll.end(), std::find(bishopDirectAll.begin(), bishopDirectAll.end(), "4d3c+"));
+    EXPECT_NE(bishopDirectAll.end(), std::find(bishopDirectAll.begin(), bishopDirectAll.end(), "4d3c"));
+
+    for (const auto& [sfen, promoted, unpromoted] : {
+        std::tuple{ bishopLeavingPromotionZone, "3c4d+", "3c4d" },
+        std::tuple{ __rotate_sfen(bishopLeavingPromotionZone), "7g6f+", "7g6f" } }) {
+        const auto checks = generated_move_usi<Check>(__Board(sfen).pos);
+        const auto allChecks = generated_move_usi<CheckAll>(__Board(sfen).pos);
+        EXPECT_NE(checks.end(), std::find(checks.begin(), checks.end(), promoted));
+        EXPECT_EQ(checks.end(), std::find(checks.begin(), checks.end(), unpromoted));
+        EXPECT_NE(allChecks.end(), std::find(allChecks.begin(), allChecks.end(), promoted));
+        EXPECT_EQ(allChecks.end(), std::find(allChecks.begin(), allChecks.end(), unpromoted));
+    }
+
+    const auto rookPromotionOnlyCheck = generated_move_usi<Check>(__Board(rookPromotionOnly).pos);
+    EXPECT_NE(rookPromotionOnlyCheck.end(),
+        std::find(rookPromotionOnlyCheck.begin(), rookPromotionOnlyCheck.end(), "4d4c+"));
+    EXPECT_EQ(rookPromotionOnlyCheck.end(),
+        std::find(rookPromotionOnlyCheck.begin(), rookPromotionOnlyCheck.end(), "4d4c"));
+
+    const auto rookDirectCheck = generated_move_usi<Check>(__Board(rookDirect).pos);
+    const auto rookDirectAll = generated_move_usi<CheckAll>(__Board(rookDirect).pos);
+    EXPECT_NE(rookDirectCheck.end(), std::find(rookDirectCheck.begin(), rookDirectCheck.end(), "4c5c+"));
+    EXPECT_EQ(rookDirectCheck.end(), std::find(rookDirectCheck.begin(), rookDirectCheck.end(), "4c5c"));
+    EXPECT_NE(rookDirectAll.end(), std::find(rookDirectAll.begin(), rookDirectAll.end(), "4c5c+"));
+    EXPECT_NE(rookDirectAll.end(), std::find(rookDirectAll.begin(), rookDirectAll.end(), "4c5c"));
+
+    for (const auto& [sfen, promoted, unpromoted] : {
+        std::tuple{ bishopPromotionOnly, "6f5g+", "6f5g" },
+        std::tuple{ bishopDirect, "6f7g+", "6f7g" },
+        std::tuple{ rookPromotionOnly, "6f6g+", "6f6g" },
+        std::tuple{ rookDirect, "6g5g+", "6g5g" } }) {
+        const auto checks = generated_move_usi<Check>(__Board(__rotate_sfen(sfen)).pos);
+        EXPECT_NE(checks.end(), std::find(checks.begin(), checks.end(), promoted));
+        EXPECT_EQ(checks.end(), std::find(checks.begin(), checks.end(), unpromoted));
+    }
+
+    for (const std::string& sfen : {
+        bishopPromotionOnly, bishopDirect, bishopLeavingPromotionZone,
+        rookPromotionOnly, rookDirect }) {
+        expect_check_all_matches_legal(sfen);
+    }
+
+    const std::string silverLeavingPromotionZone = "9/9/6S2/4k4/9/9/9/9/4K4 b - 1";
+    for (const auto& [sfen, promoted, unpromoted] : {
+        std::tuple{ silverLeavingPromotionZone, "3c4d+", "3c4d" },
+        std::tuple{ __rotate_sfen(silverLeavingPromotionZone), "7g6f+", "7g6f" } }) {
+        const auto checks = generated_move_usi<Check>(__Board(sfen).pos);
+        EXPECT_NE(checks.end(), std::find(checks.begin(), checks.end(), promoted));
+        EXPECT_EQ(checks.end(), std::find(checks.begin(), checks.end(), unpromoted));
+    }
+    expect_check_all_matches_legal(silverLeavingPromotionZone);
+}
+
+TEST(TestBoard, check_legality_filter_boundaries) {
+    initTable();
+
+    const std::string pinnedRook = "4rk3/9/9/9/9/9/4R4/9/4K4 b - 1";
+    const auto pinnedChecks = generated_move_usi<CheckAll>(__Board(pinnedRook).pos);
+    EXPECT_NE(pinnedChecks.end(), std::find(pinnedChecks.begin(), pinnedChecks.end(), "5g5a"));
+    EXPECT_EQ(pinnedChecks.end(), std::find(pinnedChecks.begin(), pinnedChecks.end(), "5g4g"));
+
+    const std::string discoveredByKing = "4k4/9/4K4/9/9/9/9/9/4R4 b - 1";
+    const auto kingChecks = generated_move_usi<CheckAll>(__Board(discoveredByKing).pos);
+    EXPECT_NE(kingChecks.end(), std::find(kingChecks.begin(), kingChecks.end(), "5c4c"));
+    EXPECT_EQ(kingChecks.end(), std::find(kingChecks.begin(), kingChecks.end(), "5c4b"));
+
+    const std::string dropsOnly = "4k4/9/9/9/9/9/9/9/4K4 b G 1";
+    const std::string unpinnedGold = "4k4/9/4G4/9/9/9/9/9/4K4 b - 1";
+    for (const std::string& sfen : { pinnedRook, discoveredByKing, dropsOnly, unpinnedGold }) {
+        expect_check_all_matches_legal(sfen);
+    }
+}
+
+TEST(TestBoard, optimized_check_candidate_boundaries) {
+    initTable();
+
+    const std::string lancePromotion = "9/9/4k4/9/9/5L3/9/9/4K4 b - 1";
+    const auto lanceChecks = generated_move_usi<Check>(__Board(lancePromotion).pos);
+    EXPECT_NE(lanceChecks.end(), std::find(lanceChecks.begin(), lanceChecks.end(), "4f4c+"));
+
+    const std::string knightPromotion = "9/4k4/9/9/4N4/9/9/9/4K4 b - 1";
+    const auto knightChecks = generated_move_usi<Check>(__Board(knightPromotion).pos);
+    EXPECT_NE(knightChecks.end(), std::find(knightChecks.begin(), knightChecks.end(), "5e4c+"));
+    EXPECT_NE(knightChecks.end(), std::find(knightChecks.begin(), knightChecks.end(), "5e6c+"));
+
+    const std::string knightNonPromotion = "4k4/9/9/9/4N4/9/9/9/4K4 b - 1";
+    const auto knightNonPromotionChecks = generated_move_usi<Check>(__Board(knightNonPromotion).pos);
+    EXPECT_NE(knightNonPromotionChecks.end(),
+        std::find(knightNonPromotionChecks.begin(), knightNonPromotionChecks.end(), "5e4c"));
+    EXPECT_NE(knightNonPromotionChecks.end(),
+        std::find(knightNonPromotionChecks.begin(), knightNonPromotionChecks.end(), "5e6c"));
+    EXPECT_EQ(knightNonPromotionChecks.end(),
+        std::find(knightNonPromotionChecks.begin(), knightNonPromotionChecks.end(), "5e4c+"));
+
+    const std::string silverCannotPromote = "9/9/4k4/9/4S4/9/9/9/4K4 b - 1";
+    const auto silverChecks = generated_move_usi<Check>(__Board(silverCannotPromote).pos);
+    EXPECT_NE(silverChecks.end(), std::find(silverChecks.begin(), silverChecks.end(), "5e4d"));
+    EXPECT_EQ(silverChecks.end(), std::find(silverChecks.begin(), silverChecks.end(), "5e4d+"));
+
+    const std::string discoveredHorse = "4k4/9/4+B4/9/9/9/9/9/4R3K b - 1";
+    const auto horseChecks = generated_move_usi<CheckAll>(__Board(discoveredHorse).pos);
+    EXPECT_NE(horseChecks.end(), std::find(horseChecks.begin(), horseChecks.end(), "5c5b"));
+
+    const std::string discoveredDragon = "4k4/9/6+R2/9/8B/9/9/9/K8 b - 1";
+    const auto dragonChecks = generated_move_usi<CheckAll>(__Board(discoveredDragon).pos);
+    EXPECT_NE(dragonChecks.end(), std::find(dragonChecks.begin(), dragonChecks.end(), "3c4b"));
+
+    for (const std::string& sfen : {
+        lancePromotion, knightPromotion, knightNonPromotion, silverCannotPromote,
+        discoveredHorse, discoveredDragon }) {
+        expect_check_all_matches_legal(sfen);
+    }
 }
 
 TEST(TestBoard, copy_relinks_stateinfo_history) {
