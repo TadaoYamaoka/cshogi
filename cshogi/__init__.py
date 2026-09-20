@@ -48,6 +48,7 @@ __all__ = [
     "C8",
     "C9",
     "COLORS",
+    "CheckMoveList",
     "D1",
     "D2",
     "D3",
