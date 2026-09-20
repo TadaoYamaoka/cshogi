@@ -2056,7 +2056,7 @@ namespace {
             if (curr != moveList) {
                 // 自玉に対して pin されている駒の集合。
                 Bitboard computedPinned;
-                if constexpr (!USE_CHECK_INFO) {
+                if (!USE_CHECK_INFO) {
                     computedPinned = pos.pinnedBB();
                     knownPinned = &computedPinned;
                 }
