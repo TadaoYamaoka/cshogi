@@ -122,6 +122,10 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="cshogi.html#cshogi.Board.check_moves">check_moves (cshogi.Board attribute)</a>
+</li>
+      <li><a href="cshogi.html#cshogi.CheckMoveList">CheckMoveList (class in cshogi)</a>
+</li>
       <li><a href="cshogi.html#cshogi.CSA.Exporter.close">close() (cshogi.CSA.Exporter method)</a>
 
       <ul>
@@ -132,6 +136,8 @@
         <li><a href="cshogi.html#cshogi.PGN.Exporter.close">(cshogi.PGN.Exporter method)</a>
 </li>
       </ul></li>
+      <li><a href="cshogi.web.html#cshogi.web.app.colab">colab() (in module cshogi.web.app)</a>
+</li>
       <li><a href="cshogi.html#cshogi.CSA.Parser.comment">comment (cshogi.CSA.Parser attribute)</a>
 </li>
       <li><a href="cshogi.html#cshogi.CSA.Parser.comments">comments (cshogi.CSA.Parser attribute)</a>
@@ -163,8 +169,6 @@
         <li><a href="cshogi.html#module-cshogi.CSA">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     cshogi.dlshogi
 
@@ -177,6 +181,36 @@
 
       <ul>
         <li><a href="cshogi.html#module-cshogi.elo">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    cshogi.gym_shogi
+
+      <ul>
+        <li><a href="cshogi.gym_shogi.html#module-cshogi.gym_shogi">module</a>
+</li>
+      </ul></li>
+      <li>
+    cshogi.gym_shogi.envs
+
+      <ul>
+        <li><a href="cshogi.gym_shogi.envs.html#module-cshogi.gym_shogi.envs">module</a>
+</li>
+      </ul></li>
+      <li>
+    cshogi.gym_shogi.envs.shogi_env
+
+      <ul>
+        <li><a href="cshogi.gym_shogi.envs.html#module-cshogi.gym_shogi.envs.shogi_env">module</a>
+</li>
+      </ul></li>
+      <li>
+    cshogi.gym_shogi.envs.shogi_vec_env
+
+      <ul>
+        <li><a href="cshogi.gym_shogi.envs.html#module-cshogi.gym_shogi.envs.shogi_vec_env">module</a>
 </li>
       </ul></li>
       <li>
@@ -219,6 +253,13 @@
 
       <ul>
         <li><a href="cshogi.web.html#module-cshogi.web">module</a>
+</li>
+      </ul></li>
+      <li>
+    cshogi.web.app
+
+      <ul>
+        <li><a href="cshogi.web.html#module-cshogi.web.app">module</a>
 </li>
       </ul></li>
   </ul></td>
@@ -293,16 +334,20 @@
         <li><a href="cshogi.html#cshogi.osl.DfPn.get_move">(cshogi.osl.DfPn method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="cshogi.html#cshogi.DfPn.get_pv">get_pv() (cshogi.DfPn method)</a>
 
       <ul>
         <li><a href="cshogi.html#cshogi.osl.DfPn.get_pv">(cshogi.osl.DfPn method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="cshogi.usi.html#cshogi.usi.Engine.go">go() (cshogi.usi.Engine method)</a>
+
+      <ul>
+        <li><a href="cshogi.web.html#cshogi.web.app.Human.go">(cshogi.web.app.Human method)</a>
 </li>
+      </ul></li>
       <li><a href="cshogi.usi.html#cshogi.usi.Engine.go_mate">go_mate() (cshogi.usi.Engine method)</a>
 </li>
   </ul></td>
@@ -328,6 +373,8 @@
 </li>
       </ul></li>
       <li><a href="cshogi.html#cshogi.Board.history">history (cshogi.Board attribute)</a>
+</li>
+      <li><a href="cshogi.web.html#cshogi.web.app.Human">Human (class in cshogi.web.app)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -368,7 +415,11 @@
       <li><a href="cshogi.html#cshogi.Board.is_pseudo_legal">is_pseudo_legal() (cshogi.Board method)</a>
 </li>
       <li><a href="cshogi.usi.html#cshogi.usi.Engine.isready">isready() (cshogi.usi.Engine method)</a>
+
+      <ul>
+        <li><a href="cshogi.web.html#cshogi.web.app.Human.isready">(cshogi.web.app.Human method)</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -413,12 +464,24 @@
 </li>
       <li><a href="cshogi.html#cshogi.make_rank">make_rank() (in module cshogi)</a>
 </li>
+      <li><a href="cshogi.web.html#cshogi.web.app.match">match() (in module cshogi.web.app)</a>
+</li>
       <li><a href="cshogi.html#cshogi.Board.mate_move">mate_move() (cshogi.Board method)</a>
 </li>
       <li><a href="cshogi.html#cshogi.Board.mate_move_in_1ply">mate_move_in_1ply() (cshogi.Board method)</a>
 </li>
       <li><a href="cshogi.usi.html#cshogi.usi.InfoListener.mate_score">mate_score (cshogi.usi.InfoListener property)</a>
 </li>
+      <li><a href="cshogi.gym_shogi.envs.html#cshogi.gym_shogi.envs.shogi_env.ShogiEnv.metadata">metadata (cshogi.gym_shogi.envs.shogi_env.ShogiEnv attribute)</a>
+
+      <ul>
+        <li><a href="cshogi.gym_shogi.envs.html#cshogi.gym_shogi.envs.shogi_vec_env.ShogiVecEnv.metadata">(cshogi.gym_shogi.envs.shogi_vec_env.ShogiVecEnv attribute)</a>
+</li>
+        <li><a href="cshogi.gym_shogi.envs.html#cshogi.gym_shogi.envs.ShogiEnv.metadata">(cshogi.gym_shogi.envs.ShogiEnv attribute)</a>
+</li>
+        <li><a href="cshogi.gym_shogi.envs.html#cshogi.gym_shogi.envs.ShogiVecEnv.metadata">(cshogi.gym_shogi.envs.ShogiVecEnv attribute)</a>
+</li>
+      </ul></li>
       <li>
     module
 
@@ -433,6 +496,14 @@
 </li>
         <li><a href="cshogi.html#module-cshogi.elo">cshogi.elo</a>
 </li>
+        <li><a href="cshogi.gym_shogi.html#module-cshogi.gym_shogi">cshogi.gym_shogi</a>
+</li>
+        <li><a href="cshogi.gym_shogi.envs.html#module-cshogi.gym_shogi.envs">cshogi.gym_shogi.envs</a>
+</li>
+        <li><a href="cshogi.gym_shogi.envs.html#module-cshogi.gym_shogi.envs.shogi_env">cshogi.gym_shogi.envs.shogi_env</a>
+</li>
+        <li><a href="cshogi.gym_shogi.envs.html#module-cshogi.gym_shogi.envs.shogi_vec_env">cshogi.gym_shogi.envs.shogi_vec_env</a>
+</li>
         <li><a href="cshogi.html#module-cshogi.KI2">cshogi.KI2</a>
 </li>
         <li><a href="cshogi.html#module-cshogi.KIF">cshogi.KIF</a>
@@ -445,6 +516,8 @@
 </li>
         <li><a href="cshogi.web.html#module-cshogi.web">cshogi.web</a>
 </li>
+        <li><a href="cshogi.web.html#module-cshogi.web.app">cshogi.web.app</a>
+</li>
       </ul></li>
       <li><a href="cshogi.html#cshogi.Board.move">move() (cshogi.Board method)</a>
 
@@ -456,12 +529,12 @@
         <li><a href="cshogi.html#cshogi.KIF.Exporter.move">(cshogi.KIF.Exporter method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="cshogi.html#cshogi.move16">move16() (in module cshogi)</a>
 </li>
       <li><a href="cshogi.html#cshogi.move16_from_psv">move16_from_psv() (in module cshogi)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="cshogi.html#cshogi.move16_to_psv">move16_to_psv() (in module cshogi)</a>
 </li>
       <li><a href="cshogi.html#cshogi.move_cap">move_cap() (in module cshogi)</a>
@@ -621,7 +694,11 @@
       <li><a href="cshogi.html#cshogi.Board.pop_pass">pop_pass() (cshogi.Board method)</a>
 </li>
       <li><a href="cshogi.usi.html#cshogi.usi.Engine.position">position() (cshogi.usi.Engine method)</a>
+
+      <ul>
+        <li><a href="cshogi.web.html#cshogi.web.app.Human.position">(cshogi.web.app.Human method)</a>
 </li>
+      </ul></li>
       <li><a href="cshogi.html#cshogi.Board.pseudo_legal_move_is_legal">pseudo_legal_move_is_legal() (cshogi.Board method)</a>
 </li>
       <li><a href="cshogi.html#cshogi.Board.pseudo_legal_moves">pseudo_legal_moves (cshogi.Board attribute)</a>
@@ -649,7 +726,11 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="cshogi.usi.html#cshogi.usi.Engine.quit">quit() (cshogi.usi.Engine method)</a>
+
+      <ul>
+        <li><a href="cshogi.web.html#cshogi.web.app.Human.quit">(cshogi.web.app.Human method)</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -664,10 +745,30 @@
 </li>
       <li><a href="cshogi.usi.html#cshogi.usi.MultiPVListener.re_multipv">re_multipv (cshogi.usi.MultiPVListener attribute)</a>
 </li>
+      <li><a href="cshogi.gym_shogi.envs.html#cshogi.gym_shogi.envs.shogi_env.ShogiEnv.render">render() (cshogi.gym_shogi.envs.shogi_env.ShogiEnv method)</a>
+
+      <ul>
+        <li><a href="cshogi.gym_shogi.envs.html#cshogi.gym_shogi.envs.shogi_vec_env.ShogiVecEnv.render">(cshogi.gym_shogi.envs.shogi_vec_env.ShogiVecEnv method)</a>
+</li>
+        <li><a href="cshogi.gym_shogi.envs.html#cshogi.gym_shogi.envs.ShogiEnv.render">(cshogi.gym_shogi.envs.ShogiEnv method)</a>
+</li>
+        <li><a href="cshogi.gym_shogi.envs.html#cshogi.gym_shogi.envs.ShogiVecEnv.render">(cshogi.gym_shogi.envs.ShogiVecEnv method)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="cshogi.html#cshogi.Board.reset">reset() (cshogi.Board method)</a>
+
+      <ul>
+        <li><a href="cshogi.gym_shogi.envs.html#cshogi.gym_shogi.envs.shogi_env.ShogiEnv.reset">(cshogi.gym_shogi.envs.shogi_env.ShogiEnv method)</a>
 </li>
+        <li><a href="cshogi.gym_shogi.envs.html#cshogi.gym_shogi.envs.shogi_vec_env.ShogiVecEnv.reset">(cshogi.gym_shogi.envs.shogi_vec_env.ShogiVecEnv method)</a>
+</li>
+        <li><a href="cshogi.gym_shogi.envs.html#cshogi.gym_shogi.envs.ShogiEnv.reset">(cshogi.gym_shogi.envs.ShogiEnv method)</a>
+</li>
+        <li><a href="cshogi.gym_shogi.envs.html#cshogi.gym_shogi.envs.ShogiVecEnv.reset">(cshogi.gym_shogi.envs.ShogiVecEnv method)</a>
+</li>
+      </ul></li>
       <li><a href="cshogi.html#cshogi.KI2.Parser.RESULT_RE">RESULT_RE (cshogi.KI2.Parser attribute)</a>
 
       <ul>
@@ -675,6 +776,8 @@
 </li>
       </ul></li>
       <li><a href="cshogi.html#cshogi.rotate_sfen">rotate_sfen() (in module cshogi)</a>
+</li>
+      <li><a href="cshogi.web.html#cshogi.web.app.run">run() (in module cshogi.web.app)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -720,8 +823,6 @@
         <li><a href="cshogi.html#cshogi.osl.DfPn.set_max_depth">(cshogi.osl.DfPn method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="cshogi.html#cshogi.DfPn.set_max_search_node">set_max_search_node() (cshogi.DfPn method)</a>
 
       <ul>
@@ -730,6 +831,8 @@
       </ul></li>
       <li><a href="cshogi.html#cshogi.Board.set_pieces">set_pieces() (cshogi.Board method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="cshogi.html#cshogi.Board.set_position">set_position() (cshogi.Board method)</a>
 </li>
       <li><a href="cshogi.html#cshogi.Board.set_psfen">set_psfen() (cshogi.Board method)</a>
@@ -742,6 +845,28 @@
 </li>
       <li><a href="cshogi.html#cshogi.Board.sfen">sfen() (cshogi.Board method)</a>
 </li>
+      <li><a href="cshogi.gym_shogi.envs.html#cshogi.gym_shogi.envs.ShogiEnv">ShogiEnv (class in cshogi.gym_shogi.envs)</a>
+
+      <ul>
+        <li><a href="cshogi.gym_shogi.envs.html#cshogi.gym_shogi.envs.shogi_env.ShogiEnv">(class in cshogi.gym_shogi.envs.shogi_env)</a>
+</li>
+      </ul></li>
+      <li><a href="cshogi.gym_shogi.envs.html#cshogi.gym_shogi.envs.ShogiVecEnv">ShogiVecEnv (class in cshogi.gym_shogi.envs)</a>
+
+      <ul>
+        <li><a href="cshogi.gym_shogi.envs.html#cshogi.gym_shogi.envs.shogi_vec_env.ShogiVecEnv">(class in cshogi.gym_shogi.envs.shogi_vec_env)</a>
+</li>
+      </ul></li>
+      <li><a href="cshogi.gym_shogi.envs.html#cshogi.gym_shogi.envs.shogi_env.ShogiEnv.step">step() (cshogi.gym_shogi.envs.shogi_env.ShogiEnv method)</a>
+
+      <ul>
+        <li><a href="cshogi.gym_shogi.envs.html#cshogi.gym_shogi.envs.shogi_vec_env.ShogiVecEnv.step">(cshogi.gym_shogi.envs.shogi_vec_env.ShogiVecEnv method)</a>
+</li>
+        <li><a href="cshogi.gym_shogi.envs.html#cshogi.gym_shogi.envs.ShogiEnv.step">(cshogi.gym_shogi.envs.ShogiEnv method)</a>
+</li>
+        <li><a href="cshogi.gym_shogi.envs.html#cshogi.gym_shogi.envs.ShogiVecEnv.step">(cshogi.gym_shogi.envs.ShogiVecEnv method)</a>
+</li>
+      </ul></li>
       <li><a href="cshogi.html#cshogi.DfPn.stop">stop() (cshogi.DfPn method)</a>
 
       <ul>
@@ -789,15 +914,25 @@
       <li><a href="cshogi.dlshogi.html#cshogi.dlshogi.use_nyugyoku_features">use_nyugyoku_features() (in module cshogi.dlshogi)</a>
 </li>
       <li><a href="cshogi.usi.html#cshogi.usi.Engine.usi">usi() (cshogi.usi.Engine method)</a>
+
+      <ul>
+        <li><a href="cshogi.web.html#cshogi.web.app.Human.usi">(cshogi.web.app.Human method)</a>
+</li>
+      </ul></li>
+      <li><a href="cshogi.html#cshogi.cli.usi_info_to_csa_comment">usi_info_to_csa_comment() (in module cshogi.cli)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="cshogi.html#cshogi.cli.usi_info_to_csa_comment">usi_info_to_csa_comment() (in module cshogi.cli)</a>
+      <li><a href="cshogi.web.html#cshogi.web.app.usi_info_to_pv">usi_info_to_pv() (in module cshogi.web.app)</a>
 </li>
       <li><a href="cshogi.html#cshogi.cli.usi_info_to_score">usi_info_to_score() (in module cshogi.cli)</a>
 </li>
       <li><a href="cshogi.usi.html#cshogi.usi.Engine.usinewgame">usinewgame() (cshogi.usi.Engine method)</a>
+
+      <ul>
+        <li><a href="cshogi.web.html#cshogi.web.app.Human.usinewgame">(cshogi.web.app.Human method)</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 

@@ -56,6 +56,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#cshogi.Board"><code class="docutils literal notranslate"><span class="pre">Board</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.Board.book_key"><code class="docutils literal notranslate"><span class="pre">Board.book_key()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.Board.book_key_after"><code class="docutils literal notranslate"><span class="pre">Board.book_key_after()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.Board.check_moves"><code class="docutils literal notranslate"><span class="pre">Board.check_moves</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.Board.copy"><code class="docutils literal notranslate"><span class="pre">Board.copy()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.Board.csa_pos"><code class="docutils literal notranslate"><span class="pre">Board.csa_pos()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.Board.drop_move"><code class="docutils literal notranslate"><span class="pre">Board.drop_move()</span></code></a></li>
@@ -111,6 +112,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.Board.zobrist_hash"><code class="docutils literal notranslate"><span class="pre">Board.zobrist_hash()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="#cshogi.CheckMoveList"><code class="docutils literal notranslate"><span class="pre">CheckMoveList</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#cshogi.DfPn"><code class="docutils literal notranslate"><span class="pre">DfPn</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.DfPn.get_move"><code class="docutils literal notranslate"><span class="pre">DfPn.get_move()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.DfPn.get_pv"><code class="docutils literal notranslate"><span class="pre">DfPn.get_pv()</span></code></a></li>
@@ -370,6 +372,20 @@
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>long long</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.Board.check_moves">
+<span class="sig-name descname"><span class="pre">check_moves</span></span><a class="headerlink" href="#cshogi.Board.check_moves" title="Link to this definition"></a></dt>
+<dd><p>Generates legal checking moves from the current board position.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An iterator that yields checking moves.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#cshogi.CheckMoveList" title="cshogi.CheckMoveList">CheckMoveList</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1219,6 +1235,13 @@
 </dl>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cshogi.CheckMoveList">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">cshogi.</span></span><span class="sig-name descname"><span class="pre">CheckMoveList</span></span><a class="headerlink" href="#cshogi.CheckMoveList" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>An iterator class to generate legal checking moves.</p>
 </dd></dl>
 
 <dl class="py class">
@@ -2905,14 +2928,14 @@
 <li class="toctree-l2"><a class="reference internal" href="cshogi.gym_shogi.html#subpackages">Subpackages</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="cshogi.gym_shogi.envs.html">cshogi.gym_shogi.envs package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="cshogi.gym_shogi.envs.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cshogi.gym_shogi.envs.html#cshogi-gym-shogi-envs-shogi-env-module">cshogi.gym_shogi.envs.shogi_env module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cshogi.gym_shogi.envs.html#cshogi-gym-shogi-envs-shogi-vec-env-module">cshogi.gym_shogi.envs.shogi_vec_env module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cshogi.gym_shogi.envs.html#module-contents">Module contents</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.gym_shogi.envs.html#module-cshogi.gym_shogi.envs.shogi_env">cshogi.gym_shogi.envs.shogi_env module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.gym_shogi.envs.html#module-cshogi.gym_shogi.envs.shogi_vec_env">cshogi.gym_shogi.envs.shogi_vec_env module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.gym_shogi.envs.html#module-cshogi.gym_shogi.envs">Module contents</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="cshogi.gym_shogi.html#module-contents">Module contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cshogi.gym_shogi.html#module-cshogi.gym_shogi">Module contents</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cshogi.usi.html">cshogi.usi package</a><ul>
@@ -2955,7 +2978,22 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cshogi.web.html">cshogi.web package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="cshogi.web.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cshogi.web.html#cshogi-web-app-module">cshogi.web.app module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cshogi.web.html#module-cshogi.web.app">cshogi.web.app module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.web.html#cshogi.web.app.Human"><code class="docutils literal notranslate"><span class="pre">Human</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.web.html#cshogi.web.app.Human.go"><code class="docutils literal notranslate"><span class="pre">Human.go()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.web.html#cshogi.web.app.Human.isready"><code class="docutils literal notranslate"><span class="pre">Human.isready()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.web.html#cshogi.web.app.Human.position"><code class="docutils literal notranslate"><span class="pre">Human.position()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.web.html#cshogi.web.app.Human.quit"><code class="docutils literal notranslate"><span class="pre">Human.quit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.web.html#cshogi.web.app.Human.usi"><code class="docutils literal notranslate"><span class="pre">Human.usi()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.web.html#cshogi.web.app.Human.usinewgame"><code class="docutils literal notranslate"><span class="pre">Human.usinewgame()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.web.html#cshogi.web.app.colab"><code class="docutils literal notranslate"><span class="pre">colab()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.web.html#cshogi.web.app.match"><code class="docutils literal notranslate"><span class="pre">match()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.web.html#cshogi.web.app.run"><code class="docutils literal notranslate"><span class="pre">run()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.web.html#cshogi.web.app.usi_info_to_pv"><code class="docutils literal notranslate"><span class="pre">usi_info_to_pv()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="cshogi.web.html#module-cshogi.web">Module contents</a></li>
 </ul>
 </li>
