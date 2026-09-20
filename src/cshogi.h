@@ -712,6 +712,34 @@ private:
     std::shared_ptr<MoveList<LegalAll>> ml;
 };
 
+class __CheckMoveList
+{
+public:
+    __CheckMoveList() : current_(0) {}
+    __CheckMoveList(const __Board& board) : current_(0) {
+        const CheckInfo ci(board.pos);
+        if (board.pos.inCheck()) {
+            ns_mate::CheckMovePicker<true> picker(board.pos, ci);
+            for (const auto& entry : picker)
+                moves_.push_back(entry.move.value());
+        }
+        else {
+            ns_mate::CheckMovePicker<false> picker(board.pos, ci);
+            for (const auto& entry : picker)
+                moves_.push_back(entry.move.value());
+        }
+    }
+
+    bool end() const { return current_ == moves_.size(); }
+    int move() const { return moves_[current_]; }
+    void next() { ++current_; }
+    int size() const { return (int)moves_.size(); }
+
+private:
+    std::vector<int> moves_;
+    size_t current_;
+};
+
 class __PseudoLegalMoveList
 {
 public:

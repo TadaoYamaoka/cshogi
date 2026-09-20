@@ -723,6 +723,15 @@ cdef class Board:
         return LegalMoveList(self)
 
     @property
+    def check_moves(self):
+        """Generates legal checking moves from the current board position.
+
+        :return: An iterator that yields checking moves.
+        :rtype: CheckMoveList
+        """
+        return CheckMoveList(self)
+
+    @property
     def pseudo_legal_moves(self):
         """Generates a list of pseudo-legal moves from the current board position.
 
@@ -1174,6 +1183,13 @@ cdef extern from "cshogi.h":
         int move()
         void next()
         int size()
+    cdef cppclass __CheckMoveList:
+        __CheckMoveList() except +
+        __CheckMoveList(const __Board& board) except +
+        bool end()
+        int move()
+        void next()
+        int size()
     cdef cppclass __PseudoLegalMoveList:
         __PseudoLegalMoveList() except +
         __PseudoLegalMoveList(const __Board& board) except +
@@ -1208,6 +1224,28 @@ cdef class LegalMoveList:
 
     def __cinit__(self, Board board):
         self.__ml = __LegalMoveList(board.__board)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.__ml.end():
+            raise StopIteration()
+        move = self.__ml.move()
+        self.__ml.next()
+        return move
+
+    def __len__(self):
+        return self.__ml.size()
+
+
+cdef class CheckMoveList:
+    """An iterator class to generate legal checking moves."""
+
+    cdef __CheckMoveList __ml
+
+    def __cinit__(self, Board board):
+        self.__ml = __CheckMoveList(board.__board)
 
     def __iter__(self):
         return self
