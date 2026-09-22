@@ -80,6 +80,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.Board.move_from_usi"><code class="docutils literal notranslate"><span class="pre">Board.move_from_usi()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.Board.move_is_draw"><code class="docutils literal notranslate"><span class="pre">Board.move_is_draw()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.Board.move_number"><code class="docutils literal notranslate"><span class="pre">Board.move_number</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.Board.nyugyoku_result"><code class="docutils literal notranslate"><span class="pre">Board.nyugyoku_result()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.Board.peek"><code class="docutils literal notranslate"><span class="pre">Board.peek()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.Board.piece"><code class="docutils literal notranslate"><span class="pre">Board.piece()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.Board.piece_planes"><code class="docutils literal notranslate"><span class="pre">Board.piece_planes()</span></code></a></li>
@@ -536,14 +537,19 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.Board.is_nyugyoku">
-<span class="sig-name descname"><span class="pre">is_nyugyoku</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.is_nyugyoku" title="Link to this definition"></a></dt>
-<dd><p>Check for a win according to the Nyūgyoku declaration rule (27-point rule).</p>
+<span class="sig-name descname"><span class="pre">is_nyugyoku</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rule</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.is_nyugyoku" title="Link to this definition"></a></dt>
+<dd><p>Check for a win according to a Nyugyoku declaration rule.</p>
+<p>The default is the 27-point rule for backward compatibility. Under
+the 24-point rule, a draw at 24 to 30 points returns False.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>True if the game is in a state of Nyūgyoku declaration (a win by entering king according to the 27-point rule), False otherwise.</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>rule</strong> – LAW_24 or LAW_27.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>bool</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True only when the declaration result is a win.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
@@ -766,6 +772,26 @@
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Current move number.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.Board.nyugyoku_result">
+<span class="sig-name descname"><span class="pre">nyugyoku_result</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rule</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.Board.nyugyoku_result" title="Link to this definition"></a></dt>
+<dd><p>Return the result of a Nyugyoku declaration judgment.</p>
+<p>Under the 24-point rule, 31 or more points is a win and 24 to 30
+points is a draw. Under the 27-point rule, the winning threshold is
+28 points for Black and 27 points for White.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>rule</strong> – LAW_24 or LAW_27.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>One of NYUGYOKU_NONE, NYUGYOKU_WIN, or NYUGYOKU_DRAW.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
 </dd>
 </dl>
 </dd></dl>
