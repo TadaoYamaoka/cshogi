@@ -132,6 +132,10 @@ REPETITION_TYPES = [
     REPETITION_SUPERIOR, REPETITION_INFERIOR
 ] = range(6)
 
+NYUGYOKU_NONE = 0
+NYUGYOKU_WIN = 1
+NYUGYOKU_DRAW = 2
+
 SVG_PIECE_DEFS = [
     '<g id="black-pawn"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">歩</text></g>',
     '<g id="black-lance"><text font-family="serif" font-size="17" text-anchor="middle" x="10.5" y="16.5">香</text></g>',
@@ -256,6 +260,15 @@ def to_csa(int move):
 
 
 cdef extern from "cshogi.h":
+    cdef enum NyugyokuResult:
+        NyugyokuNone
+        NyugyokuWin
+        NyugyokuDraw
+
+    cdef enum NyugyokuRule:
+        _LAW_24 "LAW_24"
+        _LAW_27 "LAW_27"
+
     cdef cppclass __Board:
         __Board() except +
         __Board(const string& sfen) except +
@@ -300,7 +313,8 @@ cdef extern from "cshogi.h":
         bool moveIsLegal(const int move)
         vector[int] pieces_in_hand(const int color)
         vector[int] pieces()
-        bool is_nyugyoku()
+        bool is_nyugyoku(const NyugyokuRule rule)
+        NyugyokuResult nyugyoku_result(const NyugyokuRule rule)
         void piece_planes(char* mem)
         void piece_planes_rotate(char* mem)
         void _dlshogi_make_input_features(char* mem1, char* mem2)
@@ -315,6 +329,10 @@ cdef extern from "cshogi.h":
     int __make_file(const int sq)
     int __make_rank(const int sq)
     string __rotate_sfen(const string& sfen)
+
+
+LAW_24 = <int>_LAW_24
+LAW_27 = <int>_LAW_27
 
 
 cdef class Board:
@@ -933,13 +951,34 @@ cdef class Board:
         """
         return self.__board.pieces()
 
-    def is_nyugyoku(self):
-        """Check for a win according to the Nyūgyoku declaration rule (27-point rule).
+    def is_nyugyoku(self, NyugyokuRule rule=LAW_27):
+        """Check for a win according to a Nyugyoku declaration rule.
 
-        :return: True if the game is in a state of Nyūgyoku declaration (a win by entering king according to the 27-point rule), False otherwise.
+        The default is the 27-point rule for backward compatibility. Under
+        the 24-point rule, a draw at 24 to 30 points returns False.
+
+        :param rule: LAW_24 or LAW_27.
+        :return: True only when the declaration result is a win.
         :rtype: bool
         """
-        return self.__board.is_nyugyoku()
+        if rule != _LAW_24 and rule != _LAW_27:
+            raise ValueError("rule must be LAW_24 or LAW_27")
+        return self.__board.is_nyugyoku(rule)
+
+    def nyugyoku_result(self, NyugyokuRule rule=LAW_24):
+        """Return the result of a Nyugyoku declaration judgment.
+
+        Under the 24-point rule, 31 or more points is a win and 24 to 30
+        points is a draw. Under the 27-point rule, the winning threshold is
+        28 points for Black and 27 points for White.
+
+        :param rule: LAW_24 or LAW_27.
+        :return: One of NYUGYOKU_NONE, NYUGYOKU_WIN, or NYUGYOKU_DRAW.
+        :rtype: int
+        """
+        if rule != _LAW_24 and rule != _LAW_27:
+            raise ValueError("rule must be LAW_24 or LAW_27")
+        return self.__board.nyugyoku_result(rule)
 
     def piece_planes(self, np.ndarray features):
         """Generate piece planes representing the current state of the board. The result is stored in the given ndarray.
