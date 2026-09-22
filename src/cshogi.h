@@ -4,6 +4,7 @@
 #include "init.hpp"
 #include "position.hpp"
 #include "generateMoves.hpp"
+#include "search.hpp"
 #include "usi.hpp"
 #include "book.hpp"
 #include "mate.h"
@@ -58,8 +59,6 @@ int __dlshogi_get_features2_num() {
     return MAX_FEATURES2_NUM + (use_nyugyoku_features ? (int)ColorNum * MAX_FEATURES2_NYUGYOKU_NUM : 0);
 }
 
-
-bool nyugyoku(const Position& pos);
 
 void HuffmanCodedPos_init() {
     HuffmanCodedPos::init();
@@ -258,7 +257,8 @@ public:
     bool moveIsLegal(const int move) const {
         return moveIsPseudoLegal(move) && pseudoLegalMoveIsLegal(move);
     }
-    bool is_nyugyoku() const { return nyugyoku(pos); }
+    bool is_nyugyoku(const NyugyokuRule rule = LAW_27) const { return nyugyoku(pos, rule) == NyugyokuWin; }
+    NyugyokuResult nyugyoku_result(const NyugyokuRule rule) const { return nyugyoku(pos, rule); }
     bool isOK() const { return pos.isOK(); }
 
     std::vector<int> pieces_in_hand(const int color) const {

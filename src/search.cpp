@@ -19,13 +19,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "position.hpp"
+#include "search.hpp"
 #include "usi.hpp"
 #include "generateMoves.hpp"
 
-// 入玉勝ちかどうかを判定
-bool nyugyoku(const Position& pos) {
-    // CSA ルールでは、一 から 六 の条件を全て満たすとき、入玉勝ち宣言が出来る。
+// 入玉宣言の結果を判定
+NyugyokuResult nyugyoku(const Position& pos, const NyugyokuRule rule) {
+    // 入玉宣言法の共通条件を全て満たすか判定する。
     // 判定が高速に出来るものから順に判定していく事にする。
 
     // 一 宣言側の手番である。
@@ -38,7 +38,7 @@ bool nyugyoku(const Position& pos) {
 
     // 五 宣言側の玉に王手がかかっていない。
     if (pos.inCheck())
-        return false;
+        return NyugyokuNone;
 
     const Color us = pos.turn();
     // 敵陣のマスク
@@ -46,16 +46,16 @@ bool nyugyoku(const Position& pos) {
 
     // 二 宣言側の玉が敵陣三段目以内に入っている。
     if (!pos.bbOf(King, us).andIsAny(opponentsField))
-        return false;
+        return NyugyokuNone;
 
     // 四 宣言側の敵陣三段目以内の駒は、玉を除いて10枚以上存在する。
     const int ownPiecesCount = (pos.bbOf(us) & opponentsField).popCount() - 1;
     if (ownPiecesCount < 10)
-        return false;
+        return NyugyokuNone;
 
-    // 三 宣言側が、大駒5点小駒1点で計算して
-    //     先手の場合28点以上の持点がある。
-    //     後手の場合27点以上の持点がある。
+    // 三 宣言側が、大駒5点小駒1点で計算して必要な持点がある。
+    //     24点法は31点以上で勝ち、24点以上30点以下で無勝負。
+    //     27点法は先手28点以上、後手27点以上で勝ち。
     //     点数の対象となるのは、宣言側の持駒と敵陣三段目以内に存在する玉を除く宣言側の駒のみである。
     const int ownBigPiecesCount = (pos.bbOf(Rook, Dragon, Bishop, Horse) & opponentsField & pos.bbOf(us)).popCount();
     const int ownSmallPiecesCount = ownPiecesCount - ownBigPiecesCount;
@@ -64,13 +64,13 @@ bool nyugyoku(const Position& pos) {
         + hand.numOf<HPawn>() + hand.numOf<HLance>() + hand.numOf<HKnight>()
         + hand.numOf<HSilver>() + hand.numOf<HGold>()
         + (ownBigPiecesCount + hand.numOf<HRook>() + hand.numOf<HBishop>()) * 5;
-#if defined LAW_24
-    if (val < 31)
-        return false;
-#else
-    if (val < (us == Black ? 28 : 27))
-        return false;
-#endif
+    if (rule == LAW_24) {
+        if (val >= 31)
+            return NyugyokuWin;
+        if (val >= 24)
+            return NyugyokuDraw;
+        return NyugyokuNone;
+    }
 
-    return true;
+    return val >= (us == Black ? 28 : 27) ? NyugyokuWin : NyugyokuNone;
 }

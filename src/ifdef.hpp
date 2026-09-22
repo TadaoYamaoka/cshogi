@@ -72,11 +72,6 @@
 #endif
 
 #if 0
-// 入玉を24点法にする。
-#define LAW_24
-#endif
-
-#if 0
 // 探索時に片方だけが千日手を禁止して考える。
 #define BAN_BLACK_REPETITION
 #elif 0
