@@ -206,7 +206,7 @@ namespace {
             Bitboard toBB = pos.attacksFrom<PT>(US, from) & target;
             FOREACH_BB(toBB, const Square to, {
                 const bool toCanPromote = canPromote(US, makeRank(to));
-                if (fromCanPromote | toCanPromote) {
+                if (fromCanPromote || toCanPromote) {
                     (*moveList++).move = makePromoteMove<MT>(PT, from, to, pos);
                     if (MT == NonEvasion || ALL)
                         (*moveList++).move = makeNonPromoteMove<MT>(PT, from, to, pos);
@@ -446,7 +446,7 @@ namespace {
                 Bitboard toBB = pos.attacksFrom<Silver>(US, from) & target;
                 FOREACH_BB(toBB, const Square to, {
                     const bool toCanPromote = canPromote(US, makeRank(to));
-                    if (fromCanPromote | toCanPromote)
+                    if (fromCanPromote || toCanPromote)
                         (*moveList++).move = makePromoteMove<MT>(Silver, from, to, pos);
                     (*moveList++).move = makeNonPromoteMove<MT>(Silver, from, to, pos);
                 });
@@ -486,7 +486,7 @@ namespace {
             switch (pt) {
             case Empty    : assert(false); break; // 最適化の為のダミー
             case Pawn     : case Lance    : case Knight   : case Silver   : case Bishop   : case Rook     :
-                (*moveList++).move = ((canPromote(us, makeRank(to)) | canPromote(us, makeRank(from))) ?
+                (*moveList++).move = ((canPromote(us, makeRank(to)) || canPromote(us, makeRank(from))) ?
                                       makePromoteMove<Capture>(pt, from, to, pos) :
                                       makeNonPromoteMove<Capture>(pt, from, to, pos));
                 break;
@@ -788,7 +788,7 @@ namespace {
                 (*moveList++).move = makeNonPromoteMove<Capture>(pt, from, to, pos);
             break;
         case Silver:
-            if (canPromote(US, makeRank(to)) | canPromote(US, makeRank(from))) {
+            if (canPromote(US, makeRank(to)) || canPromote(US, makeRank(from))) {
                 (*moveList++).move = makePromoteMove<Capture>(pt, from, to, pos);
             }
             (*moveList++).move = makeNonPromoteMove<Capture>(pt, from, to, pos);
@@ -797,7 +797,7 @@ namespace {
             (*moveList++).move = makeNonPromoteMove<Capture>(pt, from, to, pos);
             break;
         case Bishop: case Rook:
-            if (canPromote(US, makeRank(to)) | canPromote(US, makeRank(from))) {
+            if (canPromote(US, makeRank(to)) || canPromote(US, makeRank(from))) {
                 (*moveList++).move = makePromoteMove<Capture>(pt, from, to, pos);
                 // 不成で移動する升
                 if (ALL) {
@@ -1749,7 +1749,7 @@ namespace {
                             // 成って王手
                             const Bitboard goldBB = USE_CHECK_INFO ? checkBB[Gold] : goldAttack(opp, ksq);
                             if (goldBB.isSet(to)) {
-                                if (canPromote(US, makeRank(to)) | canPromote(US, makeRank(from))) {
+                                if (canPromote(US, makeRank(to)) || canPromote(US, makeRank(from))) {
                                     (*moveList++).move = makePromoteMove<Capture>(pt, from, to, pos);
                                 }
                             }
@@ -1896,7 +1896,7 @@ namespace {
                     const Bitboard goldBB = USE_CHECK_INFO ? checkBB[Gold] : goldAttack(opp, ksq);
                     toBB = goldBB & destinations;
                     FOREACH_BB(toBB, const Square to, {
-                        if (canPromote(US, makeRank(to)) | canPromote(US, makeRank(from))) {
+                        if (canPromote(US, makeRank(to)) || canPromote(US, makeRank(from))) {
                             (*moveList++).move = makePromoteMove<Capture>(pt, from, to, pos);
                         }
                     });
@@ -1925,7 +1925,7 @@ namespace {
                         const bool fromCanPromote = canPromote(US, makeRank(from));
                         Bitboard toBB = horseBB & bishopAttack(from, occupied) & target;
                         FOREACH_BB(toBB, const Square to, {
-                            if (canPromote(US, makeRank(to)) | fromCanPromote) {
+                            if (canPromote(US, makeRank(to)) || fromCanPromote) {
                                 (*moveList++).move = makePromoteMove<Capture>(pt, from, to, pos);
                                 if (ALL && bishopBB.isSet(to)) {
                                     (*moveList++).move = makeNonPromoteMove<Capture>(pt, from, to, pos);
@@ -1943,7 +1943,7 @@ namespace {
                         if (dstBB.isOneBit<false>() && dstBB.andIsAny(pos.bbOf(opp))) {
                             const Square to = dstBB.constFirstOneFromSQ11();
                             // 成って王手
-                            if (canPromote(US, makeRank(to)) | canPromote(US, makeRank(from))) {
+                            if (canPromote(US, makeRank(to)) || canPromote(US, makeRank(from))) {
                                 (*moveList++).move = makePromoteMove<Capture>(pt, from, to, pos);
                                 // 成らない手を後に生成
                                 if (ALL) {
@@ -1968,7 +1968,7 @@ namespace {
                         Bitboard toBB = dragonBB & rookAttack(from, occupied) & target;
                         FOREACH_BB(toBB, const Square to, {
                             // 成る
-                            if (canPromote(US, makeRank(to)) | fromCanPromote) {
+                            if (canPromote(US, makeRank(to)) || fromCanPromote) {
                                 (*moveList++).move = makePromoteMove<Capture>(pt, from, to, pos);
                                 if (ALL) {
                                     if (rookBB.isSet(to)) {
@@ -1988,7 +1988,7 @@ namespace {
                         if (dstBB.isOneBit<false>() && dstBB.andIsAny(pos.bbOf(opp))) {
                             const Square to = dstBB.constFirstOneFromSQ11();
                             // 成って王手
-                            if (canPromote(US, makeRank(to)) | canPromote(US, makeRank(from))) {
+                            if (canPromote(US, makeRank(to)) || canPromote(US, makeRank(from))) {
                                 (*moveList++).move = makePromoteMove<Capture>(pt, from, to, pos);
                                 // 成らない手を後に生成
                                 if (ALL) {
