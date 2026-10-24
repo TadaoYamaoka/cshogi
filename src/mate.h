@@ -11,7 +11,7 @@ FORCE_INLINE bool mateMoveInEvenPly(Position& pos, const int depth, const int dr
 
 // 詰み探索用の指し手picker
 namespace ns_mate {
-	const constexpr size_t MaxCheckMoves = 91;
+	const constexpr size_t MaxCheckMoves = 94;
 
 	// 攻め側。王手生成とdoMove()で同じCheckInfoを共有する。
 	template <bool INCHECK>

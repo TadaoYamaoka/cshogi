@@ -19,7 +19,7 @@ void DfPn::dfpn_stop(const bool stop)
 
 // 詰将棋エンジン用のMovePicker
 namespace ns_dfpn {
-    const constexpr size_t MaxCheckMoves = 91;
+    const constexpr size_t MaxCheckMoves = 94;
 
     template <bool or_node>
     class MovePicker {
