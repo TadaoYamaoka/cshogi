@@ -465,10 +465,12 @@ namespace {
         }
     };
     // 玉の場合
-    // 必ず盤上に 1 枚だけあることを前提にすることで、while ループを 1 つ無くして高速化している。
+    // 盤上に最大 1 枚だけあることを前提にすることで、while ループを 1 つ無くして高速化している。
     template <MoveType MT, Color US, bool ALL> struct GeneratePieceMoves<MT, King, US, ALL> {
         FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos, const Bitboard& target, const Square /*ksq*/) {
             const Square from = pos.kingSquare(US);
+            if (from == SquareNum)
+                return moveList;
             Bitboard toBB = pos.attacksFrom<King>(US, from) & target;
             FOREACH_BB(toBB, const Square to, {
                 (*moveList++).move = makeNonPromoteMove<MT>(King, from, to, pos);

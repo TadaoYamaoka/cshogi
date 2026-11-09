@@ -30,7 +30,7 @@
 // Bitboard のビットが縦に並んでいて、
 // 0 ビット目から順に、以下の位置と対応させる。
 // SQ11 = 1一, SQ19 = 1九, SQ99 = 9九
-enum Square {
+enum Square : int {
     SQ11, SQ12, SQ13, SQ14, SQ15, SQ16, SQ17, SQ18, SQ19,
     SQ21, SQ22, SQ23, SQ24, SQ25, SQ26, SQ27, SQ28, SQ29,
     SQ31, SQ32, SQ33, SQ34, SQ35, SQ36, SQ37, SQ38, SQ39,
@@ -62,7 +62,7 @@ enum Square {
 OverloadEnumOperators(Square);
 
 // 筋
-enum File {
+enum File : int {
     File1, File2, File3, File4, File5, File6, File7, File8, File9, FileNum,
     FileNoLeftNum = File6,
     FileBegin = 0,
@@ -76,7 +76,7 @@ OverloadEnumOperators(File);
 inline int abs(const File f) { return std::abs(static_cast<int>(f)); }
 
 // 段
-enum Rank {
+enum Rank : int {
     Rank1, Rank2, Rank3, Rank4, Rank5, Rank6, Rank7, Rank8, Rank9, RankNum,
     RankBegin = 0,
     // 画面表示など順序が決まっているループに使う。
@@ -101,7 +101,7 @@ inline bool isLeftOf(const File target) { return (US == Black ? (BFILE < target)
 template <Color US, File BFILE, File WFILE>
 inline bool isRightOf(const File target) { return (US == Black ? (target < BFILE) : (WFILE < target)); }
 
-enum SquareDelta {
+enum SquareDelta : int {
     DeltaNothing = 0, // 同一の Square にあるとき
     DeltaN = -1, DeltaE = -9, DeltaS = 1, DeltaW = 9,
     DeltaNE = DeltaN + DeltaE,
