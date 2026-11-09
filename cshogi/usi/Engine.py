@@ -214,7 +214,7 @@ class Engine:
         while True:
             self.proc.stdout.flush()
             line = self.proc.stdout.readline()
-            if line == '':
+            if not line:
                 raise EOFError()
             line = line.strip()
             if line[:7] == b'id name':
@@ -241,7 +241,7 @@ class Engine:
         while True:
             self.proc.stdout.flush()
             line = self.proc.stdout.readline()
-            if line == '':
+            if not line:
                 raise EOFError()
             line = line.strip().decode(locale.getpreferredencoding())
             if listener:
@@ -280,7 +280,7 @@ class Engine:
         while True:
             self.proc.stdout.flush()
             line = self.proc.stdout.readline()
-            if line == '':
+            if not line:
                 raise EOFError()
             line = line.strip().decode('shift-jis')
             if listener:
@@ -354,7 +354,7 @@ class Engine:
         while True:
             self.proc.stdout.flush()
             line = self.proc.stdout.readline()
-            if line == '':
+            if not line:
                 raise EOFError()
             line = line.strip().decode(locale.getpreferredencoding())
             if listener:
@@ -386,7 +386,7 @@ class Engine:
         while True:
             self.proc.stdout.flush()
             line = self.proc.stdout.readline()
-            if line == '':
+            if not line:
                 raise EOFError()
             line = line.strip().decode(locale.getpreferredencoding())
             if listener:
