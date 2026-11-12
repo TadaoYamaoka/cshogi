@@ -329,6 +329,11 @@ class Engine:
         :param listener: Optional callback to handle engine responses.
         :return: The best move found and optional ponder move.
         """
+        self._send_go(ponder, btime, wtime, byoyomi, binc, winc, nodes, listener)
+        return self._read_bestmove(listener)
+
+    def _send_go(self, ponder=False, btime=None, wtime=None, byoyomi=None,
+                 binc=None, winc=None, nodes=None, listener=None):
         if self.debug: listener = print
         cmd = 'go'
         if ponder:
@@ -351,6 +356,8 @@ class Engine:
         self.proc.stdin.write(cmd.encode('ascii') + b'\n')
         self.proc.stdin.flush()
 
+    def _read_bestmove(self, listener=None):
+        if self.debug: listener = print
         while True:
             self.proc.stdout.flush()
             line = self.proc.stdout.readline()

@@ -69,6 +69,35 @@ class EngineEofTests(unittest.TestCase):
         self.assertEqual(self.invoke('go', b'info depth 1\nbestmove 7g7f ponder 3c3d\n'), ('7g7f', '3c3d'))
         self.assertEqual(self.invoke('go_mate', b'checkmate nomate\n'), 'nomate')
 
+    def test_split_go_sends_and_flushes_before_reading(self):
+        engine = engine_module.Engine('fake_engine', connect=False)
+        stdout = GuardedStream(b'info depth 1\nbestmove 7g7f ponder 3c3d\n')
+        stdin = io.BytesIO()
+        engine.proc = types.SimpleNamespace(stdin=stdin, stdout=stdout)
+        lines = []
+        with patch.object(stdin, 'flush', wraps=stdin.flush) as flush:
+            engine._send_go(ponder=True, btime=100, wtime=200,
+                            binc=10, winc=20, nodes=30, listener=lines.append)
+            flush.assert_called_once()
+        self.assertEqual(stdout.tell(), 0)
+        command = 'go ponder btime 100 wtime 200 binc 10 winc 20 nodes 30'
+        self.assertEqual(stdin.getvalue(), command.encode('ascii') + b'\n')
+        self.assertEqual(lines, [command])
+        self.assertEqual(engine._read_bestmove(lines.append), ('7g7f', '3c3d'))
+        self.assertEqual(lines[1:], ['info depth 1', 'bestmove 7g7f ponder 3c3d'])
+
+    def test_go_preserves_byoyomi_command_and_debug_listener(self):
+        engine = engine_module.Engine('fake_engine', connect=False, debug=True)
+        engine.proc = types.SimpleNamespace(
+            stdin=io.BytesIO(), stdout=GuardedStream(b'bestmove resign\n'))
+        with patch('builtins.print') as debug, patch.object(
+                engine_module, 'locale') as locale:
+            locale.getpreferredencoding.return_value = 'ascii'
+            self.assertEqual(engine.go(byoyomi=100, binc=20), ('resign', None))
+        self.assertEqual(engine.proc.stdin.getvalue(), b'go byoyomi 100\n')
+        self.assertEqual([call.args[0] for call in debug.call_args_list],
+                         ['go byoyomi 100', 'bestmove resign'])
+
 
 if __name__ == '__main__':
     unittest.main()

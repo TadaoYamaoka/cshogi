@@ -7,6 +7,7 @@ import os
 import datetime
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import ExitStack, suppress
 
 from cshogi import *
 from cshogi.usi import Engine
@@ -61,6 +62,36 @@ def usi_info_to_score(info):
         return None
 
     return to_score(m)
+
+def _stop_ponder(pending, listeners):
+    """Stop all searches before joining readers; report the first error."""
+    error = None
+    killed = set()
+    for engine, (future, _) in pending.items():
+        try:
+            if not future.done():
+                engine.stop(listener=listeners[engine])
+        except BaseException as exc:
+            if error is None:
+                error = exc
+            if not future.done():
+                # A failed stop may leave the reader blocked on engine output.
+                engine.proc.kill()
+                killed.add(engine)
+    for engine, (future, _) in pending.items():
+        try:
+            future.result()
+        except BaseException as exc:
+            if error is None:
+                error = exc
+        finally:
+            if engine in killed:
+                engine.proc.wait()
+                engine.proc = None
+    pending.clear()
+    if error is not None:
+        raise error
+
 
 def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, names: Optional[List[str]] = None,
          games: int = 1, resign: Optional[int] = None, mate_win: bool = False,
@@ -133,10 +164,6 @@ def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, n
     else:
         inc1 = inc2 = inc
 
-    # ponder
-    if ponder:
-        executor = ThreadPoolExecutor(max_workers=2)
-
     # debug
     if debug:
         class Listener:
@@ -193,355 +220,346 @@ def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, n
     engine2_won = [0, 0, 0, 0, 0, 0]
     draw_count = 0
     WIN_DRAW = 2
-    for n in range(games):
-        # 先後入れ替え
-        if no_swap or n % 2 == 0:
-            engines_order = (engine1, engine2)
-            options_order = (options1, options2)
-            listeners_order = (listener1, listener2)
-            byoyomi_order = (byoyomi1, byoyomi2)
-            btime = time1
-            wtime = time2
-            binc = inc1
-            winc = inc2
-        else:
-            engines_order = (engine2, engine1)
-            options_order = (options2, options1)
-            listeners_order = (listener2, listener1)
-            byoyomi_order = (byoyomi2, byoyomi1)
-            btime = time2
-            wtime = time1
-            binc = inc2
-            winc = inc1
-
-        # 接続とエンジン設定
-        for engine, options, listener in zip(engines_order, options_order, listeners_order):
-            if engine.proc is None:
-                engine.connect(listener=listener)
-            if ponder:
-                engine.setoption('USI_Ponder', 'true', listener=listener)
-            for name, value in options.items():
-                engine.setoption(name, value, listener=listener)
-            engine.isready(listener=listener)
-
-        if names:
-            if names[0]: engine1.name = names[0]
-            if names[1]: engine2.name = names[1]
-
-        print('{} vs {} start.'.format(engines_order[0].name, engines_order[1].name))
-
-        # 初期局設定
-        board.reset()
-        moves = []
-        usi_moves = []
-        repetition_hash = defaultdict(int)
-        if csa:
-            engine_names = [engine.name for engine in engines_order]
-            if not multi_csa:
-                csa_exporter = CSA.Exporter(os.path.join(csa, '+'.join(engine_names) + '+' + datetime.datetime.now().strftime('%Y%m%d%H%M%S') + '.csa'), append=False)
-            csa_exporter.info(board, engine_names, version='V2')
-        if opening:
-            for move_usi in opening_list[n // 2 % len(opening_list)]:
-                move = board.push_usi(move_usi)
-                if csa:
-                    csa_exporter.move(move)
-                moves.append(move)
-                usi_moves.append(move_usi)
-                repetition_hash[board.zobrist_hash()] += 1
-                if board.move_number > opening_moves:
-                    break
-
-        # 盤面表示
-        if is_display:
-            print('開始局面')
-            if is_jupyter:
-                display(SVG(board.to_svg()))
+    with ExitStack() as stack:
+        executor = stack.enter_context(ThreadPoolExecutor(max_workers=2)) if ponder else None
+        for n in range(games):
+            # 先後入れ替え
+            if no_swap or n % 2 == 0:
+                engines_order = (engine1, engine2)
+                options_order = (options1, options2)
+                listeners_order = (listener1, listener2)
+                byoyomi_order = (byoyomi1, byoyomi2)
+                btime = time1
+                wtime = time2
+                binc = inc1
+                winc = inc2
             else:
-                print(board)
+                engines_order = (engine2, engine1)
+                options_order = (options2, options1)
+                listeners_order = (listener2, listener1)
+                byoyomi_order = (byoyomi2, byoyomi1)
+                btime = time2
+                wtime = time1
+                binc = inc2
+                winc = inc1
 
-        # 新規ゲーム
-        for engine, listener in zip(engines_order, listeners_order):
-            engine.usinewgame(listener=listener)
+            # 接続とエンジン設定
+            for engine, options, listener in zip(engines_order, options_order, listeners_order):
+                if engine.proc is None:
+                    engine.connect(listener=listener)
+                if ponder:
+                    engine.setoption('USI_Ponder', 'true', listener=listener)
+                for name, value in options.items():
+                    engine.setoption(name, value, listener=listener)
+                engine.isready(listener=listener)
 
-        # 対局
-        is_game_over = False
-        is_nyugyoku = False
-        is_illegal = False
-        is_repetition_win = False
-        is_repetition_lose = False
-        is_fourfold_repetition = False
-        is_timeup = False
-        remain_time = [btime, wtime]
-        inc_time = (binc, winc)
-        bestmove = None
-        pondermove = None
-        pre_pondermove = None
-        feature = None
-        pre_feature = None
-        while not is_game_over:
-            engine_index = (board.move_number - 1) % 2
-            engine = engines_order[engine_index]
-            listener = listeners_order[engine_index]
-            byoyomi = byoyomi_order[engine_index]
+            if names:
+                if names[0]: engine1.name = names[0]
+                if names[1]: engine2.name = names[1]
 
-            # 持将棋
-            if board.move_number > draw:
-                is_game_over = True
-                break
+            print('{} vs {} start.'.format(engines_order[0].name, engines_order[1].name))
 
-            # ponder
-            ponderhit = False
-            if ponder:
-                if pre_pondermove:
-                    if bestmove == pre_pondermove:
-                        ponderhit = True
-                        pre_pondermove = pondermove
-
-                        start_time = perf_counter()
-
-                        engine.ponderhit(listener=listener)
-                        bestmove, pondermove = pre_feature.result()
-    
-                        elapsed_time = perf_counter() - start_time
-                    else:
-                        pre_pondermove = pondermove
-                        engine.stop(listener=listener)
-                        pre_feature.result()
-                else:
-                    pre_pondermove = pondermove
-                pre_feature = feature
-
-            if not ponderhit:
-                # position
-                engine.position(usi_moves, listener=listener)
-
-                start_time = perf_counter()
-
-                # go
-                bestmove, pondermove = engine.go(byoyomi=byoyomi, btime=remain_time[BLACK], wtime=remain_time[WHITE], binc=binc, winc=winc, listener=listener)
-
-                elapsed_time = perf_counter() - start_time
-
-            if remain_time[board.turn] is not None:
-                if inc_time[board.turn] is not None:
-                    remain_time[board.turn] += inc_time[board.turn]
-                remain_time[board.turn] -= math.ceil(elapsed_time * 1000)
-
-                if remain_time[board.turn] < 0:
-                    # 1秒未満は切れ負けにしない
-                    if remain_time[board.turn] > -1000:
-                        remain_time[board.turn] = 0
-                    else:
-                        # 時間切れ負け
-                        is_timeup = True
-                        is_game_over = True
-                        break
-
-            # ponder
-            if ponder and pondermove:
-                engine.position(usi_moves + [bestmove, pondermove], listener=listener)
-                feature = executor.submit(engine.go, ponder=True, byoyomi=byoyomi, btime=remain_time[BLACK], wtime=remain_time[WHITE], binc=binc, winc=winc, listener=listener)
-
-            score = usi_info_to_score(listener.info)
-            # 投了閾値
-            if resign is not None:
-                if score is not None and score <= -resign:
-                    # 投了
-                    is_game_over = True
-                    break
-
-            # 詰みを見つけたら終了
-            if mate_win:
-                if score is not None and score == 100000:
-                    move = board.move_from_usi(bestmove)
+            # 初期局設定
+            board.reset()
+            moves = []
+            usi_moves = []
+            repetition_hash = defaultdict(int)
+            if csa:
+                engine_names = [engine.name for engine in engines_order]
+                if not multi_csa:
+                    csa_exporter = CSA.Exporter(os.path.join(csa, '+'.join(engine_names) + '+' + datetime.datetime.now().strftime('%Y%m%d%H%M%S') + '.csa'), append=False)
+                csa_exporter.info(board, engine_names, version='V2')
+            if opening:
+                for move_usi in opening_list[n // 2 % len(opening_list)]:
+                    move = board.push_usi(move_usi)
                     if csa:
-                        csa_exporter.move(move, time=int(elapsed_time), comment=usi_info_to_csa_comment(board, listener.info))
-                    board.push(move)
-                    is_game_over = True
-                    break
-
-            if bestmove == 'resign':
-                # 投了
-                is_game_over = True
-                break
-            elif bestmove == 'win':
-                # 入玉勝ち宣言
-                is_nyugyoku = True
-                is_game_over = True
-                break
-            else:
-                move = board.move_from_usi(bestmove)
-                if board.is_legal(move):
-                    if csa:
-                        csa_exporter.move(move, time=int(elapsed_time), comment=usi_info_to_csa_comment(board, listener.info))
-                    board.push(move)
+                        csa_exporter.move(move)
                     moves.append(move)
-                    usi_moves.append(bestmove)
-                    key = board.zobrist_hash()
-                    repetition_hash[key] += 1
-                    # 千日手
-                    if repetition_hash[key] == 4:
-                        # 連続王手
-                        is_draw = board.is_draw()
-                        if is_draw == REPETITION_WIN:
-                            is_repetition_win = True
-                            is_game_over = True
-                            break
-                        elif is_draw == REPETITION_LOSE:
-                            is_repetition_lose = True
-                            is_game_over = True
-                            break
-                        is_fourfold_repetition = True
-                        is_game_over = True
+                    usi_moves.append(move_usi)
+                    repetition_hash[board.zobrist_hash()] += 1
+                    if board.move_number > opening_moves:
                         break
-                else:
-                    is_illegal = True
-                    is_game_over = True
-                    break
 
             # 盤面表示
             if is_display:
-                print('{}手目'.format(len(usi_moves)))
+                print('開始局面')
                 if is_jupyter:
-                    display(SVG(board.to_svg(move)))
+                    display(SVG(board.to_svg()))
                 else:
                     print(board)
 
-            # 終局判定
-            if board.is_game_over():
-                is_game_over = True
-                break
-
-        # ゲーム終了
-        for engine, listener in zip(engines_order, listeners_order):
-            engine.gameover(listener=listener)
-
-        # エンジン終了
-        if not keep_process:
+            # 新規ゲーム
             for engine, listener in zip(engines_order, listeners_order):
-                engine.quit(listener=listener)
+                engine.usinewgame(listener=listener)
 
-        # 結果出力
-        if not board.is_game_over() and board.move_number > draw:
-            win = WIN_DRAW
-            print('まで{}手で持将棋'.format(board.move_number - 1))
-            csa_endgame = '%JISHOGI'
-        elif is_fourfold_repetition:
-            win = WIN_DRAW
-            print('まで{}手で千日手'.format(board.move_number - 1))
-            csa_endgame = '%SENNICHITE'
-        elif is_nyugyoku:
-            win = board.turn
-            print('まで{}手で入玉宣言'.format(board.move_number - 1))
-            csa_endgame = '%KACHI'
-        elif is_illegal:
-            win = opponent(board.turn)
-            print('まで{}手で{}の反則負け'.format(board.move_number - 1, '先手' if win == WHITE else '後手'))
-            csa_endgame = '%ILLEGAL_MOVE'
-        elif is_repetition_win:
-            win = board.turn
-            print('まで{}手で{}の反則勝ち'.format(board.move_number - 1, '先手' if win == BLACK else '後手'))
-            csa_endgame = '%+ILLEGAL_ACTION' if board.turn == WHITE else '%-ILLEGAL_ACTION'
-        elif is_repetition_lose:
-            win = opponent(board.turn)
-            print('まで{}手で{}の反則負け'.format(board.move_number - 1, '先手' if win == WHITE else '後手'))
-            csa_endgame = 'ILLEGAL_MOVE'
-        elif is_timeup:
-            win = opponent(board.turn)
-            print('まで{}手で{}の切れ負け'.format(board.move_number - 1, '先手' if win == WHITE else '後手'))
-            csa_endgame = '%TIME_UP'
-        else:
-            win = opponent(board.turn)
-            print('まで{}手で{}の勝ち'.format(board.move_number - 1, '先手' if win == BLACK else '後手'))
-            csa_endgame = '%TORYO'
+            # 対局
+            is_nyugyoku = False
+            is_illegal = False
+            is_repetition_win = False
+            is_repetition_lose = False
+            is_fourfold_repetition = False
+            is_timeup = False
+            remain_time = [btime, wtime]
+            inc_time = (binc, winc)
+            pending = {}
+            try:
+                while True:
+                    engine_index = (board.move_number - 1) % 2
+                    engine = engines_order[engine_index]
+                    listener = listeners_order[engine_index]
+                    byoyomi = byoyomi_order[engine_index]
 
-        # 勝敗カウント
-        if engines_order[0] is engine1:
-            engine1_turn = 0
-            engine2_turn = 1
-        else:
-            engine1_turn = 1
-            engine2_turn = 0
-        if win == WIN_DRAW:
-            draw_count += 1
-            engine1_won[4 + engine1_turn] += 1
-            engine2_won[4 + engine2_turn] += 1
-        elif engine1_turn == 0 and win == BLACK or engine1_turn == 1 and win == WHITE:
-            engine1_won[engine1_turn] += 1
-            engine2_won[2 + engine2_turn] += 1
-        else:
-            engine2_won[engine2_turn] += 1
-            engine1_won[2 + engine1_turn] += 1
+                    # 持将棋
+                    if board.move_number > draw:
+                        break
 
-        black_won = engine1_won[0] + engine2_won[0]
-        white_won = engine1_won[1] + engine2_won[1]
-        engine1_won_sum = engine1_won[0] + engine1_won[1]
-        engine2_won_sum = engine2_won[0] + engine2_won[1]
-        total_count = engine1_won_sum + engine2_won_sum + draw_count
+                    # ponder
+                    ponderhit = False
+                    if engine in pending:
+                        future, expected_move = pending[engine]
+                        if bestmove == expected_move:
+                            ponderhit = True
+                            start_time = perf_counter()
+                            engine.ponderhit(listener=listener)
+                            bestmove, pondermove = future.result()
+                            elapsed_time = perf_counter() - start_time
+                        else:
+                            engine.stop(listener=listener)
+                            future.result()
+                        del pending[engine]
 
-        # 勝敗状況表示
-        if print_summary:
-            print('{} of {} games finished.'.format(n + 1, games))
-            print('{} vs {}: {}-{}-{} ({:.1f}%)'.format(
-                engine1.name, engine2.name, engine1_won_sum, engine2_won_sum, draw_count,
-                (engine1_won_sum + draw_count / 2) / total_count * 100))
-            print('Black vs White: {}-{}-{} ({:.1f}%)'.format(
-                black_won, white_won, draw_count,
-                (black_won + draw_count / 2) / total_count * 100))
-            print('{} playing Black: {}-{}-{} ({:.1f}%)'.format(
-                engine1.name,
-                engine1_won[0], engine1_won[2], engine1_won[4],
-                (engine1_won[0] + engine1_won[4] / 2) / (engine1_won[0] + engine1_won[2] + engine1_won[4]) * 100))
-            print('{} playing White: {}-{}-{} ({:.1f}%)'.format(
-                engine1.name,
-                engine1_won[1], engine1_won[3], engine1_won[5],
-                (engine1_won[1] + engine1_won[5] / 2) / (engine1_won[1] + engine1_won[3] + engine1_won[5]) * 100 if not no_swap and n > 0 else 0))
-            print('{} playing Black: {}-{}-{} ({:.1f}%)'.format(
-                engine2.name,
-                engine2_won[0], engine2_won[2], engine2_won[4],
-                (engine2_won[0] + engine2_won[4] / 2) / (engine2_won[0] + engine2_won[2] + engine2_won[4]) * 100 if not no_swap and n > 0 else 0))
-            print('{} playing White: {}-{}-{} ({:.1f}%)'.format(
-                engine2.name,
-                engine2_won[1], engine2_won[3], engine2_won[5],
-                (engine2_won[1] + engine2_won[5] / 2) / (engine2_won[1] + engine2_won[3] + engine2_won[5]) * 100))
-            elo = Elo(engine1_won_sum, engine2_won_sum, draw_count)
-            if engine1_won_sum > 0 and engine2_won_sum > 0:
-                try:
-                    error_margin = elo.error_margin()
-                except ValueError:
-                    error_margin = math.nan
-                print('Elo difference: {:.1f} +/- {:.1f}, LOS: {:.1f} %, DrawRatio: {:.1f} %'.format(
-                    elo.diff(), error_margin, elo.los(), elo.draw_ratio()))
+                    if not ponderhit:
+                        # position
+                        engine.position(usi_moves, listener=listener)
 
-        # CSA
-        if csa:
-            csa_exporter.endgame(csa_endgame)
+                        start_time = perf_counter()
 
-        # PGN
-        if pgn:
-            if win == BLACK:
-                result = BLACK_WIN
-            elif win == WHITE:
-                result = WHITE_WIN
+                        # go
+                        bestmove, pondermove = engine.go(byoyomi=byoyomi, btime=remain_time[BLACK], wtime=remain_time[WHITE], binc=binc, winc=winc, listener=listener)
+
+                        elapsed_time = perf_counter() - start_time
+
+                    if remain_time[board.turn] is not None:
+                        if inc_time[board.turn] is not None:
+                            remain_time[board.turn] += inc_time[board.turn]
+                        remain_time[board.turn] -= math.ceil(elapsed_time * 1000)
+
+                        if remain_time[board.turn] < 0:
+                            # 1秒未満は切れ負けにしない
+                            if remain_time[board.turn] > -1000:
+                                remain_time[board.turn] = 0
+                            else:
+                                # 時間切れ負け
+                                is_timeup = True
+                                break
+
+                    score = usi_info_to_score(listener.info)
+                    # 投了閾値
+                    if resign is not None:
+                        if score is not None and score <= -resign:
+                            # 投了
+                            break
+
+                    # 詰みを見つけたら終了
+                    if mate_win:
+                        if score is not None and score == 100000:
+                            move = board.move_from_usi(bestmove)
+                            if csa:
+                                csa_exporter.move(move, time=int(elapsed_time), comment=usi_info_to_csa_comment(board, listener.info))
+                            board.push(move)
+                            break
+
+                    if bestmove == 'resign':
+                        # 投了
+                        break
+                    elif bestmove == 'win':
+                        # 入玉勝ち宣言
+                        is_nyugyoku = True
+                        break
+                    else:
+                        move = board.move_from_usi(bestmove)
+                        if board.is_legal(move):
+                            if csa:
+                                csa_exporter.move(move, time=int(elapsed_time), comment=usi_info_to_csa_comment(board, listener.info))
+                            board.push(move)
+                            moves.append(move)
+                            usi_moves.append(bestmove)
+                            key = board.zobrist_hash()
+                            repetition_hash[key] += 1
+                            # 千日手
+                            if repetition_hash[key] == 4:
+                                # 連続王手
+                                is_draw = board.is_draw()
+                                if is_draw == REPETITION_WIN:
+                                    is_repetition_win = True
+                                    break
+                                elif is_draw == REPETITION_LOSE:
+                                    is_repetition_lose = True
+                                    break
+                                is_fourfold_repetition = True
+                                break
+                        else:
+                            is_illegal = True
+                            break
+
+                    # 終局判定
+                    game_over = board.is_game_over()
+
+                    # Send before submitting the reader so stop cannot overtake go ponder.
+                    if ponder and pondermove and not game_over and board.move_number <= draw:
+                        engine.position(usi_moves + [pondermove], listener=listener)
+                        engine._send_go(ponder=True, byoyomi=byoyomi, btime=remain_time[BLACK], wtime=remain_time[WHITE], binc=binc, winc=winc, listener=listener)
+                        pending[engine] = (executor.submit(engine._read_bestmove, listener), pondermove)
+
+                    # 盤面表示
+                    if is_display:
+                        print('{}手目'.format(len(usi_moves)))
+                        if is_jupyter:
+                            display(SVG(board.to_svg(move)))
+                        else:
+                            print(board)
+
+                    if game_over:
+                        break
+
+            except BaseException:
+                # Cleanup must not replace an exception from the game itself.
+                with suppress(BaseException):
+                    _stop_ponder(pending, dict(zip(engines_order, listeners_order)))
+                raise
             else:
-                result = DRAW
-            pgn_exporter.tag_pair([engine.name for engine in engines_order], result, round=n+1)
-            if not no_pgn_moves:
-                pgn_exporter.movetext(moves)
+                _stop_ponder(pending, dict(zip(engines_order, listeners_order)))
 
-        if callback:
-            is_continue = callback({
-                'engine1_name': engine1.name,
-                'engine2_name': engine2.name,
-                'engine1_won': engine1_won_sum,
-                'engine2_won': engine2_won_sum,
-                'black_won': black_won,
-                'white_won': white_won,
-                'draw': draw_count,
-                'total': total_count,
-                })
-            if not is_continue:
-                break
+            # ゲーム終了
+            for engine, listener in zip(engines_order, listeners_order):
+                engine.gameover(listener=listener)
+
+            # エンジン終了
+            if not keep_process:
+                for engine, listener in zip(engines_order, listeners_order):
+                    engine.quit(listener=listener)
+
+            # 結果出力
+            if not board.is_game_over() and board.move_number > draw:
+                win = WIN_DRAW
+                print('まで{}手で持将棋'.format(board.move_number - 1))
+                csa_endgame = '%JISHOGI'
+            elif is_fourfold_repetition:
+                win = WIN_DRAW
+                print('まで{}手で千日手'.format(board.move_number - 1))
+                csa_endgame = '%SENNICHITE'
+            elif is_nyugyoku:
+                win = board.turn
+                print('まで{}手で入玉宣言'.format(board.move_number - 1))
+                csa_endgame = '%KACHI'
+            elif is_illegal:
+                win = opponent(board.turn)
+                print('まで{}手で{}の反則負け'.format(board.move_number - 1, '先手' if win == WHITE else '後手'))
+                csa_endgame = '%ILLEGAL_MOVE'
+            elif is_repetition_win:
+                win = board.turn
+                print('まで{}手で{}の反則勝ち'.format(board.move_number - 1, '先手' if win == BLACK else '後手'))
+                csa_endgame = '%+ILLEGAL_ACTION' if board.turn == WHITE else '%-ILLEGAL_ACTION'
+            elif is_repetition_lose:
+                win = opponent(board.turn)
+                print('まで{}手で{}の反則負け'.format(board.move_number - 1, '先手' if win == WHITE else '後手'))
+                csa_endgame = 'ILLEGAL_MOVE'
+            elif is_timeup:
+                win = opponent(board.turn)
+                print('まで{}手で{}の切れ負け'.format(board.move_number - 1, '先手' if win == WHITE else '後手'))
+                csa_endgame = '%TIME_UP'
+            else:
+                win = opponent(board.turn)
+                print('まで{}手で{}の勝ち'.format(board.move_number - 1, '先手' if win == BLACK else '後手'))
+                csa_endgame = '%TORYO'
+
+            # 勝敗カウント
+            if engines_order[0] is engine1:
+                engine1_turn = 0
+                engine2_turn = 1
+            else:
+                engine1_turn = 1
+                engine2_turn = 0
+            if win == WIN_DRAW:
+                draw_count += 1
+                engine1_won[4 + engine1_turn] += 1
+                engine2_won[4 + engine2_turn] += 1
+            elif engine1_turn == 0 and win == BLACK or engine1_turn == 1 and win == WHITE:
+                engine1_won[engine1_turn] += 1
+                engine2_won[2 + engine2_turn] += 1
+            else:
+                engine2_won[engine2_turn] += 1
+                engine1_won[2 + engine1_turn] += 1
+
+            black_won = engine1_won[0] + engine2_won[0]
+            white_won = engine1_won[1] + engine2_won[1]
+            engine1_won_sum = engine1_won[0] + engine1_won[1]
+            engine2_won_sum = engine2_won[0] + engine2_won[1]
+            total_count = engine1_won_sum + engine2_won_sum + draw_count
+
+            # 勝敗状況表示
+            if print_summary:
+                print('{} of {} games finished.'.format(n + 1, games))
+                print('{} vs {}: {}-{}-{} ({:.1f}%)'.format(
+                    engine1.name, engine2.name, engine1_won_sum, engine2_won_sum, draw_count,
+                    (engine1_won_sum + draw_count / 2) / total_count * 100))
+                print('Black vs White: {}-{}-{} ({:.1f}%)'.format(
+                    black_won, white_won, draw_count,
+                    (black_won + draw_count / 2) / total_count * 100))
+                print('{} playing Black: {}-{}-{} ({:.1f}%)'.format(
+                    engine1.name,
+                    engine1_won[0], engine1_won[2], engine1_won[4],
+                    (engine1_won[0] + engine1_won[4] / 2) / (engine1_won[0] + engine1_won[2] + engine1_won[4]) * 100))
+                print('{} playing White: {}-{}-{} ({:.1f}%)'.format(
+                    engine1.name,
+                    engine1_won[1], engine1_won[3], engine1_won[5],
+                    (engine1_won[1] + engine1_won[5] / 2) / (engine1_won[1] + engine1_won[3] + engine1_won[5]) * 100 if not no_swap and n > 0 else 0))
+                print('{} playing Black: {}-{}-{} ({:.1f}%)'.format(
+                    engine2.name,
+                    engine2_won[0], engine2_won[2], engine2_won[4],
+                    (engine2_won[0] + engine2_won[4] / 2) / (engine2_won[0] + engine2_won[2] + engine2_won[4]) * 100 if not no_swap and n > 0 else 0))
+                print('{} playing White: {}-{}-{} ({:.1f}%)'.format(
+                    engine2.name,
+                    engine2_won[1], engine2_won[3], engine2_won[5],
+                    (engine2_won[1] + engine2_won[5] / 2) / (engine2_won[1] + engine2_won[3] + engine2_won[5]) * 100))
+                elo = Elo(engine1_won_sum, engine2_won_sum, draw_count)
+                if engine1_won_sum > 0 and engine2_won_sum > 0:
+                    try:
+                        error_margin = elo.error_margin()
+                    except ValueError:
+                        error_margin = math.nan
+                    print('Elo difference: {:.1f} +/- {:.1f}, LOS: {:.1f} %, DrawRatio: {:.1f} %'.format(
+                        elo.diff(), error_margin, elo.los(), elo.draw_ratio()))
+
+            # CSA
+            if csa:
+                csa_exporter.endgame(csa_endgame)
+
+            # PGN
+            if pgn:
+                if win == BLACK:
+                    result = BLACK_WIN
+                elif win == WHITE:
+                    result = WHITE_WIN
+                else:
+                    result = DRAW
+                pgn_exporter.tag_pair([engine.name for engine in engines_order], result, round=n+1)
+                if not no_pgn_moves:
+                    pgn_exporter.movetext(moves)
+
+            if callback:
+                is_continue = callback({
+                    'engine1_name': engine1.name,
+                    'engine2_name': engine2.name,
+                    'engine1_won': engine1_won_sum,
+                    'engine2_won': engine2_won_sum,
+                    'black_won': black_won,
+                    'white_won': white_won,
+                    'draw': draw_count,
+                    'total': total_count,
+                    })
+                if not is_continue:
+                    break
 
     # CSA
     if csa:
