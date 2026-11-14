@@ -257,6 +257,7 @@ def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, n
             moves = []
             usi_moves = []
             repetition_hash = defaultdict(int)
+            repetition_hash[board.zobrist_hash()] = 1
             if csa:
                 engine_names = [engine.name for engine in engines_order]
                 if not multi_csa:
