@@ -300,6 +300,7 @@ def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, n
             is_repetition_lose = False
             is_fourfold_repetition = False
             is_timeup = False
+            is_max_moves = False
             remain_time = [btime, wtime]
             inc_time = (binc, winc)
             pending = {}
@@ -312,6 +313,7 @@ def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, n
 
                     # 持将棋
                     if board.move_number > draw:
+                        is_max_moves = True
                         break
 
                     # ponder
@@ -441,7 +443,7 @@ def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, n
                     engine.quit(listener=listener)
 
             # 結果出力
-            if not board.is_game_over() and board.move_number > draw:
+            if is_max_moves:
                 win = WIN_DRAW
                 print('まで{}手で持将棋'.format(board.move_number - 1))
                 csa_endgame = '%JISHOGI'
