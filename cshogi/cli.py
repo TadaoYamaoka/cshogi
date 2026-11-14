@@ -367,9 +367,14 @@ def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, n
                     if mate_win:
                         if score is not None and score == 100000:
                             move = board.move_from_usi(bestmove)
+                            if not board.is_legal(move):
+                                is_illegal = True
+                                break
                             if csa:
                                 csa_exporter.move(move, time=int(elapsed_time), comment=usi_info_to_csa_comment(board, listener.info))
                             board.push(move)
+                            moves.append(move)
+                            usi_moves.append(bestmove)
                             break
 
                     if bestmove == 'resign':
