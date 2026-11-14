@@ -346,8 +346,8 @@ def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, n
                         remain_time[board.turn] -= math.ceil(elapsed_time * 1000)
 
                         if remain_time[board.turn] < 0:
-                            # 1秒未満は切れ負けにしない
-                            if remain_time[board.turn] > -1000:
+                            # 秒読みを超えても1秒未満は切れ負けにしない
+                            if remain_time[board.turn] > -((byoyomi or 0) + 1000):
                                 remain_time[board.turn] = 0
                             else:
                                 # 時間切れ負け
