@@ -51,7 +51,7 @@ def usi_info_to_pv(board, info):
     # pv
     pv = []
     board2 = board.copy()
-    for usi_move in m[3].split(' '):
+    for usi_move in (m[3] or '').split():
         move = board2.move_from_usi(usi_move)
         if not board2.is_legal(move):
             break

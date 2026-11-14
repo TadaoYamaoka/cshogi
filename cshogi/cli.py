@@ -22,7 +22,10 @@ try:
 except NameError:
     is_jupyter = False
 
-re_usi_info = re.compile('^.*score (cp|mate) ([+\-0-9]+).*pv (.*)$')
+re_usi_info = re.compile(
+    r'^info (?:(?!string\b)\S+\s+)*?score (cp|mate) ([+-]?\d+|[+-])(?=\s|$)'
+    r'(?:(?!\b(?:pv|string)\b).)*'
+    r'(?:\bpv (.*)|\bstring.*)?$')
 def to_score(m):
     if m[1] == 'cp':
         score = int(m[2])
@@ -44,7 +47,7 @@ def usi_info_to_csa_comment(board, info):
     # pv
     pv = []
     board2 = board.copy()
-    for usi_move in m[3].split(' '):
+    for usi_move in (m[3] or '').split():
         move = board2.move_from_usi(usi_move)
         if not board2.is_legal(move):
             break
@@ -164,30 +167,19 @@ def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, n
     else:
         inc1 = inc2 = inc
 
-    # debug
-    if debug:
-        class Listener:
-            def __init__(self, id):
-                self.id = id
-                self.info = self.bestmove = ''
+    class Listener:
+        def __init__(self, id):
+            self.id = id
+            self.info = ''
 
-            def __call__(self, line):
+        def __call__(self, line):
+            if debug:
                 print(self.id + ':' + line)
-                self.info = self.bestmove
-                self.bestmove = line
+            if re_usi_info.match(line):
+                self.info = line
 
-        listener1 = Listener('1')
-        listener2 = Listener('2')
-    else:
-        class Listener:
-            def __init__(self):
-                self.info = self.bestmove = ''
-
-            def __call__(self, line):
-                self.info = self.bestmove
-                self.bestmove = line
-        listener1 = Listener()
-        listener2 = Listener()
+    listener1 = Listener('1')
+    listener2 = Listener('2')
 
     # CSA
     if csa and multi_csa:
@@ -339,6 +331,7 @@ def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, n
                         start_time = perf_counter()
 
                         # go
+                        listener.info = ''
                         bestmove, pondermove = engine.go(byoyomi=byoyomi, btime=remain_time[BLACK], wtime=remain_time[WHITE], binc=binc, winc=winc, listener=listener)
 
                         elapsed_time = perf_counter() - start_time
@@ -420,6 +413,7 @@ def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, n
                     # Send before submitting the reader so stop cannot overtake go ponder.
                     if ponder and pondermove and not game_over and board.move_number <= draw:
                         engine.position(usi_moves + [pondermove], listener=listener)
+                        listener.info = ''
                         engine._send_go(ponder=True, byoyomi=byoyomi, btime=remain_time[BLACK], wtime=remain_time[WHITE], binc=binc, winc=winc, listener=listener)
                         pending[engine] = (executor.submit(engine._read_bestmove, listener), pondermove)
 

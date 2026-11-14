@@ -128,6 +128,55 @@ class Match:
             return cli.main('black', 'white', **options)
 
 
+class CliInfoTests(unittest.TestCase):
+    def test_mate_without_distance(self):
+        for value, expected in [('+', 100000), ('-', -100000)]:
+            for pv in ('', ' pv 7g7f'):
+                with self.subTest(value=value, pv=pv):
+                    self.assertEqual(cli.usi_info_to_score(
+                        'info score mate ' + value + pv), expected)
+
+    def test_string_contents_are_not_scores_or_pv(self):
+        for line in (
+                'info string score mate 3',
+                'info depth 1 string score mate 3',
+                'info depth 1 string score cp -500 pv 7g7f'):
+            with self.subTest(line=line):
+                self.assertIsNone(cli.usi_info_to_score(line))
+                self.assertIsNone(cli.usi_info_to_csa_comment(cli.Board(), line))
+
+        for suffix, expected in (
+                (' string score mate 3 pv invalid', '** 123'),
+                (' pv 7g7f 3c3d', '** 123 -3334FU')):
+            line = 'info depth 1 score cp 123 nodes 100' + suffix
+            with self.subTest(line=line):
+                self.assertEqual(cli.usi_info_to_score(line), 123)
+                self.assertEqual(cli.usi_info_to_csa_comment(cli.Board(), line), expected)
+
+    def test_terminal_decisions_ignore_diagnostic_text(self):
+        original_response = FakeEngine.response
+
+        def response(engine, listener):
+            def forward(line):
+                if line.startswith('bestmove '):
+                    listener('info depth 1 string score mate 3')
+                    listener('info depth 1 string score cp -500')
+                listener(line)
+            return original_response(engine, forward)
+
+        for debug in (False, True):
+            for score, options, expected in (
+                    ('mate +', {'mate_win': True}, 'engine1_won'),
+                    ('mate -', {'resign': 100}, 'engine2_won'),
+                    ('cp 0', {'mate_win': True, 'resign': 100}, 'draw')):
+                with self.subTest(debug=debug, score=score):
+                    match = Match(['7g7f'])
+                    match.scores[0] = score
+                    with patch.object(FakeEngine, 'response', response):
+                        result = match.run(ponder=False, draw=1, debug=debug, **options)
+                    self.assertEqual(result[expected], 1)
+
+
 class CliPonderTests(unittest.TestCase):
     def assert_clean(self, match):
         self.assertTrue(all(not engine.active for engine in match.engines))
