@@ -186,7 +186,8 @@ def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, n
             def __call__(self, line):
                 self.info = self.bestmove
                 self.bestmove = line
-        listener1 = listener2 = Listener()
+        listener1 = Listener()
+        listener2 = Listener()
 
     # CSA
     if csa and multi_csa:
