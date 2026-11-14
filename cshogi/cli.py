@@ -268,7 +268,8 @@ def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, n
             if csa:
                 engine_names = [engine.name for engine in engines_order]
                 if not multi_csa:
-                    csa_exporter = CSA.Exporter(os.path.join(csa, '+'.join(engine_names) + '+' + datetime.datetime.now().strftime('%Y%m%d%H%M%S') + '.csa'), append=False)
+                    suffix = f'{random.SystemRandom().getrandbits(32):08x}'
+                    csa_exporter = CSA.Exporter(os.path.join(csa, '+'.join(engine_names) + '+' + datetime.datetime.now().strftime('%Y%m%d%H%M%S') + '+' + suffix + '.csa'), append=False)
                 csa_exporter.info(board, engine_names, version='V2')
             if opening:
                 for move_usi in opening_list[n // 2 % len(opening_list)]:
@@ -545,6 +546,8 @@ def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, n
             # CSA
             if csa:
                 csa_exporter.endgame(csa_endgame)
+                if not multi_csa:
+                    csa_exporter.close()
 
             # PGN
             if pgn:
@@ -573,7 +576,7 @@ def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, n
                     break
 
     # CSA
-    if csa:
+    if csa and multi_csa:
         csa_exporter.close()
 
     # PGN
