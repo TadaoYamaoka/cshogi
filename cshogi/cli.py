@@ -377,7 +377,10 @@ def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, n
                         break
                     elif bestmove == 'win':
                         # 入玉勝ち宣言
-                        is_nyugyoku = True
+                        if board.is_nyugyoku():
+                            is_nyugyoku = True
+                        else:
+                            is_illegal = True
                         break
                     else:
                         move = board.move_from_usi(bestmove)
