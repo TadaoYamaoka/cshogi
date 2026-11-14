@@ -469,7 +469,7 @@ def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, n
             elif is_repetition_lose:
                 win = opponent(board.turn)
                 print('まで{}手で{}の反則負け'.format(board.move_number - 1, '先手' if win == WHITE else '後手'))
-                csa_endgame = 'ILLEGAL_MOVE'
+                csa_endgame = '%+ILLEGAL_ACTION' if board.turn == BLACK else '%-ILLEGAL_ACTION'
             elif is_timeup:
                 win = opponent(board.turn)
                 print('まで{}手で{}の切れ負け'.format(board.move_number - 1, '先手' if win == WHITE else '後手'))
