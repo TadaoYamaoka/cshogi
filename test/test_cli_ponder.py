@@ -3,6 +3,8 @@ import contextlib
 import io
 import subprocess
 import sys
+import tempfile
+from pathlib import Path
 from concurrent.futures import Future, ThreadPoolExecutor
 from threading import Event
 import unittest
@@ -37,7 +39,7 @@ class FakeEngine:
     def usinewgame(self, listener=None):
         assert not self.active
 
-    def position(self, moves, listener=None):
+    def position(self, moves, sfen='startpos', listener=None):
         assert not self.active, 'position raced with a ponder reader'
         self.moves = list(moves)
 
@@ -126,6 +128,63 @@ class Match:
                 patch.object(cli, 'ThreadPoolExecutor', self.pool), \
                 contextlib.redirect_stdout(io.StringIO()):
             return cli.main('black', 'white', **options)
+
+
+class CliOpeningTests(unittest.TestCase):
+    def run_opening(self, match, contents, **options):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'opening.txt'
+            path.write_text(contents, encoding='utf-8')
+            return match.run(opening=str(path), **options)
+
+    def test_startpos_with_and_without_moves(self):
+        for contents in ('startpos', 'startpos moves 7g7f 3c3d'):
+            with self.subTest(contents=contents):
+                match = Match()
+                result = self.run_opening(match, contents, ponder=False)
+                self.assertEqual(result['total'], 1)
+                self.assertEqual(match.engines[0].moves[:2], ['7g7f', '3c3d'])
+
+    def test_invalid_opening_is_rejected_before_connect(self):
+        for contents in ('position startpos moves 7g7f',
+                         'startpos 7g7f', 'sfen invalid', '',
+                         'startpos moves invalid', 'startpos moves 7g7e'):
+            with self.subTest(contents=contents):
+                match = Match()
+                with self.assertRaises(ValueError):
+                    self.run_opening(match, contents, ponder=False)
+                self.assertTrue(all(engine.proc is None for engine in match.engines))
+
+    def test_sfen_is_sent_to_search_and_ponder_with_correct_turn(self):
+        board = cli.Board()
+        board.push_usi('7g7f')
+        board.move_number = 41  # White to move despite an odd move number.
+        initial_position = 'sfen ' + board.sfen()
+        for ponder, hit in ((False, False), (True, True), (True, False)):
+            with self.subTest(ponder=ponder, hit=hit):
+                match = Match(['3c3d', '2g2f', '8c8d', '2f2e', 'resign'])
+                if not hit:
+                    match.predictions[2] = '7i6h'
+                positions = []
+
+                class SfenEngine(FakeEngine):
+                    def position(self, moves, sfen='startpos', listener=None):
+                        super().position(moves, sfen=sfen, listener=listener)
+                        positions.append((self.name, sfen, list(moves)))
+
+                def engine(name, **kwargs):
+                    instance = SfenEngine(name, match)
+                    match.engines.append(instance)
+                    return instance
+
+                match.engine = engine
+                result = self.run_opening(
+                    match, initial_position + ' moves 3c3d 2g2f',
+                    opening_moves=2, ponder=ponder)
+                self.assertEqual(result['engine1_won'], 1)
+                self.assertEqual(positions[0], ('white', initial_position, ['3c3d', '2g2f']))
+                self.assertTrue(all(position == initial_position for _, position, _ in positions))
+                self.assertTrue(all(not instance.active for instance in match.engines))
 
 
 class CliInfoTests(unittest.TestCase):

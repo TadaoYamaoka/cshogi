@@ -273,7 +273,7 @@ cdef extern from "cshogi.h":
         __Board() except +
         __Board(const string& sfen) except +
         __Board(const __Board& board) except +
-        void set(const string& sfen)
+        void set(const string& sfen) except +
         void set_position(const string& position) except +
         void set_pieces(const int pieces[], const int pieces_in_hand[][7])
         void set_hcp(char* hcp) except +

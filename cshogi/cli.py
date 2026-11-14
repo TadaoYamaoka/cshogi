@@ -193,12 +193,29 @@ def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, n
     if opening:
         opening_list = []
         with open(opening) as f:
-            for line in f:
-                moves = line.strip()[15:]
-                if moves:
-                    opening_list.append(moves.split(' '))
+            for line_number, line in enumerate(f, 1):
+                parts = line.split()
+                if parts and parts[0] == 'startpos':
+                    position_end = 1
+                elif len(parts) >= 5 and parts[0] == 'sfen':
+                    position_end = 5
                 else:
-                    opening_list.append([])
+                    raise ValueError(f'{opening}:{line_number}: expected startpos or sfen')
+                if len(parts) > position_end and parts[position_end] != 'moves':
+                    raise ValueError(f'{opening}:{line_number}: expected moves after position')
+                initial_position = ' '.join(parts[:position_end])
+                opening_usi_moves = parts[position_end + 1:]
+                opening_board = Board()
+                if initial_position != 'startpos':
+                    opening_board.set_sfen(initial_position[5:])
+                for move_usi in opening_usi_moves:
+                    move = opening_board.move_from_usi(move_usi)
+                    if not opening_board.is_legal(move):
+                        raise ValueError(f'{opening}:{line_number}: illegal opening move: {move_usi}')
+                    opening_board.push(move)
+                opening_list.append((initial_position, opening_usi_moves))
+        if not opening_list:
+            raise ValueError(f'{opening}: no opening positions')
         # インデックス指定
         if opening_index is not None:
             opening_list = [opening_list[opening_index]]
@@ -253,7 +270,10 @@ def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, n
             print('{} vs {} start.'.format(engines_order[0].name, engines_order[1].name))
 
             # 初期局設定
+            initial_position, opening_usi_moves = opening_list[n // 2 % len(opening_list)] if opening else ('startpos', [])
             board.reset()
+            if initial_position != 'startpos':
+                board.set_sfen(initial_position[5:])
             moves = []
             usi_moves = []
             repetition_hash = defaultdict(int)
@@ -265,14 +285,14 @@ def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, n
                     csa_exporter = CSA.Exporter(os.path.join(csa, '+'.join(engine_names) + '+' + datetime.datetime.now().strftime('%Y%m%d%H%M%S') + '+' + suffix + '.csa'), append=False)
                 csa_exporter.info(board, engine_names, version='V2')
             if opening:
-                for move_usi in opening_list[n // 2 % len(opening_list)]:
+                for move_usi in opening_usi_moves:
                     move = board.push_usi(move_usi)
                     if csa:
                         csa_exporter.move(move)
                     moves.append(move)
                     usi_moves.append(move_usi)
                     repetition_hash[board.zobrist_hash()] += 1
-                    if board.move_number > opening_moves:
+                    if len(usi_moves) >= opening_moves:
                         break
 
             # 盤面表示
@@ -300,7 +320,7 @@ def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, n
             pending = {}
             try:
                 while True:
-                    engine_index = (board.move_number - 1) % 2
+                    engine_index = board.turn
                     engine = engines_order[engine_index]
                     listener = listeners_order[engine_index]
                     byoyomi = byoyomi_order[engine_index]
@@ -327,7 +347,7 @@ def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, n
 
                     if not ponderhit:
                         # position
-                        engine.position(usi_moves, listener=listener)
+                        engine.position(usi_moves, sfen=initial_position, listener=listener)
 
                         start_time = perf_counter()
 
@@ -413,7 +433,7 @@ def main(engine1: str, engine2: str, options1: Dict = {}, options2: Dict = {}, n
 
                     # Send before submitting the reader so stop cannot overtake go ponder.
                     if ponder and pondermove and not game_over and board.move_number <= draw:
-                        engine.position(usi_moves + [pondermove], listener=listener)
+                        engine.position(usi_moves + [pondermove], sfen=initial_position, listener=listener)
                         listener.info = ''
                         engine._send_go(ponder=True, byoyomi=byoyomi, btime=remain_time[BLACK], wtime=remain_time[WHITE], binc=binc, winc=winc, listener=listener)
                         pending[engine] = (executor.submit(engine._read_bestmove, listener), pondermove)
