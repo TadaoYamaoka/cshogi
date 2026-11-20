@@ -86,7 +86,7 @@ class Exporter:
                 self.f.write('PI\n+\n')
             else:
                 self.f.write(csa_pos)
-            self.turn = init_board.turn
+            self.turn = board.turn
         else:
             self.f.write('PI\n+\n')
             self.turn = cshogi.BLACK
