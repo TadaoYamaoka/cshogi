@@ -1,4 +1,4 @@
-﻿#include <string>
+#include <string>
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -157,7 +157,7 @@ namespace parser {
                         }
                     }
                     // score
-                    else if (line.substr(0, 4) == "'** ") {
+                    else if (!moves.empty() && line.substr(0, 4) == "'** ") {
                         auto last = line.find_first_of(" ", 4);
                         if (last == std::string::npos)
                             last = line.size();
