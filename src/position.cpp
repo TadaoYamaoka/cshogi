@@ -1,4 +1,4 @@
-﻿/*
+/*
   Apery, a USI shogi playing engine derived from Stockfish, a UCI chess playing engine.
   Copyright (C) 2004-2008 Tord Romstad (Glaurung author)
   Copyright (C) 2008-2015 Marco Costalba, Joona Kiiski, Tord Romstad
@@ -3201,15 +3201,24 @@ void Position::set(const std::string& sfen) {
     std::istringstream ss(sfen);
     char token;
     Square sq = SQ91;
+    int rankSquares = 0;
+    int rankCount = 0;
 
     clear();
 
     // 盤上の駒
     while (ss.get(token) && token != ' ') {
-        if (isdigit(token))
+        if (isdigit(token)) {
+            rankSquares += token - '0';
             sq += DeltaE * (token - '0');
-        else if (token == '/')
+        }
+        else if (token == '/') {
+            if (rankSquares != 9)
+                goto INCORRECT;
+            rankSquares = 0;
+            ++rankCount;
             sq += (DeltaW * 9) + DeltaS;
+        }
         else if (token == '+')
             promoteFlag = Promoted;
         else if (g_charToPieceUSI.isLegalChar(token)) {
@@ -3217,6 +3226,7 @@ void Position::set(const std::string& sfen) {
                 setPiece(g_charToPieceUSI.value(token) + promoteFlag, sq);
                 promoteFlag = UnPromoted;
                 sq += DeltaE;
+                ++rankSquares;
             }
             else
                 goto INCORRECT;
@@ -3224,6 +3234,8 @@ void Position::set(const std::string& sfen) {
         else
             goto INCORRECT;
     }
+    if (rankSquares != 9 || rankCount != 8)
+        goto INCORRECT;
     kingSquare_[Black] = king_square_or_square_num(bbOf(King, Black));
     kingSquare_[White] = king_square_or_square_num(bbOf(King, White));
     goldsBB_ = bbOf(Gold, ProPawn, ProLance, ProKnight, ProSilver);
