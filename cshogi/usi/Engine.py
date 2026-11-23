@@ -460,7 +460,7 @@ class Engine:
             proc.wait()
             for stream in (proc.stdin, proc.stdout, proc.stderr):
                 if stream is not None:
-                    with suppress(BrokenPipeError):
+                    with suppress(OSError):
                         stream.close()
             self.proc = None
 

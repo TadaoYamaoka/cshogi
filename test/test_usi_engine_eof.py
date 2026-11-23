@@ -7,7 +7,7 @@ import io
 from pathlib import Path
 import types
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 spec = importlib.util.spec_from_file_location(
     'usi_engine_under_test', Path(__file__).resolve().parents[1] / 'cshogi/usi/Engine.py')
@@ -32,6 +32,18 @@ class GuardedStream(io.BytesIO):
 
 class EngineEofTests(unittest.TestCase):
     methods = ('connect', 'usi', 'isready', 'go', 'go_mate')
+
+    def test_reap_closes_remaining_pipes_after_oserror(self):
+        engine = engine_module.Engine('unused', connect=False)
+        proc = engine.proc = Mock()
+        proc.stdin.close.side_effect = OSError(22, 'Invalid argument')
+        proc.stdout.close.side_effect = BrokenPipeError()
+        engine._reap()
+        engine._reap()
+        proc.wait.assert_called_once()
+        for stream in (proc.stdin, proc.stdout, proc.stderr):
+            stream.close.assert_called_once()
+        self.assertIsNone(engine.proc)
 
     def invoke(self, method, response):
         engine = engine_module.Engine('fake_engine', connect=False)

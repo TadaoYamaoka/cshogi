@@ -376,40 +376,51 @@ class CliPonderTests(unittest.TestCase):
         self.assertNotIn('go ponder', [cmd for _, cmd in match.events])
 
     def test_failed_stop_kills_process_and_releases_blocked_reader(self):
-        engine = Engine('unused', connect=False)
         process = subprocess.Popen(
             [sys.executable, '-u', '-c',
-             "import sys; print('ready', flush=True); sys.stdin.read()"],
+             "import os, sys, threading; threading.Timer(5, lambda: os._exit(9)).start(); sys.stdin.read()"],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        engine.proc = process
         failure = BrokenPipeError('debug output closed')
+        match = Match(['7g7f', 'resign'])
+        match.predictions[0] = '3c3d'
 
-        def listener(line):
-            raise failure
+        class BlockedReader(FakeEngine):
+            debug = False
 
-        with ThreadPoolExecutor(max_workers=1) as pool:
+            def _spawn(self):
+                self.proc = process
+
+            def stop(self, **kwargs):
+                raise failure
+
+            _read_bestmove = Engine._read_bestmove
+            kill = Engine.kill
+            _reap = Engine._reap
+
+        black = BlockedReader('black', match)
+        white = FakeEngine('white', match)
+        with process, patch.object(match, 'engine', side_effect=[black, white]), \
+                patch.object(black, 'kill', wraps=black.kill) as kill:
             try:
-                self.assertEqual(process.stdout.readline().strip(), b'ready')
-                future = pool.submit(engine._read_bestmove)
-                read_result = future.result
-                pending = {engine: (future, '3c3d')}
-                # Bound a regression so an unsent stop cannot hang the suite.
-                with patch.object(future, 'result',
-                                  side_effect=lambda: read_result(timeout=3)):
-                    with self.assertRaises(BrokenPipeError) as caught:
-                        cli._stop_ponder(pending, {engine: listener})
+                with self.assertRaises(BrokenPipeError) as caught:
+                    match.run()
                 self.assertIs(caught.exception, failure)
+                kill.assert_called_once()
                 self.assertIsNotNone(process.poll())
-                self.assertIsNone(engine.proc)
-                self.assertFalse(pending)
-                self.assertTrue(future.done())
-                self.assertIsInstance(future.exception(), EOFError)
+                self.assertIsNone(black.proc)
             finally:
                 if process.poll() is None:
                     process.kill()
-                process.wait()
-                for stream in (process.stdin, process.stdout, process.stderr):
-                    stream.close()
+
+    def test_second_interrupt_during_sequential_cleanup_propagates(self):
+        match = Match()
+        match.fail_at = 1
+        match.failure = KeyboardInterrupt('first interrupt during search')
+        second = KeyboardInterrupt('second interrupt while collecting ponder')
+        with patch.object(Future, 'exception', side_effect=second), self.assertRaises(KeyboardInterrupt) as caught:
+            match.run()
+        self.assertIs(caught.exception, second)
+        self.assertTrue(all(engine.proc is None for engine in match.engines))
 
     def test_cleanup_stops_every_engine_before_collecting_and_keeps_first_error(self):
         events = []
@@ -438,7 +449,7 @@ class CliPonderTests(unittest.TestCase):
         with self.assertRaisesRegex(OSError, 'stop failed'):
             cli._stop_ponder(pending, dict.fromkeys(engines))
         self.assertEqual(events, ['first', 'second'])
-        self.assertFalse(pending)
+        self.assertEqual(set(pending), set(engines))  # The worker owns abort and reap.
 
 
 if __name__ == '__main__':

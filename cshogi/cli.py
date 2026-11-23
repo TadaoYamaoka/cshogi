@@ -10,6 +10,7 @@ from dataclasses import dataclass, replace
 from enum import Enum
 from io import StringIO
 from itertools import chain
+from queue import SimpleQueue
 from threading import Event, Lock
 from time import perf_counter
 from typing import Callable
@@ -76,40 +77,34 @@ def _abort_games(engines, pending):
     for engine in engines:
         with suppress(Exception):
             engine.kill()
-    for future, _ in pending.values():
-        with suppress(BaseException):
-            future.result()
-    pending.clear()
-    for engine in engines:
-        with suppress(Exception):
-            engine._reap()
+    try:
+        for future, _ in pending.values():
+            with suppress(Exception):
+                future.exception()
+    finally:
+        pending.clear()
+        for engine in engines:
+            with suppress(Exception):
+                engine._reap()
 
 
-def _stop_ponder(pending, listeners, fail=None):
+def _stop_ponder(pending, listeners):
     """Send every stop before collecting the readers."""
     if not pending:
         return
     error = None
-    try:
-        for engine, (future, _) in pending.items():
-            if not future.done():
-                try:
-                    engine.stop(listener=listeners[engine])
-                except Exception as exc:
-                    if error is None:
-                        error = exc
-                        if fail:
-                            fail(exc)
-        if error is not None:
-            raise error
-        for future in as_completed([future for future, _ in pending.values()]):
-            future.result()
-        pending.clear()
-    except BaseException as exc:
-        if fail:
-            fail(exc)
-        _abort_games(listeners, pending)
-        raise
+    for engine, (future, _) in pending.items():
+        if not future.done():
+            try:
+                engine.stop(listener=listeners[engine])
+            except Exception as exc:
+                if error is None:
+                    error = exc
+    if error is not None:
+        raise error
+    for future in as_completed([future for future, _ in pending.values()]):
+        future.result()
+    pending.clear()
 
 
 Opening = tuple[str, tuple[str, ...]]
@@ -301,16 +296,12 @@ class Records:
             writer.info(board, names, version='V2')
         return writer
 
-    def finish(self, result, writer):
-        if writer:
-            writer.endgame(result.csa_code)
-            if self.buffer_multi:
-                if self.multi.f.tell():
-                    self.multi.f.write('/\n')
-                self.multi.f.write(writer.f.getvalue())
-                self.multi.f.flush()
-            elif self.directory:
-                writer.close()
+    def finish(self, result, csa_record):
+        if csa_record is not None:
+            if self.multi.f.tell():
+                self.multi.f.write('/\n')
+            self.multi.f.write(csa_record)
+            self.multi.f.flush()
         if self.pgn:
             outcome = {BLACK: BLACK_WIN, WHITE: WHITE_WIN, None: DRAW}[result.winner]
             self.pgn.tag_pair(result.names, outcome, round=result.spec.round)
@@ -338,6 +329,7 @@ class Worker:
 
     def play_pairs(self, pairs):
         last_order = ()
+        completed = 0
         try:
             for spec in chain.from_iterable(pairs):
                 if not self.match.try_start():
@@ -347,12 +339,14 @@ class Worker:
                     if engine_id not in self.players:
                         settings = self.configs[engine_id]
                         label = f'{self.prefix}{len(self.players) + 1}'
-                        listener = Listener(label, self.match.log if self.config.debug else None)
+                        listener = Listener(label, self.match.debug_log if self.config.debug else None)
                         self.players[engine_id] = Player(settings, Engine(settings.command, connect=False), listener)
                 with ExitStack() as stack:
-                    result, writer = self.play_game(spec, stack)
-                    self.match.report(result, writer, self.prefix)
-            for engine_id in last_order:
+                    result, csa_record = self.play_game(spec, stack)
+                self.match.report(result, csa_record, self.prefix)
+                completed += 1
+            # Preserve USI quit order for the final game, then release any other owned engine.
+            for engine_id in dict.fromkeys((*last_order, *self.players)):
                 player = self.players[engine_id]
                 if player.engine.proc is not None:
                     player.engine.quit(listener=player.listener)
@@ -363,6 +357,7 @@ class Worker:
             for player in self.players.values():
                 self.group.discard(player.engine)
             self.players.clear()
+        return completed
 
     def play_game(self, spec, stack):
         config = self.config
@@ -522,14 +517,18 @@ class Worker:
 
             if game_over:
                 break
-        _stop_ponder(pending, dict(zip(engines_order, listeners_order)), self.match.fail)
+        _stop_ponder(pending, dict(zip(engines_order, listeners_order)))
         for player in (black, white):
             player.engine.gameover(listener=player.listener)
         if not config.keep_process:
             for player in (black, white):
                 player.engine.quit(listener=player.listener)
         winner, code, message = ending.outcome(board.turn, board.move_number - 1)
-        return GameResult(spec, names, winner, code, message, tuple(moves)), writer
+        result = GameResult(spec, names, winner, code, message, tuple(moves))
+        if writer:
+            writer.endgame(result.csa_code)
+        csa_record = writer.f.getvalue() if self.match.records.buffer_multi else None
+        return result, csa_record
 
 
 def rate(wins, losses, draws):
@@ -623,6 +622,28 @@ class Match:
         self.lock = Lock()
         self.stopped = Event()
         self.error = None
+        self.debug_log = self.log
+
+    @contextmanager
+    def queued_debug_log(self):
+        lines = SimpleQueue()
+
+        def drain():
+            try:
+                for line in iter(lines.get, None):
+                    self.log(line)
+            except Exception as exc:
+                self.fail(exc)
+
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            writer = pool.submit(drain)
+            self.debug_log = lines.put
+            try:
+                yield
+            finally:
+                lines.put(None)
+                writer.result()
+                self.debug_log = self.log
 
     def try_start(self):
         with self.lock:
@@ -663,18 +684,18 @@ class Match:
             if self.error is None:
                 self.table.finish_pair(pair, self.games)
 
-    def report(self, result, writer, prefix):
+    def report(self, result, csa_record, prefix):
         with self._reporting():
             print(prefix + result.message)
             if self.table is not None:
-                self.records.finish(result, writer)
+                self.records.finish(result, csa_record)
                 self.table.record(result)
                 return
             self.stats.add(result.spec, result.names, result.winner)
             snapshot = self.stats.snapshot()
             if self.print_summary:
                 self.stats.summary(snapshot, self.games)
-            self.records.finish(result, writer)
+            self.records.finish(result, csa_record)
             if self.callback and not self.stopped.is_set() and not self.callback(snapshot):
                 self.stopped.set()
 
@@ -730,9 +751,11 @@ def run_workers(pairs, workers, config, group, match):
                     worker.play_pairs(jobs)
                 else:
                     for pair in jobs:
-                        worker.play_pairs((pair,))
-                        match.finish_pair(pair)
+                        if worker.play_pairs((pair,)) == len(pair):
+                            match.finish_pair(pair)
         except BaseException as exc:
+            if len(workers) == 1 and isinstance(exc, KeyboardInterrupt):
+                raise
             match.fail(exc)
 
     if len(workers) == 1:
@@ -747,8 +770,6 @@ def run_workers(pairs, workers, config, group, match):
                 match.stopped.set()
                 group.close()
                 raise
-    if match.error is not None:
-        raise match.error
 
 
 def main(engine1: str, engine2: str, options1: dict | None = None, options2: dict | None = None, names: list[str] | None = None,
@@ -823,10 +844,14 @@ def _run(configs, config, games, opening, seed, index, no_swap, csa, multi_csa, 
     with ExitStack() as stack:
         records = Records(stack, csa, multi_csa, pgn, no_pgn_moves, concurrency > 1)
         match = Match(records, games, print_summary, callback, table)
+        if config.debug and concurrency > 1:
+            stack.enter_context(match.queued_debug_log())
         run_workers(pairs, workers, config, ProcessGroup(), match)
-        if table is not None:
-            return [stats.snapshot() for stats in table.stats.values()]
-        return match.stats.snapshot()
+    if match.error is not None:
+        raise match.error
+    if table is not None:
+        return [stats.snapshot() for stats in table.stats.values()]
+    return match.stats.snapshot()
 
 
 def _parse_options(value):

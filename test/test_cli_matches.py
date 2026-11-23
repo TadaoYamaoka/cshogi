@@ -26,6 +26,23 @@ def run_cli(match, *args):
 
 
 class SequentialMatchTests(unittest.TestCase):
+    def test_individual_csa_is_closed_once_before_callback(self):
+        class Record(io.StringIO):
+            closes = 0
+
+            def close(self):
+                self.closes += 1
+                super().close()
+
+        record = Record()
+
+        def callback(stats):
+            self.assertTrue(record.closed)
+
+        with patch.object(cli, 'open', return_value=record):
+            Match(['resign']).run(csa='records', callback=callback)
+        self.assertEqual(record.closes, 1)
+
     def test_counts_colors_and_callback_snapshot(self):
         calls = []
 
@@ -221,6 +238,72 @@ class ParallelMatchTests(unittest.TestCase):
         self.assertEqual(sorted(rounds), list('1234'))
         self.assertEqual(result['total'], 4)
 
+    def test_interrupted_league_keeps_five_games_without_publishing_six(self):
+        half_pair, two_pairs, closed = Event(), Event(), Event()
+        report, finish, close = cli.Match.report, cli.LeagueTable.finish_pair, cli.ProcessGroup.close
+        finished = []
+
+        def reported(state, result, *args):
+            report(state, result, *args)
+            if result.spec.index == 4:
+                half_pair.set()
+                self.assertTrue(closed.wait(4))
+
+        def finished_pair(table, pair, games):
+            finish(table, pair, games)
+            finished.append(pair[0].index)
+            if len(finished) == 2:
+                two_pairs.set()
+
+        def interrupt(*args, **kwargs):
+            self.assertTrue(half_pair.wait(3) and two_pairs.wait(3))
+            raise KeyboardInterrupt
+
+        def shutdown(group):
+            close(group)
+            closed.set()
+
+        output = io.StringIO()
+        with tempfile.TemporaryDirectory() as directory, contextlib.redirect_stdout(output), \
+                patch.object(cli, 'Engine', Match(['resign']).engine), patch.object(cli, 'wait', interrupt), \
+                patch.object(cli.Match, 'report', reported), patch.object(cli.LeagueTable, 'finish_pair', finished_pair), \
+                patch.object(cli.ProcessGroup, 'close', shutdown):
+            pgn = Path(directory) / 'league.pgn'
+            with self.assertRaises(KeyboardInterrupt):
+                cli.league('A', 'B', 'C', games=2, concurrency=2, pgn=pgn)
+            self.assertEqual(pgn.read_text().count('[Result '), 5)
+        self.assertCountEqual(finished, [0, 2])
+        self.assertNotIn('games finished.', output.getvalue())
+
+    def test_debug_search_can_return_while_a_callback_holds_the_match_lock(self):
+        searching, reporting, logged = Event(), Event(), Event()
+        play_game, go = cli.Worker.play_game, FakeEngine.go
+
+        def play(worker, spec, stack):
+            for player in worker.players.values():
+                player.engine.during_report = spec.index == 2
+            if spec.index == 0:
+                self.assertTrue(searching.wait(3))
+            return play_game(worker, spec, stack)
+
+        def search(engine, **kwargs):
+            if engine.during_report:
+                searching.set()
+                self.assertTrue(reporting.wait(3))
+            result = go(engine, **kwargs)
+            if engine.during_report:
+                logged.set()
+            return result
+
+        def callback(stats):
+            reporting.set()
+            self.assertTrue(logged.wait(3))
+            return False
+
+        with patch.object(cli.Worker, 'play_game', play), patch.object(FakeEngine, 'go', search):
+            result = Match(['resign']).run(games=4, concurrency=2, debug=True, ponder=False, callback=callback)
+        self.assertEqual(result['total'], 2)
+
     def test_callback_stops_new_games_and_drains_started_games(self):
         match = Match(['resign'])
         started, stopped = Event(), Event()
@@ -320,7 +403,7 @@ for command in sys.stdin:
         print('bestmove 7g7f ponder 3c3d', flush=True)
 """
 
-    def run_shutdown(self, mode):
+    def run_shutdown(self, mode, concurrency=2, league=False):
         processes = []
         waiting = Event()
         handshake = cli.Engine._handshake
@@ -335,11 +418,16 @@ for command in sys.stdin:
         def handshake_wait(engine, listener):
             if mode == 'handshake':
                 waiting.set()
+                if concurrency == 1:
+                    with patch.object(engine.proc.stdout, 'readline', side_effect=KeyboardInterrupt):
+                        return handshake(engine, listener)
             handshake(engine, listener)
 
         def read(engine, listener):
             if mode == 'ponder' and engine.pondering:
                 waiting.set()
+            elif mode == 'ponder' and concurrency == 1 and engine.cmd == 'white':
+                interrupt()
             return reader(engine, listener)
 
         send = cli.Engine._send_go
@@ -362,19 +450,26 @@ for command in sys.stdin:
                                       ('_read_bestmove', read), ('_send_go', send_go)]:
                 stack.enter_context(patch.object(cli.Engine, name, replacement))
             stack.enter_context(contextlib.redirect_stdout(io.StringIO()))
-            if mode != 'callback':
+            if mode != 'callback' and concurrency > 1:
                 stack.enter_context(patch.object(cli, 'wait', interrupt))
             start = monotonic()
             with self.assertRaises(RuntimeError if mode == 'callback' else KeyboardInterrupt) as caught:
-                cli.main('black', 'white', concurrency=2, games=4, keep_process=True,
-                         ponder=mode == 'ponder', callback=callback)
+                options = dict(concurrency=concurrency, games=4, keep_process=True, ponder=mode == 'ponder')
+                if league:
+                    cli.league('black', 'white', 'third', **options)
+                else:
+                    cli.main('black', 'white', callback=callback, **options)
             if mode == 'callback':
                 self.assertIs(caught.exception, failure)
             self.assertLess(monotonic() - start, 7)
         self.assertTrue(processes)
         self.assertTrue(all(p.poll() is not None for p in processes))
+        self.assertTrue(all(stream.closed for p in processes for stream in (p.stdin, p.stdout, p.stderr)))
 
     def test_interrupt_and_callback_cleanup(self):
-        for mode in ('handshake', 'ponder', 'callback'):
-            with self.subTest(mode=mode):
-                self.run_shutdown(mode)
+        for mode in ('handshake', 'ponder'):
+            for concurrency in (1, 2):
+                for league in (False, True):
+                    with self.subTest(mode=mode, concurrency=concurrency, league=league):
+                        self.run_shutdown(mode, concurrency, league)
+        self.run_shutdown('callback')

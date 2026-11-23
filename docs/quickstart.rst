@@ -184,3 +184,5 @@ Features
   A falsy callback result stops new games. Games already started finish
   and contribute to the records and final totals. Parallel callbacks run
   serially on the reporting workers. Board display requires concurrency 1.
+  Parallel debug output is queued so that a worker can keep reading engine
+  responses while another worker prints standings or runs a callback.
