@@ -68,6 +68,15 @@ class SequentialMatchTests(unittest.TestCase):
                 self.assertEqual(totals, [0] if count == 2 else [0, 0, 0])
                 engine.assert_not_called()
 
+    def test_cli_rejects_extra_clock_values(self):
+        for flag in ('--byoyomi', '--time', '--inc'):
+            stderr = io.StringIO()
+            with self.subTest(flag=flag), contextlib.redirect_stderr(stderr):
+                with self.assertRaises(SystemExit) as caught:
+                    cli._cli(['A', 'B', flag, '1', '2', '3'])
+                self.assertEqual(caught.exception.code, 2)
+                self.assertIn('error: expected one or 2 clock values', stderr.getvalue())
+
     def test_individual_csa_is_closed_once_before_callback(self):
         class Record(io.StringIO):
             closes = 0

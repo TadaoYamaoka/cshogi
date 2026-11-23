@@ -717,7 +717,7 @@ def _clock_values(value, count):
         return value
     if len(value) == 1 or (count == 3 and value):
         return [value[0]] * count
-    raise ValueError(f'expected one or {count} clock values')
+    raise _MatchConfigError(f'expected one or {count} clock values')
 
 
 class _MatchConfigError(ValueError):
