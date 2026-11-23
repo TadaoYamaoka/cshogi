@@ -169,7 +169,7 @@ Features
         --worker-options2 "UCT_Threads:2" "UCT_Threads:0,UCT_Threads2:2" \
         --worker-options3 "UCT_Threads:2" "UCT_Threads:0,UCT_Threads2:2"
 
-  Here ``[w1]`` uses GPU 0 and ``[w2]`` uses GPU 1. Budget CPU threads
+  Here ``[worker1]`` uses GPU 0 and ``[worker2]`` uses GPU 1. Budget CPU threads
   across workers, including both engines when pondering. For dlshogi builds
   with a TensorRT cache, initialize each model/GPU/batch-size combination
   once before starting workers that share the same cache file.
@@ -188,5 +188,5 @@ Features
   serially on the reporting workers. Board display requires concurrency 1.
   Parallel debug output is queued so that a worker can keep reading engine
   responses while another worker prints standings or runs a callback.
-  A debug label such as ``[w1] g3 2`` identifies worker 1, scheduled game 3,
+  A debug label such as ``[worker1] g3 2`` identifies worker 1, scheduled game 3,
   and the second engine on the command line.

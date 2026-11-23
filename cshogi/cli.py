@@ -3,6 +3,7 @@ import math
 import os
 import random
 import re
+import sys
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed, wait
 from contextlib import ExitStack, contextmanager, nullcontext, suppress
@@ -763,7 +764,7 @@ def _worker_configs(configs, concurrency, worker_options, display):
 
 def run_workers(pairs, workers, config, group, match):
     def run(index):
-        prefix = f'[w{index + 1}] ' if len(workers) > 1 else ''
+        prefix = f'[worker{index + 1}] ' if len(workers) > 1 else ''
         try:
             with ExitStack() as stack:
                 executor = stack.enter_context(ThreadPoolExecutor(max_workers=2)) if config.ponder else None
@@ -893,6 +894,10 @@ def _parse_options(value):
 
 def _cli(argv=None):
     import argparse
+
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(line_buffering=True)
+
     parser = argparse.ArgumentParser()
     parser.add_argument('engine1')
     parser.add_argument('engine2')

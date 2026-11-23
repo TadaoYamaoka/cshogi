@@ -202,9 +202,22 @@ class SequentialMatchTests(unittest.TestCase):
 
 
 class ParallelMatchTests(unittest.TestCase):
+    def test_cli_flushes_start_and_end_lines_to_buffered_stdout(self):
+        buffer = io.BytesIO()
+        match = Match(['resign'])
+
+        def search(engine, **kwargs):
+            self.assertIn('[worker1] A vs B start.', buffer.getvalue().decode().splitlines())
+            return 'resign', None
+
+        with io.TextIOWrapper(buffer, encoding='utf-8') as output, contextlib.redirect_stdout(output), \
+                patch.object(cli, 'Engine', match.engine), patch.object(FakeEngine, 'go', search):
+            cli._cli(['A', 'B', '-c', '2'])
+            self.assertIn('[worker1] まで0手で後手の勝ち', buffer.getvalue().decode().splitlines())
+
     def test_parallel_debug_labels_identify_league_games(self):
         output = run_cli(Match(['resign']), 'A', 'B', 'C', '-c', 2, '--debug', '--keep-process')
-        labels = re.findall(r'^\[w\d+\] g(\d+) (\d+):bestmove resign$', output, re.MULTILINE)
+        labels = re.findall(r'^\[worker\d+\] g(\d+) (\d+):bestmove resign$', output, re.MULTILINE)
         self.assertCountEqual(labels, [('1', '1'), ('2', '2'), ('3', '1'),
                                        ('4', '3'), ('5', '2'), ('6', '3')])
         sequential = run_cli(Match(['resign']), 'A', 'B', '--debug')
@@ -244,7 +257,7 @@ class ParallelMatchTests(unittest.TestCase):
             self.assertEqual(seen[i], seen[i + 1])
             self.assertEqual(bool(moves[i + 1]), bool(moves[i + 2]))
         for prefix, engine in seen.values():
-            gpu = {'[w1] ': '0', '[w2] ': '1', '[w3] ': '2'}[prefix]
+            gpu = {'[worker1] ': '0', '[worker2] ': '1', '[worker3] ': '2'}[prefix]
             self.assertEqual(commands[engine][::2], [('model', 'new')] * (len(commands[engine]) // 2))
             self.assertEqual(commands[engine][1::2], [('gpu', gpu)] * (len(commands[engine]) // 2))
 
@@ -281,10 +294,10 @@ class ParallelMatchTests(unittest.TestCase):
         for (engine, worker), sent in commands.items():
             model = {'B': 'base', 'C': 'new'}[engine.name]
             expected = [('DNN_Model', model)]
-            expected += [('UCT_Threads', '2')] if worker == '[w1]' else [('UCT_Threads', '0'), ('UCT_Threads2', '2')]
+            expected += [('UCT_Threads', '2')] if worker == '[worker1]' else [('UCT_Threads', '0'), ('UCT_Threads2', '2')]
             self.assertEqual(sent, expected * 2)
         standings = [s for s in baseline.splitlines() if 'finished.' in s or ': ' in s]
-        self.assertEqual([s for s in output.splitlines() if not s.startswith('[w')], standings)
+        self.assertEqual([s for s in output.splitlines() if not s.startswith('[worker')], standings)
         self.assertEqual(len(match.engines), 12)
         self.assertEqual(sum(cmd == 'quit' for _, cmd in match.events), 12)
 
@@ -371,7 +384,7 @@ class ParallelMatchTests(unittest.TestCase):
             with self.assertRaises(RuntimeError) as caught:
                 cli.league('A', 'B', 'C', games=4, concurrency=2)
         self.assertIs(caught.exception, failure)
-        standings = [line for line in output.getvalue().splitlines() if not line.startswith('[w')]
+        standings = [line for line in output.getvalue().splitlines() if not line.startswith('[worker')]
         self.assertEqual(standings, ['2 of 4 games finished.', 'A vs B: 1-1-0 (50.0%)',
                                      'A vs C: 1-1-0 (50.0%)', 'B vs C: 1-1-0 (50.0%)'])
 
@@ -381,7 +394,7 @@ class ParallelMatchTests(unittest.TestCase):
         sent = []
 
         def option(engine, key, value, listener):
-            if listener.label.startswith('[w2]'):
+            if listener.label.startswith('[worker2]'):
                 sent.append((key, value))
                 setting.set()
                 self.assertTrue(changed.wait(3))
