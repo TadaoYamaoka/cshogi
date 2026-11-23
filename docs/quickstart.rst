@@ -155,14 +155,14 @@ Features
       
       >>> cli.main('/content/LesserkaiSrc/Lesserkai/Lesserkai', '/content/LesserkaiSrc/Lesserkai/Lesserkai')
 
-  Use ``--concurrency`` to play several pairs at once. Each worker plays the
+  Use ``-c`` or ``--concurrency`` to play several pairs at once. Each worker plays the
   two colors of an opening on the same hardware. Worker options override the
   named engine's common options in command-line order. Supply one quoted
   option string per worker for each engine that needs overrides.
 
   .. code-block:: bash
 
-      python -m cshogi.cli yane dlshogi dlshogi --games 20 --concurrency 2 \
+      python -m cshogi.cli yane dlshogi dlshogi --games 20 -c 2 \
         --name2 base --name3 new --keep-process --pgn league.pgn \
         --options2 "DNN_Model:base.onnx,UCT_Threads:3" \
         --options3 "DNN_Model:new.onnx,UCT_Threads:3" \

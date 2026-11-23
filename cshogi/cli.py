@@ -157,17 +157,16 @@ LEAGUE_PAIRS = ((0, 1), (0, 2), (1, 2))
 
 
 def schedule(games, openings, no_swap, league=False):
-    pairs = []
+    index = 0
     for first in range(0, games, 2):
         opening = openings[first // 2 % len(openings)]
         for a, b in (LEAGUE_PAIRS if league else ((0, 1),)):
-            index = len(pairs) * 2
             pair = [GameSpec(index, 1 if league else first + 1, opening, a, b)]
             if league or first + 1 < games:
                 black, white = (b, a) if league or not no_swap else (a, b)
                 pair.append(GameSpec(index + 1, 2 if league else first + 2, opening, black, white))
-            pairs.append(tuple(pair))
-    return pairs
+            yield tuple(pair)
+            index += len(pair)
 
 
 @dataclass(frozen=True, slots=True)
@@ -730,8 +729,9 @@ def _engine_configs(commands, names, options, byoyomi, time, inc):
         names = [None] * count
     elif len(names) != count:
         raise _MatchConfigError(f'names must have {count} entries')
+    engine_options = ({} if opts is None else opts for opts in options)
     return tuple(EngineConfig(*values) for values in zip(
-        commands, names, options, _clock_values(byoyomi, count),
+        commands, names, engine_options, _clock_values(byoyomi, count),
         _clock_values(time, count), _clock_values(inc, count), strict=True))
 
 
@@ -754,15 +754,13 @@ def _worker_configs(configs, concurrency, worker_options, display):
 
 
 def run_workers(pairs, workers, config, group, match):
-    schedule_iter = iter(pairs)
-
     def run(index):
         prefix = f'[w{index + 1}] ' if len(workers) > 1 else ''
         try:
             with ExitStack() as stack:
                 executor = stack.enter_context(ThreadPoolExecutor(max_workers=2)) if config.ponder else None
                 worker = Worker(workers[index], config, group, match, prefix, executor)
-                jobs = match.take_pairs(schedule_iter)
+                jobs = match.take_pairs(pairs)
                 if match.table is None:
                     worker.play_pairs(jobs)
                 else:
@@ -777,9 +775,12 @@ def run_workers(pairs, workers, config, group, match):
     if len(workers) == 1:
         run(0)
     else:
+        pair_count = (match.games + 1) // 2
+        if match.table is not None:
+            pair_count *= len(LEAGUE_PAIRS)
         with ThreadPoolExecutor(max_workers=len(workers)) as pool:
             try:
-                pending = {pool.submit(run, i) for i in range(min(len(workers), len(pairs)))}
+                pending = {pool.submit(run, i) for i in range(min(len(workers), pair_count))}
                 while pending:
                     _, pending = wait(pending, timeout=0.5)
             except BaseException:
@@ -832,7 +833,7 @@ def main(engine1: str, engine2: str, options1: dict | None = None, options2: dic
     :return: Dictionary containing game results and statistics.
     """
 
-    configs = _engine_configs((engine1, engine2), names, (options1 or {}, options2 or {}),
+    configs = _engine_configs((engine1, engine2), names, (options1, options2),
                               byoyomi, time, inc)
     config = GameConfig(resign, mate_win, draw, ponder, opening_moves, keep_process, is_display, debug)
     return _run(configs, config, games, opening, opening_seed, opening_index, no_swap,
@@ -846,7 +847,7 @@ def league(engine1: str, engine2: str, engine3: str, options1=None, options2=Non
            no_pgn_moves=False, is_display=False, debug=False, concurrency=1, worker_options=None):
     """Play two games per pairing and opening. Return standings in AB, AC, BC order."""
     configs = _engine_configs((engine1, engine2, engine3), names,
-                              (options1 or {}, options2 or {}, options3 or {}), byoyomi, time, inc)
+                              (options1, options2, options3), byoyomi, time, inc)
     config = GameConfig(resign, mate_win, draw, ponder, opening_moves, keep_process, is_display, debug)
     return _run(configs, config, games, opening, opening_seed, opening_index, no_swap,
                 csa, multi_csa, pgn, no_pgn_moves, concurrency, worker_options, False, None)
@@ -891,7 +892,7 @@ def _cli(argv=None):
     parser.add_argument('--options1', type=str, default='')
     parser.add_argument('--options2', type=str, default='')
     parser.add_argument('--options3', type=str, default='')
-    parser.add_argument('--concurrency', type=int, default=1, help='number of workers (default: 1)')
+    parser.add_argument('-c', '--concurrency', type=int, default=1, help='number of workers (default: 1)')
     for number in (1, 2, 3):
         parser.add_argument(f'--worker-options{number}', nargs='+', metavar='OPTIONS',
                             help=f'one comma-separated name:value list per worker for engine {number}')

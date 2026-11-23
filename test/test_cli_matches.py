@@ -125,6 +125,30 @@ class SequentialMatchTests(unittest.TestCase):
         self.assertEqual(searches, [dict(btime=10, wtime=20, binc=1, winc=2, byoyomi=11),
                                     dict(btime=20, wtime=10, binc=2, winc=1, byoyomi=22)])
 
+    def test_callback_can_update_initially_empty_engine_options(self):
+        options1, options2 = {}, {}
+        sent = []
+
+        def callback(stats):
+            if stats['total'] == 1:
+                options1['Threads'] = 2
+                options2['Threads'] = 3
+            return True
+
+        def setoption(engine, key, value, listener):
+            sent.append((engine.name, key, value))
+
+        with patch.object(FakeEngine, 'setoption', setoption):
+            Match(['resign']).run(games=2, ponder=False, options1=options1, options2=options2,
+                                  callback=callback)
+        self.assertEqual(sent, [('white', 'Threads', 3), ('black', 'Threads', 2)])
+
+    def test_first_callback_stops_after_scheduling_one_pair(self):
+        with patch.object(cli, 'GameSpec', wraps=cli.GameSpec) as spec:
+            result = Match(['resign']).run(games=100000, ponder=False, callback=lambda _: False)
+        self.assertEqual(result['total'], 1)
+        self.assertEqual(spec.call_count, 2)
+
     def test_white_sfen_opening_and_timed_search_in_csa(self):
         board = cli.Board()
         board.push_usi('7g7f')
@@ -179,7 +203,7 @@ class SequentialMatchTests(unittest.TestCase):
 
 class ParallelMatchTests(unittest.TestCase):
     def test_parallel_debug_labels_identify_league_games(self):
-        output = run_cli(Match(['resign']), 'A', 'B', 'C', '--concurrency', 2, '--debug', '--keep-process')
+        output = run_cli(Match(['resign']), 'A', 'B', 'C', '-c', 2, '--debug', '--keep-process')
         labels = re.findall(r'^\[w\d+\] g(\d+) (\d+):bestmove resign$', output, re.MULTILINE)
         self.assertCountEqual(labels, [('1', '1'), ('2', '2'), ('3', '1'),
                                        ('4', '3'), ('5', '2'), ('6', '3')])
