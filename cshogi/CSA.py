@@ -21,11 +21,11 @@ class Exporter:
     :param encoding: The encoding of the file, defaults to None.
     """
 
-    def __init__(self, path: Optional[str] = None, append: bool = False, encoding: Optional[str] = None):
+    def __init__(self, path: Optional[str] = None, append: bool = False, encoding: Optional[str] = None, *, stream=None):
         if path:
             self.open(path, append, encoding=encoding)
         else:
-            self.f = None
+            self.f = stream
 
     def open(self, path: str, append: bool = False, encoding: Optional[str]=None):
         """Open the file for writing.

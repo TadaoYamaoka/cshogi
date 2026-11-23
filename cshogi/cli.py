@@ -1,7 +1,9 @@
 from typing import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 from threading import Lock
+from io import StringIO
+from itertools import chain
 import random
 import math
 from time import perf_counter
@@ -9,7 +11,7 @@ import re
 import os
 import datetime
 from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, wait
 from contextlib import ExitStack, suppress
 
 from cshogi import *
@@ -204,14 +206,14 @@ class ProcessGroup:
 
 
 class Listener:
-    def __init__(self, label, debug):
+    def __init__(self, label, log):
         self.label = label
-        self.debug = debug
+        self.log = log
         self.info = ''
 
     def __call__(self, line):
-        if self.debug:
-            print(f'{self.label}:{line}')
+        if self.log:
+            self.log(f'{self.label}:{line}')
         if re_usi_info.match(line):
             self.info = line
 
@@ -251,7 +253,7 @@ class GameResult:
 
 
 class Records:
-    def __init__(self, stack, csa, multi_csa, pgn, no_pgn_moves):
+    def __init__(self, stack, csa, multi_csa, pgn, no_pgn_moves, parallel):
         self.directory = csa if not multi_csa else None
         self.multi = CSA.Exporter(csa, append=True) if csa and multi_csa else None
         if self.multi:
@@ -260,9 +262,12 @@ class Records:
         if self.pgn:
             stack.callback(self.pgn.close)
         self.no_pgn_moves = no_pgn_moves
+        self.buffer_multi = self.multi is not None and parallel
 
     def start(self, stack, board, names):
         writer = self.multi
+        if self.buffer_multi:
+            writer = CSA.Exporter(stream=StringIO())
         if self.directory:
             suffix = f'{random.SystemRandom().getrandbits(32):08x}'
             stamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
@@ -276,6 +281,11 @@ class Records:
     def finish(self, result, writer):
         if writer:
             writer.endgame(result.csa_code)
+            if self.buffer_multi:
+                if self.multi.f.tell():
+                    self.multi.f.write('/\n')
+                self.multi.f.write(writer.f.getvalue())
+                self.multi.f.flush()
         if self.pgn:
             outcome = {BLACK: BLACK_WIN, WHITE: WHITE_WIN, None: DRAW}[result.winner]
             self.pgn.tag_pair(result.names, outcome, round=result.spec.round)
@@ -290,7 +300,7 @@ class Player:
     listener: Listener
 
 
-def play_game(spec, players, config, group, executor, pending, records, stack, prefix):
+def play_game(spec, players, config, group, executor, pending, match, stack, prefix):
     black, white = players[spec.black_id], players[spec.white_id]
     engines_order = (black.engine, white.engine)
     listeners_order = (black.listener, white.listener)
@@ -307,7 +317,7 @@ def play_game(spec, players, config, group, executor, pending, records, stack, p
             engine.name = player.config.name
 
     names = (black.engine.name, white.engine.name)
-    print(f'{prefix}{names[0]} vs {names[1]} start.')
+    match.log(f'{prefix}{names[0]} vs {names[1]} start.')
     initial_position, opening_usi_moves = spec.opening
     board = Board()
     if initial_position != 'startpos':
@@ -316,7 +326,7 @@ def play_game(spec, players, config, group, executor, pending, records, stack, p
     usi_moves = []
     repetition_hash = defaultdict(int)
     repetition_hash[board.zobrist_hash()] = 1
-    writer = records.start(stack, board, names)
+    writer = match.records.start(stack, board, names)
     for move_usi in opening_usi_moves:
         move = board.push_usi(move_usi)
         if writer:
@@ -548,6 +558,18 @@ class Match:
         with self.lock:
             return not self.stopped
 
+    def take_pairs(self, schedule):
+        while True:
+            with self.lock:
+                pair = None if self.stopped else next(schedule, None)
+            if pair is None:
+                return
+            yield pair
+
+    def log(self, line):
+        with self.lock:
+            print(line)
+
     def _fail_locked(self, exc):
         if self.error is None:
             self.error = exc
@@ -579,22 +601,18 @@ def play_pairs(pairs, configs, config, group, match, prefix=''):
     with ExitStack() as stack:
         executor = stack.enter_context(ThreadPoolExecutor(max_workers=2)) if config.ponder else None
         try:
-            for pair in pairs:
-                for spec in pair:
-                    if not match.try_start():
-                        break
-                    for engine_id in (spec.black_id, spec.white_id):
-                        if engine_id not in players:
-                            settings = configs[engine_id]
-                            players[engine_id] = Player(settings, Engine(settings.command, connect=False),
-                                                        Listener(f'{prefix}{engine_id + 1}', config.debug))
-                    with ExitStack() as game_stack:
-                        result, writer = play_game(spec, players, config, group, executor, pending,
-                                                   match.records, game_stack, prefix)
-                        match.report(result, writer, prefix)
-                else:
-                    continue
-                break
+            for spec in chain.from_iterable(pairs):
+                if not match.try_start():
+                    break
+                for engine_id in (spec.black_id, spec.white_id):
+                    if engine_id not in players:
+                        settings = configs[engine_id]
+                        listener = Listener(f'{prefix}{engine_id + 1}', match.log if config.debug else None)
+                        players[engine_id] = Player(settings, Engine(settings.command, connect=False), listener)
+                with ExitStack() as game_stack:
+                    result, writer = play_game(spec, players, config, group, executor, pending,
+                                               match, game_stack, prefix)
+                    match.report(result, writer, prefix)
             for player in players.values():
                 if player.engine.proc is not None:
                     player.engine.quit(listener=player.listener)
@@ -631,6 +649,47 @@ def _engine_configs(commands, names, options, byoyomi, time, inc):
         _clock_values(time, count), _clock_values(inc, count), strict=True))
 
 
+def _worker_configs(configs, concurrency, worker_options, display):
+    if type(concurrency) is not int or concurrency < 1:
+        raise ValueError('concurrency must be a positive integer')
+    if display and concurrency > 1:
+        raise ValueError('--display requires concurrency=1')
+    overrides = worker_options if worker_options is not None else [None] * len(configs)
+    if len(overrides) != len(configs):
+        raise ValueError('worker_options must have one entry per engine')
+    for engine_id, items in enumerate(overrides, 1):
+        if items is not None and len(items) != concurrency:
+            raise ValueError(f'worker-options{engine_id} requires {concurrency} entries')
+    return [tuple(replace(cfg, options={**cfg.options, **items[i]}) if items is not None else cfg
+                  for cfg, items in zip(configs, overrides))
+            for i in range(concurrency)]
+
+
+def run_workers(pairs, workers, config, group, match):
+    schedule_iter = iter(pairs)
+
+    def run(index):
+        prefix = f'[w{index + 1}] ' if len(workers) > 1 else ''
+        try:
+            play_pairs(match.take_pairs(schedule_iter), workers[index], config, group, match, prefix)
+        except BaseException as exc:
+            match.fail(exc)
+
+    if len(workers) == 1:
+        run(0)
+    else:
+        with ThreadPoolExecutor(max_workers=len(workers)) as pool:
+            try:
+                pending = {pool.submit(run, i) for i in range(min(len(workers), len(pairs)))}
+                while pending:
+                    _, pending = wait(pending, timeout=0.5)
+            except BaseException:
+                group.close()
+                raise
+    if match.error is not None:
+        raise match.error
+
+
 def main(engine1: str, engine2: str, options1: dict | None = None, options2: dict | None = None, names: list[str] | None = None,
          games: int = 1, resign: int | None = None, mate_win: bool = False,
          byoyomi: int | list[int] | None = None, time: int | list[int] | None = None, inc: int | list[int] | None = None,
@@ -639,7 +698,8 @@ def main(engine1: str, engine2: str, options1: dict | None = None, options2: dic
          keep_process: bool = False,
          csa: str | None = None, multi_csa: bool = False, pgn: str | None = None, no_pgn_moves: bool = False,
          is_display: bool = False, debug: bool = False,
-         print_summary: bool = True, callback: Callable | None = None) -> dict:
+         print_summary: bool = True, callback: Callable | None = None, concurrency: int = 1,
+         worker_options: list[list[dict] | None] | None = None) -> dict:
     """Executes a series of games between two USI engines.
 
     :param engine1: Path to the first USI engine.
@@ -669,23 +729,34 @@ def main(engine1: str, engine2: str, options1: dict | None = None, options2: dic
     :param debug: Whether to enable debugging mode.
     :param print_summary: Whether to print the summary after the match.
     :param callback: Optional callback function executed after each game.
+    :param concurrency: Number of workers playing independently.
+    :param worker_options: One entry per engine, either None or one option dictionary per worker.
     :return: Dictionary containing game results and statistics.
     """
 
     configs = _engine_configs((engine1, engine2), names, (options1 or {}, options2 or {}),
                               byoyomi, time, inc)
     config = GameConfig(resign, mate_win, draw, ponder, opening_moves, keep_process, is_display, debug)
+    workers = _worker_configs(configs, concurrency, worker_options, is_display)
     pairs = schedule(games, load_openings(opening, opening_seed, opening_index), no_swap)
     group = ProcessGroup()
     with ExitStack() as stack:
-        records = Records(stack, csa, multi_csa, pgn, no_pgn_moves)
+        records = Records(stack, csa, multi_csa, pgn, no_pgn_moves, concurrency > 1)
         match = Match(records, games, print_summary, callback)
-        play_pairs(pairs, configs, config, group, match)
-        if match.error is not None:
-            raise match.error
+        run_workers(pairs, workers, config, group, match)
         return match.stats.snapshot()
 
-if __name__ == '__main__':
+def _parse_options(value):
+    options = {}
+    for entry in value.split(',') if value else ():
+        key, sep, option = entry.partition(':')
+        if not sep or not key:
+            raise ValueError(f'expected name:value, got {entry!r}')
+        options[key] = option
+    return options
+
+
+def _cli(argv=None):
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('engine1')
@@ -694,6 +765,9 @@ if __name__ == '__main__':
     parser.add_argument('--options1', type=str, default='')
     parser.add_argument('--options2', type=str, default='')
     parser.add_argument('--options3', type=str, default='')
+    parser.add_argument('--concurrency', type=int, default=1)
+    for number in (1, 2, 3):
+        parser.add_argument(f'--worker-options{number}', nargs='+', metavar='OPTIONS')
     parser.add_argument('--name1', type=str)
     parser.add_argument('--name2', type=str)
     parser.add_argument('--name3', type=str)
@@ -717,20 +791,22 @@ if __name__ == '__main__':
     parser.add_argument('--no-pgn-moves', action='store_true')
     parser.add_argument('--display', action='store_true')
     parser.add_argument('--debug', action='store_true')
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
+
+    count = 3 if args.engine3 is not None else 2
+    if count == 2 and args.worker_options3 is not None:
+        parser.error('--worker-options3 requires a third engine')
+    try:
+        options_list = [_parse_options(getattr(args, f'options{i}')) for i in range(1, count + 1)]
+        worker_options = []
+        for i in range(1, count + 1):
+            items = getattr(args, f'worker_options{i}')
+            worker_options.append([_parse_options(item) for item in items] if items else None)
+    except ValueError as exc:
+        parser.error(str(exc))
 
     if args.csa is not None and not args.multi_csa:
         os.makedirs(args.csa, exist_ok=True)
-
-    options_list = [{}, {}, {}]
-    for i, kvs in enumerate([options.split(',') for options in (args.options1, args.options2, args.options3)]):
-        if len(kvs) == 1 and kvs[0] == '':
-            continue
-        for kv_str in kvs:
-            kv = kv_str.split(':', 1)
-            if len(kv) != 2:
-                raise ValueError('options{}'.format(i + 1))
-            options_list[i][kv[0]] = kv[1]
 
     if args.engine3 is None:
         # 1 on 1 matches
@@ -743,7 +819,7 @@ if __name__ == '__main__':
             args.keep_process,
             args.csa, args.multi_csa,
             args.pgn, args.no_pgn_moves,
-            args.display, args.debug)
+            args.display, args.debug, concurrency=args.concurrency, worker_options=worker_options)
     else:
         # league matches
         engines = (args.engine1, args.engine2, args.engine3)
@@ -820,3 +896,7 @@ if __name__ == '__main__':
                     results[i]['engine1_name'], results[i]['engine2_name'],
                     results[i]['engine1_won'], results[i]['engine2_won'], results[i]['draw'],
                     (results[i]['engine1_won'] + results[i]['draw'] / 2) / results[i]['total'] * 100))
+
+
+if __name__ == '__main__':
+    _cli()
