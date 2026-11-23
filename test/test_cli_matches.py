@@ -6,12 +6,15 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from threading import Event
+from threading import Barrier, Event
 from time import monotonic
 from unittest.mock import patch
 
 from cshogi import cli
-from test.test_cli_ponder import FakeEngine, Match
+if __package__:
+    from .test_cli_ponder import FakeEngine, Match
+else:
+    from test_cli_ponder import FakeEngine, Match
 
 
 def run_cli(match, *args):
@@ -81,20 +84,122 @@ class SequentialMatchTests(unittest.TestCase):
         self.assertEqual(len(match.engines), 6)
         self.assertEqual(sum(cmd == 'quit' for _, cmd in match.events), 6)
 
+    def test_csa_endings_and_pgn_results(self):
+        cases = [
+            ('startpos', ['resign'], {}, '%TORYO', '0-1'),
+            ('startpos', ['win'], {}, '%ILLEGAL_MOVE', '0-1'),
+            ('startpos', ['7g7f'], {'draw': 1}, '%JISHOGI', '1/2-1/2'),
+            ('startpos', ['7g7f'], {'time': 0}, '%TIME_UP', '0-1'),
+            ('startpos', '5i5h 5a5b 5h5i 5b5a'.split() * 3, {}, '%SENNICHITE', '1/2-1/2'),
+            ('sfen PPPPKPPPP/GG7/9/9/9/9/9/9/4k4 b 2RB3P 1', ['win'], {}, '%KACHI', '1-0'),
+            ('sfen 4k4/5R3/9/9/9/9/9/9/K8 b - 1', '4b5b 5a4a 5b4b 4a5a'.split() * 3,
+             {}, '%+ILLEGAL_ACTION', '0-1'),
+            ('sfen 4k4/4R4/9/9/9/9/9/9/K8 w - 1', '5a4a 5b4b 4a5a 4b5b'.split() * 3,
+             {}, '%+ILLEGAL_ACTION', '0-1'),
+        ]
+        for opening, moves, options, ending, result in cases:
+            with self.subTest(ending=ending, opening=opening), tempfile.TemporaryDirectory() as directory:
+                path = Path(directory)
+                book, pgn, csa = path / 'book', path / 'match.pgn', path / 'match.csa'
+                book.write_text(opening)
+                with patch.object(cli, 'perf_counter', side_effect=range(0, 100, 2)):
+                    Match(moves).run(ponder=False, opening=book, pgn=pgn,
+                                     csa=csa, multi_csa=True, **options)
+                self.assertEqual(csa.read_text().splitlines()[-1], ending)
+                self.assertIn(f'[Result "{result}"]', pgn.read_text())
+
 
 class ParallelMatchTests(unittest.TestCase):
+    def test_ten_games_keep_openings_and_gpu_settings_with_their_pairs(self):
+        match = Match(['resign'])
+        barrier = Barrier(3, timeout=4)
+        seen = {}
+        commands = {}
+        play_game = cli.Worker.play_game
+
+        def play(worker, spec, stack):
+            if spec.index in (0, 2, 4):
+                barrier.wait()
+            seen[spec.index] = (worker.prefix, worker.players[1].engine)
+            return play_game(worker, spec, stack)
+
+        def option(engine, key, value, **kwargs):
+            commands.setdefault(engine, []).append((key, value))
+
+        with tempfile.TemporaryDirectory() as directory, patch.object(cli.Worker, 'play_game', play), \
+                patch.object(FakeEngine, 'setoption', option):
+            book = Path(directory) / 'opening'
+            book.write_text('startpos\nstartpos moves 7g7f 3c3d\n')
+            pgn = Path(directory) / 'games'
+            result = match.run(games=10, concurrency=3, ponder=False, pgn=pgn,
+                               opening=book, opening_seed=31, options2={'model': 'new', 'gpu': '0'},
+                               worker_options=[None, [{'gpu': str(i)} for i in range(3)]])
+            records = re.split(r'\[Event ', pgn.read_text())[1:]
+        self.assertEqual((result['total'], result['engine1_won'], result['engine2_won']), (10, 5, 5))
+        moves = {int(re.search(r'\[Round "(\d+)"\]', r)[1]): r.split('\n\n')[1] for r in records}
+        self.assertEqual(sorted(moves), list(range(1, 11)))
+        self.assertTrue(any(moves.values()))
+        self.assertIn('', moves.values())
+        for i in range(0, 10, 2):
+            self.assertEqual(seen[i], seen[i + 1])
+            self.assertEqual(bool(moves[i + 1]), bool(moves[i + 2]))
+        for prefix, engine in seen.values():
+            gpu = {'[w1] ': '0', '[w2] ': '1', '[w3] ': '2'}[prefix]
+            self.assertEqual(commands[engine][::2], [('model', 'new')] * (len(commands[engine]) // 2))
+            self.assertEqual(commands[engine][1::2], [('gpu', gpu)] * (len(commands[engine]) // 2))
+
+    def test_league_publishes_standings_in_stage_order(self):
+        args = ('A', 'B', 'C', '--games', 3, '--no-swap', '--keep-process')
+        baseline = run_cli(Match(['resign']), *args)
+        later_stage = Event()
+        play_game = cli.Worker.play_game
+        finish = cli.LeagueTable.finish_pair
+
+        def play(worker, spec, stack):
+            if spec.index == 0:
+                self.assertTrue(later_stage.wait(4))
+            return play_game(worker, spec, stack)
+
+        def finished(table, pair, games):
+            finish(table, pair, games)
+            if pair[0].index == 10:
+                later_stage.set()
+
+        match = Match(['resign'])
+        commands = {}
+
+        def option(engine, key, value, listener):
+            commands.setdefault((engine, listener.label.split()[0]), []).append((key, value))
+
+        with patch.object(cli.Worker, 'play_game', play), patch.object(cli.LeagueTable, 'finish_pair', finished), \
+                patch.object(FakeEngine, 'setoption', option):
+            overrides = ('UCT_Threads:2', 'UCT_Threads:0,UCT_Threads2:2')
+            output = run_cli(match, *args, '--concurrency', 2,
+                             '--options2', 'DNN_Model:base,UCT_Threads:3',
+                             '--options3', 'DNN_Model:new,UCT_Threads:3',
+                             '--worker-options2', *overrides, '--worker-options3', *overrides)
+        for (engine, worker), sent in commands.items():
+            model = {'B': 'base', 'C': 'new'}[engine.name]
+            expected = [('DNN_Model', model)]
+            expected += [('UCT_Threads', '2')] if worker == '[w1]' else [('UCT_Threads', '0'), ('UCT_Threads2', '2')]
+            self.assertEqual(sent, expected * 2)
+        standings = [s for s in baseline.splitlines() if 'finished.' in s or ': ' in s]
+        self.assertEqual([s for s in output.splitlines() if not s.startswith('[w')], standings)
+        self.assertEqual(len(match.engines), 12)
+        self.assertEqual(sum(cmd == 'quit' for _, cmd in match.events), 12)
+
     def test_out_of_order_summary_and_csa_append(self):
         match = Match(['resign'])
         first, third = Event(), Event()
-        play_game = cli.play_game
+        play_game = cli.Worker.play_game
         report = cli.Match.report
 
-        def ordered(spec, *args):
+        def ordered(worker, spec, stack):
             if spec.index == 2:
                 self.assertTrue(first.wait(3))
             if spec.index % 2:
                 self.assertTrue(third.wait(3))
-            return play_game(spec, *args)
+            return play_game(worker, spec, stack)
 
         def reported(state, result, *args):
             report(state, result, *args)
@@ -107,7 +212,7 @@ class ParallelMatchTests(unittest.TestCase):
             csa = Path(directory) / 'record.csa'
             pgn = Path(directory) / 'record.pgn'
             match.run(ponder=False, csa=csa, multi_csa=True)
-            with patch.object(cli, 'play_game', ordered), patch.object(cli.Match, 'report', reported):
+            with patch.object(cli.Worker, 'play_game', ordered), patch.object(cli.Match, 'report', reported):
                 result = match.run(ponder=False, print_summary=True, concurrency=2, games=4,
                                    csa=csa, multi_csa=True, pgn=pgn)
             self.assertEqual(len(cli.CSA.Parser.parse_file(str(csa))), 5)
@@ -119,22 +224,22 @@ class ParallelMatchTests(unittest.TestCase):
     def test_callback_stops_new_games_and_drains_started_games(self):
         match = Match(['resign'])
         started, stopped = Event(), Event()
-        play_game = cli.play_game
+        play_game = cli.Worker.play_game
         calls = []
 
-        def ordered(spec, *args):
+        def ordered(worker, spec, stack):
             if spec.index == 0:
                 self.assertTrue(started.wait(3))
             else:
                 started.set()
                 self.assertTrue(stopped.wait(3))
-            return play_game(spec, *args)
+            return play_game(worker, spec, stack)
 
         def stop(stats):
             calls.append(stats['total'])
             stopped.set()
 
-        with tempfile.TemporaryDirectory() as directory, patch.object(cli, 'play_game', ordered):
+        with tempfile.TemporaryDirectory() as directory, patch.object(cli.Worker, 'play_game', ordered):
             pgn = Path(directory) / 'games'
             result = match.run(concurrency=2, games=10, callback=stop, pgn=pgn)
             self.assertEqual(pgn.read_text().count('[Result '), 2)
@@ -144,19 +249,19 @@ class ParallelMatchTests(unittest.TestCase):
     def test_worker_failure_kills_ponder_and_drains_other_worker(self):
         other_started, killed = Event(), Event()
         failure = RuntimeError('search failed')
-        play_game = cli.play_game
+        play_game = cli.Worker.play_game
         match = Match()
         go = FakeEngine.go
 
-        def play(spec, players, *args):
-            for player in players.values():
+        def play(worker, spec, stack):
+            for player in worker.players.values():
                 player.engine.failing = spec.index == 0
             if spec.index == 0:
                 self.assertTrue(other_started.wait(3))
             else:
                 other_started.set()
                 self.assertTrue(killed.wait(3))
-            return play_game(spec, players, *args)
+            return play_game(worker, spec, stack)
 
         def search(engine, **kwargs):
             if engine.failing and engine.name == 'white':
@@ -171,7 +276,7 @@ class ParallelMatchTests(unittest.TestCase):
             if not engine.failing:
                 engine.release.set()
 
-        with tempfile.TemporaryDirectory() as directory, patch.object(cli, 'play_game', play), \
+        with tempfile.TemporaryDirectory() as directory, patch.object(cli.Worker, 'play_game', play), \
                 patch.object(FakeEngine, 'go', search), patch.object(FakeEngine, 'kill', kill), \
                 patch.object(FakeEngine, 'stop', stop):
             pgn = Path(directory) / 'games'
@@ -181,29 +286,17 @@ class ParallelMatchTests(unittest.TestCase):
             self.assertEqual(pgn.read_text().count('[Result '), 1)
         self.assertTrue(all(e.proc is None and not e.active for e in match.engines))
 
-    def test_worker_options_and_input_validation(self):
-        match = Match(['resign'])
-        events = []
-        with patch.object(FakeEngine, 'setoption',
-                          lambda e, k, v, **kw: events.append((e, k, v))):
-            run_cli(match, 'A', 'B', '--games', 10, '--concurrency', 3,
-                    '--options2', 'model:new,threads:3', '--worker-options2',
-                    'threads:2', 'threads:0,threads2:2', 'threads:1')
-        for engine in match.engines:
-            sent = [(k, v) for e, k, v in events if e is engine]
-            if engine.name == 'B':
-                self.assertEqual(sent[0], ('model', 'new'))
-                self.assertIn(sent[1], [('threads', '2'), ('threads', '0'), ('threads', '1')])
-                if sent[1][1] == '0':
-                    self.assertEqual(sent[2], ('threads2', '2'))
-            else:
-                self.assertEqual(sent, [])
+    def test_invalid_configuration_is_rejected_before_start(self):
         for kwargs in (dict(concurrency=0), dict(concurrency=2, is_display=True),
                        dict(concurrency=2, worker_options=[None, [{}]])):
             match = Match()
             with self.assertRaises(ValueError):
                 match.run(**kwargs)
             self.assertEqual(match.engines, [])
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as caught:
+            run_cli(match, 'A', 'B', 'C', '--concurrency', 2, '--worker-options3', 'GPU:0')
+        self.assertEqual(caught.exception.code, 2)
+        self.assertEqual(match.engines, [])
 
 
 class ProcessShutdownTests(unittest.TestCase):

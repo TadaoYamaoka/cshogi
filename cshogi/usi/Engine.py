@@ -1,4 +1,5 @@
 from typing import Dict, List, Tuple, Union, Optional, Callable
+from contextlib import suppress
 import subprocess
 import os.path
 import locale
@@ -459,7 +460,8 @@ class Engine:
             proc.wait()
             for stream in (proc.stdin, proc.stdout, proc.stderr):
                 if stream is not None:
-                    stream.close()
+                    with suppress(BrokenPipeError):
+                        stream.close()
             self.proc = None
 
     def quit(self, listener: Optional[Callable] = None):

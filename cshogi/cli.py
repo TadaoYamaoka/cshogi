@@ -1,18 +1,18 @@
-from typing import Callable
+import datetime
+import math
+import os
+import random
+import re
+from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed, wait
+from contextlib import ExitStack, contextmanager, suppress
 from dataclasses import dataclass, replace
 from enum import Enum
-from threading import Lock
 from io import StringIO
 from itertools import chain
-import random
-import math
+from threading import Event, Lock
 from time import perf_counter
-import re
-import os
-import datetime
-from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor, wait
-from contextlib import ExitStack, suppress
+from typing import Callable
 
 from cshogi import *
 from cshogi.usi import Engine
@@ -71,33 +71,45 @@ def usi_info_to_score(info):
 
     return to_score(m)
 
-def _stop_ponder(pending, listeners):
-    """Stop all searches before joining readers; report the first error."""
-    error = None
-    killed = set()
-    for engine, (future, _) in pending.items():
-        try:
-            if not future.done():
-                engine.stop(listener=listeners[engine])
-        except BaseException as exc:
-            if error is None:
-                error = exc
-            if not future.done():
-                # A failed stop may leave the reader blocked on engine output.
-                engine.kill()
-                killed.add(engine)
-    for engine, (future, _) in pending.items():
-        try:
+def _abort_games(engines, pending):
+    """Release every reader before reaping any process. Preserve the original failure."""
+    for engine in engines:
+        with suppress(Exception):
+            engine.kill()
+    for future, _ in pending.values():
+        with suppress(BaseException):
             future.result()
-        except BaseException as exc:
-            if error is None:
-                error = exc
-        finally:
-            if engine in killed:
-                engine._reap()
     pending.clear()
-    if error is not None:
-        raise error
+    for engine in engines:
+        with suppress(Exception):
+            engine._reap()
+
+
+def _stop_ponder(pending, listeners, fail=None):
+    """Send every stop before collecting the readers."""
+    if not pending:
+        return
+    error = None
+    try:
+        for engine, (future, _) in pending.items():
+            if not future.done():
+                try:
+                    engine.stop(listener=listeners[engine])
+                except Exception as exc:
+                    if error is None:
+                        error = exc
+                        if fail:
+                            fail(exc)
+        if error is not None:
+            raise error
+        for future in as_completed([future for future, _ in pending.values()]):
+            future.result()
+        pending.clear()
+    except BaseException as exc:
+        if fail:
+            fail(exc)
+        _abort_games(listeners, pending)
+        raise
 
 
 Opening = tuple[str, tuple[str, ...]]
@@ -146,15 +158,20 @@ class GameSpec:
     white_id: int
 
 
-def schedule(games, openings, no_swap):
+LEAGUE_PAIRS = ((0, 1), (0, 2), (1, 2))
+
+
+def schedule(games, openings, no_swap, league=False):
     pairs = []
     for first in range(0, games, 2):
         opening = openings[first // 2 % len(openings)]
-        pair = []
-        for index in range(first, min(first + 2, games)):
-            black = 0 if no_swap else index % 2
-            pair.append(GameSpec(index, index + 1, opening, black, 1 - black))
-        pairs.append(tuple(pair))
+        for a, b in (LEAGUE_PAIRS if league else ((0, 1),)):
+            index = len(pairs) * 2
+            pair = [GameSpec(index, 1 if league else first + 1, opening, a, b)]
+            if league or first + 1 < games:
+                black, white = (b, a) if league or not no_swap else (a, b)
+                pair.append(GameSpec(index + 1, 2 if league else first + 2, opening, black, white))
+            pairs.append(tuple(pair))
     return pairs
 
 
@@ -202,7 +219,8 @@ class ProcessGroup:
         with self.lock:
             self.closed = True
             for engine in self.engines:
-                engine.kill()
+                with suppress(OSError):
+                    engine.kill()
 
 
 class Listener:
@@ -269,11 +287,16 @@ class Records:
         if self.buffer_multi:
             writer = CSA.Exporter(stream=StringIO())
         if self.directory:
-            suffix = f'{random.SystemRandom().getrandbits(32):08x}'
             stamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-            filename = '+'.join((*names, stamp, suffix)) + '.csa'
-            writer = CSA.Exporter(os.path.join(self.directory, filename))
-            stack.callback(writer.close)
+            while True:
+                suffix = f'{random.SystemRandom().getrandbits(32):08x}'
+                filename = '+'.join((*names, stamp, suffix)) + '.csa'
+                try:
+                    stream = open(os.path.join(self.directory, filename), 'x', newline='\n')
+                    break
+                except FileExistsError:
+                    continue
+            writer = CSA.Exporter(stream=stack.enter_context(stream))
         if writer:
             writer.info(board, names, version='V2')
         return writer
@@ -286,6 +309,8 @@ class Records:
                     self.multi.f.write('/\n')
                 self.multi.f.write(writer.f.getvalue())
                 self.multi.f.flush()
+            elif self.directory:
+                writer.close()
         if self.pgn:
             outcome = {BLACK: BLACK_WIN, WHITE: WHITE_WIN, None: DRAW}[result.winner]
             self.pgn.tag_pair(result.names, outcome, round=result.spec.round)
@@ -293,204 +318,218 @@ class Records:
                 self.pgn.movetext(result.moves)
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class Player:
     config: EngineConfig
     engine: Engine
     listener: Listener
 
 
-def play_game(spec, players, config, group, executor, pending, match, stack, prefix):
-    black, white = players[spec.black_id], players[spec.white_id]
-    engines_order = (black.engine, white.engine)
-    listeners_order = (black.listener, white.listener)
-    for player in (black, white):
-        engine, listener = player.engine, player.listener
-        if engine.proc is None:
-            group.connect(engine, listener)
-        if config.ponder:
-            engine.setoption('USI_Ponder', 'true', listener=listener)
-        for key, value in player.config.options.items():
-            engine.setoption(key, value, listener=listener)
-        engine.isready(listener=listener)
-        if player.config.name:
-            engine.name = player.config.name
+class Worker:
+    def __init__(self, configs, config, group, match, prefix, executor):
+        self.configs = configs
+        self.config = config
+        self.group = group
+        self.match = match
+        self.prefix = prefix
+        self.executor = executor
+        self.players = {}
+        self.pending = {}
 
-    names = (black.engine.name, white.engine.name)
-    match.log(f'{prefix}{names[0]} vs {names[1]} start.')
-    initial_position, opening_usi_moves = spec.opening
-    board = Board()
-    if initial_position != 'startpos':
-        board.set_sfen(initial_position[5:])
-    moves = []
-    usi_moves = []
-    repetition_hash = defaultdict(int)
-    repetition_hash[board.zobrist_hash()] = 1
-    writer = match.records.start(stack, board, names)
-    for move_usi in opening_usi_moves:
-        move = board.push_usi(move_usi)
-        if writer:
-            writer.move(move)
-        moves.append(move)
-        usi_moves.append(move_usi)
-        repetition_hash[board.zobrist_hash()] += 1
-        if len(usi_moves) >= config.opening_moves:
-            break
-
-    if config.display:
-        print('開始局面')
-        if is_jupyter:
-            display(SVG(board.to_svg()))
-        else:
-            print(board)
-
-    # 新規ゲーム
-    for engine, listener in zip(engines_order, listeners_order):
-        engine.usinewgame(listener=listener)
-
-    # 対局
-    ending = Ending.LOSS
-    remain_time = [black.config.time, white.config.time]
-    binc, winc = black.config.inc, white.config.inc
-    inc_time = (binc, winc)
-    byoyomi_order = (black.config.byoyomi, white.config.byoyomi)
-    while True:
-        engine_index = board.turn
-        engine = engines_order[engine_index]
-        listener = listeners_order[engine_index]
-        byoyomi = byoyomi_order[engine_index]
-
-        # 持将棋
-        if board.move_number > config.draw:
-            ending = Ending.MOVE_LIMIT
-            break
-
-        # ponder
-        ponderhit = False
-        if engine in pending:
-            future, expected_move = pending[engine]
-            if bestmove == expected_move:
-                ponderhit = True
-                start_time = perf_counter()
-                engine.ponderhit(listener=listener)
-                bestmove, pondermove = future.result()
-                elapsed_time = perf_counter() - start_time
-            else:
-                engine.stop(listener=listener)
-                future.result()
-            del pending[engine]
-
-        if not ponderhit:
-            # position
-            engine.position(usi_moves, sfen=initial_position, listener=listener)
-
-            start_time = perf_counter()
-
-            # go
-            listener.info = ''
-            bestmove, pondermove = engine.go(byoyomi=byoyomi, btime=remain_time[BLACK], wtime=remain_time[WHITE], binc=binc, winc=winc, listener=listener)
-
-            elapsed_time = perf_counter() - start_time
-
-        if remain_time[board.turn] is not None:
-            if inc_time[board.turn] is not None:
-                remain_time[board.turn] += inc_time[board.turn]
-            remain_time[board.turn] -= math.ceil(elapsed_time * 1000)
-
-            if remain_time[board.turn] < 0:
-                # 秒読みを超えても1秒未満は切れ負けにしない
-                if remain_time[board.turn] > -((byoyomi or 0) + 1000):
-                    remain_time[board.turn] = 0
-                else:
-                    # 時間切れ負け
-                    ending = Ending.TIME
+    def play_pairs(self, pairs):
+        last_order = ()
+        try:
+            for spec in chain.from_iterable(pairs):
+                if not self.match.try_start():
                     break
+                last_order = (spec.black_id, spec.white_id)
+                for engine_id in last_order:
+                    if engine_id not in self.players:
+                        settings = self.configs[engine_id]
+                        label = f'{self.prefix}{len(self.players) + 1}'
+                        listener = Listener(label, self.match.log if self.config.debug else None)
+                        self.players[engine_id] = Player(settings, Engine(settings.command, connect=False), listener)
+                with ExitStack() as stack:
+                    result, writer = self.play_game(spec, stack)
+                    self.match.report(result, writer, self.prefix)
+            for engine_id in last_order:
+                player = self.players[engine_id]
+                if player.engine.proc is not None:
+                    player.engine.quit(listener=player.listener)
+        except BaseException as exc:
+            self.match.fail(exc)
+            _abort_games([player.engine for player in self.players.values()], self.pending)
+        finally:
+            for player in self.players.values():
+                self.group.discard(player.engine)
+            self.players.clear()
 
-        score = usi_info_to_score(listener.info)
-        # 投了閾値
-        if config.resign is not None:
-            if score is not None and score <= -config.resign:
-                # 投了
+    def play_game(self, spec, stack):
+        config = self.config
+        pending = self.pending
+        black, white = self.players[spec.black_id], self.players[spec.white_id]
+        engines_order = (black.engine, white.engine)
+        listeners_order = (black.listener, white.listener)
+        for player in (black, white):
+            engine, listener = player.engine, player.listener
+            if engine.proc is None:
+                self.group.connect(engine, listener)
+            if config.ponder:
+                engine.setoption('USI_Ponder', 'true', listener=listener)
+            for key, value in player.config.options.items():
+                engine.setoption(key, value, listener=listener)
+            engine.isready(listener=listener)
+            if player.config.name:
+                engine.name = player.config.name
+
+        names = (black.engine.name, white.engine.name)
+        self.match.log(f'{self.prefix}{names[0]} vs {names[1]} start.')
+        initial_position, opening_usi_moves = spec.opening
+        board = Board()
+        if initial_position != 'startpos':
+            board.set_sfen(initial_position[5:])
+        moves = []
+        usi_moves = []
+        repetition_hash = defaultdict(int)
+        repetition_hash[board.zobrist_hash()] = 1
+        writer = self.match.records.start(stack, board, names)
+        for move_usi in opening_usi_moves:
+            move = board.push_usi(move_usi)
+            if writer:
+                writer.move(move)
+            moves.append(move)
+            usi_moves.append(move_usi)
+            repetition_hash[board.zobrist_hash()] += 1
+            if len(usi_moves) >= config.opening_moves:
                 break
 
-        # 詰みを見つけたら終了
-        if config.mate_win:
-            if score is not None and score == 100000:
-                move = board.move_from_usi(bestmove)
-                if not board.is_legal(move):
-                    ending = Ending.ILLEGAL
-                    break
-                if writer:
-                    writer.move(move, time=int(elapsed_time), comment=usi_info_to_csa_comment(board, listener.info))
-                board.push(move)
-                moves.append(move)
-                usi_moves.append(bestmove)
-                break
-
-        if bestmove == 'resign':
-            # 投了
-            break
-        elif bestmove == 'win':
-            # 入玉勝ち宣言
-            if board.is_nyugyoku():
-                ending = Ending.DECLARATION
-            else:
-                ending = Ending.ILLEGAL
-            break
-        else:
-            move = board.move_from_usi(bestmove)
-            if board.is_legal(move):
-                if writer:
-                    writer.move(move, time=int(elapsed_time), comment=usi_info_to_csa_comment(board, listener.info))
-                board.push(move)
-                moves.append(move)
-                usi_moves.append(bestmove)
-                key = board.zobrist_hash()
-                repetition_hash[key] += 1
-                # 千日手
-                if repetition_hash[key] == 4:
-                    # 連続王手
-                    is_draw = board.is_draw()
-                    if is_draw == REPETITION_WIN:
-                        ending = Ending.REPETITION_WIN
-                        break
-                    elif is_draw == REPETITION_LOSE:
-                        ending = Ending.REPETITION_LOSS
-                        break
-                    ending = Ending.REPETITION_DRAW
-                    break
-            else:
-                ending = Ending.ILLEGAL
-                break
-
-        # 終局判定
-        game_over = board.is_game_over()
-
-        # Send before submitting the reader so stop cannot overtake go ponder.
-        if config.ponder and pondermove and not game_over and board.move_number <= config.draw:
-            engine.position(usi_moves + [pondermove], sfen=initial_position, listener=listener)
-            listener.info = ''
-            engine._send_go(ponder=True, byoyomi=byoyomi, btime=remain_time[BLACK], wtime=remain_time[WHITE], binc=binc, winc=winc, listener=listener)
-            pending[engine] = (executor.submit(engine._read_bestmove, listener), pondermove)
-
-        # 盤面表示
         if config.display:
-            print('{}手目'.format(len(usi_moves)))
+            print('開始局面')
             if is_jupyter:
-                display(SVG(board.to_svg(move)))
+                display(SVG(board.to_svg()))
             else:
                 print(board)
 
-        if game_over:
-            break
-    _stop_ponder(pending, dict(zip(engines_order, listeners_order)))
-    for player in (black, white):
-        player.engine.gameover(listener=player.listener)
-    if not config.keep_process:
+        # 新規ゲーム
+        for engine, listener in zip(engines_order, listeners_order):
+            engine.usinewgame(listener=listener)
+
+        # 対局
+        ending = Ending.LOSS
+        remain_time = [black.config.time, white.config.time]
+        binc, winc = black.config.inc, white.config.inc
+        inc_time = (binc, winc)
+        byoyomi_order = (black.config.byoyomi, white.config.byoyomi)
+        while True:
+            engine_index = board.turn
+            engine = engines_order[engine_index]
+            listener = listeners_order[engine_index]
+            byoyomi = byoyomi_order[engine_index]
+
+            # 持将棋
+            if board.move_number > config.draw:
+                ending = Ending.MOVE_LIMIT
+                break
+
+            # ponder
+            ponderhit = False
+            if engine in pending:
+                future, expected_move = pending[engine]
+                if bestmove == expected_move:
+                    ponderhit = True
+                    start_time = perf_counter()
+                    engine.ponderhit(listener=listener)
+                    bestmove, pondermove = future.result()
+                    elapsed_time = perf_counter() - start_time
+                else:
+                    engine.stop(listener=listener)
+                    future.result()
+                del pending[engine]
+
+            if not ponderhit:
+                # position
+                engine.position(usi_moves, sfen=initial_position, listener=listener)
+
+                start_time = perf_counter()
+
+                # go
+                listener.info = ''
+                bestmove, pondermove = engine.go(byoyomi=byoyomi, btime=remain_time[BLACK], wtime=remain_time[WHITE], binc=binc, winc=winc, listener=listener)
+
+                elapsed_time = perf_counter() - start_time
+
+            if remain_time[board.turn] is not None:
+                if inc_time[board.turn] is not None:
+                    remain_time[board.turn] += inc_time[board.turn]
+                remain_time[board.turn] -= math.ceil(elapsed_time * 1000)
+
+                if remain_time[board.turn] < 0:
+                    # 秒読みを超えても1秒未満は切れ負けにしない
+                    if remain_time[board.turn] > -((byoyomi or 0) + 1000):
+                        remain_time[board.turn] = 0
+                    else:
+                        # 時間切れ負け
+                        ending = Ending.TIME
+                        break
+
+            score = usi_info_to_score(listener.info)
+            if config.resign is not None and score is not None and score <= -config.resign:
+                break
+
+            mate = config.mate_win and score == 100000
+            if not mate and bestmove == 'resign':
+                break
+            if not mate and bestmove == 'win':
+                ending = Ending.DECLARATION if board.is_nyugyoku() else Ending.ILLEGAL
+                break
+
+            move = board.move_from_usi(bestmove)
+            if not board.is_legal(move):
+                ending = Ending.ILLEGAL
+                break
+            if writer:
+                writer.move(move, time=int(elapsed_time), comment=usi_info_to_csa_comment(board, listener.info))
+            board.push(move)
+            moves.append(move)
+            usi_moves.append(bestmove)
+            if mate:
+                break
+
+            key = board.zobrist_hash()
+            repetition_hash[key] += 1
+            if repetition_hash[key] == 4:
+                ending = {REPETITION_WIN: Ending.REPETITION_WIN,
+                          REPETITION_LOSE: Ending.REPETITION_LOSS}.get(board.is_draw(), Ending.REPETITION_DRAW)
+                break
+
+            # 終局判定
+            game_over = board.is_game_over()
+
+            # Send before submitting the reader so stop cannot overtake go ponder.
+            if config.ponder and pondermove and not game_over and board.move_number <= config.draw:
+                engine.position(usi_moves + [pondermove], sfen=initial_position, listener=listener)
+                listener.info = ''
+                engine._send_go(ponder=True, byoyomi=byoyomi, btime=remain_time[BLACK], wtime=remain_time[WHITE], binc=binc, winc=winc, listener=listener)
+                pending[engine] = (self.executor.submit(engine._read_bestmove, listener), pondermove)
+
+            # 盤面表示
+            if config.display:
+                print('{}手目'.format(len(usi_moves)))
+                if is_jupyter:
+                    display(SVG(board.to_svg(move)))
+                else:
+                    print(board)
+
+            if game_over:
+                break
+        _stop_ponder(pending, dict(zip(engines_order, listeners_order)), self.match.fail)
         for player in (black, white):
-            player.engine.quit(listener=player.listener)
-    winner, code, message = ending.outcome(board.turn, board.move_number - 1)
-    return GameResult(spec, names, winner, code, message, tuple(moves)), writer
+            player.engine.gameover(listener=player.listener)
+        if not config.keep_process:
+            for player in (black, white):
+                player.engine.quit(listener=player.listener)
+        winner, code, message = ending.outcome(board.turn, board.move_number - 1)
+        return GameResult(spec, names, winner, code, message, tuple(moves)), writer
 
 
 def rate(wins, losses, draws):
@@ -543,25 +582,56 @@ class MatchStats:
                 elo.diff(), error_margin, elo.los(), elo.draw_ratio()))
 
 
+class LeagueTable:
+    """Publish one standings block after all three mini-matches in a stage finish."""
+
+    def __init__(self):
+        self.stats = {pair: MatchStats(pair) for pair in LEAGUE_PAIRS}
+        self.pending = defaultdict(list)
+        self.finished = defaultdict(int)
+        self.next_stage = 0
+
+    def record(self, result):
+        stage = result.spec.index // (2 * len(LEAGUE_PAIRS))
+        self.pending[stage].append((result.spec, result.names, result.winner))
+
+    def finish_pair(self, pair, games):
+        stage = pair[0].index // (2 * len(LEAGUE_PAIRS))
+        self.finished[stage] += 1
+        while self.finished.get(self.next_stage) == len(LEAGUE_PAIRS):
+            for spec, names, winner in self.pending.pop(self.next_stage):
+                ids = tuple(sorted((spec.black_id, spec.white_id)))
+                self.stats[ids].add(spec, names, winner)
+            del self.finished[self.next_stage]
+            self.next_stage += 1
+            print(f'{self.next_stage * 2} of {games} games finished.')
+            for stats in self.stats.values():
+                result = stats.snapshot()
+                w, l, d = result['engine1_won'], result['engine2_won'], result['draw']
+                print(f"{result['engine1_name']} vs {result['engine2_name']}: "
+                      f"{w}-{l}-{d} ({rate(w, l, d):.1f}%)")
+
+
 class Match:
-    def __init__(self, records, games, print_summary, callback):
+    def __init__(self, records, games, print_summary, callback, table=None):
         self.records = records
         self.games = games
         self.print_summary = print_summary
         self.callback = callback
-        self.stats = MatchStats()
+        self.stats = MatchStats() if table is None else None
+        self.table = table
         self.lock = Lock()
-        self.stopped = False
+        self.stopped = Event()
         self.error = None
 
     def try_start(self):
         with self.lock:
-            return not self.stopped
+            return not self.stopped.is_set()
 
     def take_pairs(self, schedule):
         while True:
             with self.lock:
-                pair = None if self.stopped else next(schedule, None)
+                pair = None if self.stopped.is_set() else next(schedule, None)
             if pair is None:
                 return
             yield pair
@@ -573,63 +643,40 @@ class Match:
     def _fail_locked(self, exc):
         if self.error is None:
             self.error = exc
-        self.stopped = True
+        self.stopped.set()
 
     def fail(self, exc):
         with self.lock:
             self._fail_locked(exc)
 
-    def report(self, result, writer, prefix):
+    @contextmanager
+    def _reporting(self):
         with self.lock:
             try:
-                print(prefix + result.message)
-                self.stats.add(result.spec, result.names, result.winner)
-                snapshot = self.stats.snapshot()
-                if self.print_summary:
-                    self.stats.summary(snapshot, self.games)
-                self.records.finish(result, writer)
-                if self.callback and not self.stopped and not self.callback(snapshot):
-                    self.stopped = True
+                yield
             except BaseException as exc:
                 self._fail_locked(exc)
                 raise
 
+    def finish_pair(self, pair):
+        with self._reporting():
+            if self.error is None:
+                self.table.finish_pair(pair, self.games)
 
-def play_pairs(pairs, configs, config, group, match, prefix=''):
-    players = {}
-    pending = {}
-    with ExitStack() as stack:
-        executor = stack.enter_context(ThreadPoolExecutor(max_workers=2)) if config.ponder else None
-        try:
-            for spec in chain.from_iterable(pairs):
-                if not match.try_start():
-                    break
-                for engine_id in (spec.black_id, spec.white_id):
-                    if engine_id not in players:
-                        settings = configs[engine_id]
-                        listener = Listener(f'{prefix}{engine_id + 1}', match.log if config.debug else None)
-                        players[engine_id] = Player(settings, Engine(settings.command, connect=False), listener)
-                with ExitStack() as game_stack:
-                    result, writer = play_game(spec, players, config, group, executor, pending,
-                                               match, game_stack, prefix)
-                    match.report(result, writer, prefix)
-            for player in players.values():
-                if player.engine.proc is not None:
-                    player.engine.quit(listener=player.listener)
-        except BaseException as exc:
-            match.fail(exc)
-            for player in players.values():
-                with suppress(Exception):
-                    player.engine.kill()
-            for future, _ in pending.values():
-                with suppress(BaseException):
-                    future.result()
-            for player in players.values():
-                with suppress(Exception):
-                    player.engine._reap()
-        finally:
-            for player in players.values():
-                group.discard(player.engine)
+    def report(self, result, writer, prefix):
+        with self._reporting():
+            print(prefix + result.message)
+            if self.table is not None:
+                self.records.finish(result, writer)
+                self.table.record(result)
+                return
+            self.stats.add(result.spec, result.names, result.winner)
+            snapshot = self.stats.snapshot()
+            if self.print_summary:
+                self.stats.summary(snapshot, self.games)
+            self.records.finish(result, writer)
+            if self.callback and not self.stopped.is_set() and not self.callback(snapshot):
+                self.stopped.set()
 
 
 def _clock_values(value, count):
@@ -649,17 +696,21 @@ def _engine_configs(commands, names, options, byoyomi, time, inc):
         _clock_values(time, count), _clock_values(inc, count), strict=True))
 
 
+class _WorkerConfigError(ValueError):
+    pass
+
+
 def _worker_configs(configs, concurrency, worker_options, display):
     if type(concurrency) is not int or concurrency < 1:
-        raise ValueError('concurrency must be a positive integer')
+        raise _WorkerConfigError('concurrency must be a positive integer')
     if display and concurrency > 1:
-        raise ValueError('--display requires concurrency=1')
+        raise _WorkerConfigError('--display requires concurrency=1')
     overrides = worker_options if worker_options is not None else [None] * len(configs)
     if len(overrides) != len(configs):
-        raise ValueError('worker_options must have one entry per engine')
+        raise _WorkerConfigError('worker_options must have one entry per engine')
     for engine_id, items in enumerate(overrides, 1):
         if items is not None and len(items) != concurrency:
-            raise ValueError(f'worker-options{engine_id} requires {concurrency} entries')
+            raise _WorkerConfigError(f'--worker-options{engine_id} requires {concurrency} entries')
     return [tuple(replace(cfg, options={**cfg.options, **items[i]}) if items is not None else cfg
                   for cfg, items in zip(configs, overrides))
             for i in range(concurrency)]
@@ -671,7 +722,16 @@ def run_workers(pairs, workers, config, group, match):
     def run(index):
         prefix = f'[w{index + 1}] ' if len(workers) > 1 else ''
         try:
-            play_pairs(match.take_pairs(schedule_iter), workers[index], config, group, match, prefix)
+            with ExitStack() as stack:
+                executor = stack.enter_context(ThreadPoolExecutor(max_workers=2)) if config.ponder else None
+                worker = Worker(workers[index], config, group, match, prefix, executor)
+                jobs = match.take_pairs(schedule_iter)
+                if match.table is None:
+                    worker.play_pairs(jobs)
+                else:
+                    for pair in jobs:
+                        worker.play_pairs((pair,))
+                        match.finish_pair(pair)
         except BaseException as exc:
             match.fail(exc)
 
@@ -684,6 +744,7 @@ def run_workers(pairs, workers, config, group, match):
                 while pending:
                     _, pending = wait(pending, timeout=0.5)
             except BaseException:
+                match.stopped.set()
                 group.close()
                 raise
     if match.error is not None:
@@ -737,14 +798,36 @@ def main(engine1: str, engine2: str, options1: dict | None = None, options2: dic
     configs = _engine_configs((engine1, engine2), names, (options1 or {}, options2 or {}),
                               byoyomi, time, inc)
     config = GameConfig(resign, mate_win, draw, ponder, opening_moves, keep_process, is_display, debug)
-    workers = _worker_configs(configs, concurrency, worker_options, is_display)
-    pairs = schedule(games, load_openings(opening, opening_seed, opening_index), no_swap)
-    group = ProcessGroup()
+    return _run(configs, config, games, opening, opening_seed, opening_index, no_swap,
+                csa, multi_csa, pgn, no_pgn_moves, concurrency, worker_options, print_summary, callback)
+
+
+def league(engine1: str, engine2: str, engine3: str, options1=None, options2=None, options3=None,
+           names=None, *, games=1, resign=None, mate_win=False, byoyomi=None, time=None, inc=None,
+           draw=256, ponder=False, no_swap=False, opening=None, opening_moves=24, opening_seed=None,
+           opening_index=None, keep_process=False, csa=None, multi_csa=False, pgn=None,
+           no_pgn_moves=False, is_display=False, debug=False, concurrency=1, worker_options=None):
+    """Play two games per pairing and opening. Return standings in AB, AC, BC order."""
+    configs = _engine_configs((engine1, engine2, engine3), names,
+                              (options1 or {}, options2 or {}, options3 or {}), byoyomi, time, inc)
+    config = GameConfig(resign, mate_win, draw, ponder, opening_moves, keep_process, is_display, debug)
+    return _run(configs, config, games, opening, opening_seed, opening_index, no_swap,
+                csa, multi_csa, pgn, no_pgn_moves, concurrency, worker_options, False, None)
+
+
+def _run(configs, config, games, opening, seed, index, no_swap, csa, multi_csa, pgn, no_pgn_moves,
+         concurrency, worker_options, print_summary, callback):
+    workers = _worker_configs(configs, concurrency, worker_options, config.display)
+    table = LeagueTable() if len(configs) == 3 else None
+    pairs = schedule(games, load_openings(opening, seed, index), no_swap, table is not None)
     with ExitStack() as stack:
         records = Records(stack, csa, multi_csa, pgn, no_pgn_moves, concurrency > 1)
-        match = Match(records, games, print_summary, callback)
-        run_workers(pairs, workers, config, group, match)
+        match = Match(records, games, print_summary, callback, table)
+        run_workers(pairs, workers, config, ProcessGroup(), match)
+        if table is not None:
+            return [stats.snapshot() for stats in table.stats.values()]
         return match.stats.snapshot()
+
 
 def _parse_options(value):
     options = {}
@@ -765,9 +848,10 @@ def _cli(argv=None):
     parser.add_argument('--options1', type=str, default='')
     parser.add_argument('--options2', type=str, default='')
     parser.add_argument('--options3', type=str, default='')
-    parser.add_argument('--concurrency', type=int, default=1)
+    parser.add_argument('--concurrency', type=int, default=1, help='number of workers (default: 1)')
     for number in (1, 2, 3):
-        parser.add_argument(f'--worker-options{number}', nargs='+', metavar='OPTIONS')
+        parser.add_argument(f'--worker-options{number}', nargs='+', metavar='OPTIONS',
+                            help=f'one comma-separated name:value list per worker for engine {number}')
     parser.add_argument('--name1', type=str)
     parser.add_argument('--name2', type=str)
     parser.add_argument('--name3', type=str)
@@ -808,94 +892,19 @@ def _cli(argv=None):
     if args.csa is not None and not args.multi_csa:
         os.makedirs(args.csa, exist_ok=True)
 
-    if args.engine3 is None:
-        # 1 on 1 matches
-        main(args.engine1, args.engine2,
-            options_list[0], options_list[1],
-            [args.name1, args.name2],
-            args.games, args.resign, args.mate_win,
-            args.byoyomi, args.time, args.inc,
-            args.draw, args.ponder, args.no_swap, args.opening, args.opening_moves, args.opening_seed, args.opening_index,
-            args.keep_process,
-            args.csa, args.multi_csa,
-            args.pgn, args.no_pgn_moves,
-            args.display, args.debug, concurrency=args.concurrency, worker_options=worker_options)
-    else:
-        # league matches
-        engines = (args.engine1, args.engine2, args.engine3)
-        names = (args.name1, args.name2, args.name3)
-        if args.byoyomi:
-            if len(args.byoyomi) == 3:
-                byoyomis = (args.byoyomi[0], args.byoyomi[1], args.byoyomi[2])
-            else:
-                byoyomis = (args.byoyomi[0], args.byoyomi[0], args.byoyomi[0])
-        else:
-            byoyomis = (None, None, None)
-        if args.time:
-            if len(args.time) == 3:
-                times = (args.time[0], args.time[1], args.time[2])
-            else:
-                times = (args.time[0], args.time[0], args.time[0])
-        else:
-            times = (None, None, None)
-        if args.inc:
-            if len(args.inc) == 3:
-                incs = (args.inc[0], args.inc[1], args.inc[2])
-            else:
-                incs = (args.inc[0], args.inc[0], args.inc[0])
-        else:
-            incs = (None, None, None)
-        combinations = ((0, 1), (0, 2), (1, 2))
-        results = [
-            { 'engine1_won': 0, 'engine2_won': 0, 'draw': 0, 'total': 0 },
-            { 'engine1_won': 0, 'engine2_won': 0, 'draw': 0, 'total': 0 },
-            { 'engine1_won': 0, 'engine2_won': 0, 'draw': 0, 'total': 0 }]
-
-        # 初期局面
-        if args.opening:
-            # インデックス指定
-            if args.opening_index is not None:
-                opening_index_list = [args.opening_index]
-            else:
-                with open(args.opening) as f:
-                    opening_index_list = list(range(len(f.readlines())))
-                # シャッフル
-                if args.opening_seed is not None:
-                    random.seed(args.opening_seed)
-                random.shuffle(opening_index_list)
-
-        for n in range(0, args.games, 2):
-            if args.opening:
-                opening_index = opening_index_list[n // 2 % len(opening_index_list)]
-            else:
-                opening_index = None
-            for i, (a, b) in enumerate(combinations):
-                # 先後入れ替えて1回ずつ対局
-                result = main(engines[a], engines[b],
-                    options_list[a], options_list[b],
-                    [names[a], names[b]],
-                    2, args.resign, args.mate_win,
-                    (byoyomis[a], byoyomis[b]), (times[a], times[b]), (incs[a], incs[b]),
-                    args.draw, args.ponder, False, args.opening, args.opening_moves, None, opening_index,
-                    args.keep_process,
-                    args.csa, args.multi_csa,
-                    args.pgn, args.no_pgn_moves,
-                    args.display, args.debug,
-                    print_summary=False)
-                results[i]['engine1_name'] = result['engine1_name']
-                results[i]['engine2_name'] = result['engine2_name']
-                results[i]['engine1_won'] += result['engine1_won']
-                results[i]['engine2_won'] += result['engine2_won']
-                results[i]['draw'] += result['draw']
-                results[i]['total'] += result['total']
-
-            # 勝敗状況表示
-            print('{} of {} games finished.'.format(n + 2, args.games))
-            for i, (a, b) in enumerate(combinations):
-                print('{} vs {}: {}-{}-{} ({:.1f}%)'.format(
-                    results[i]['engine1_name'], results[i]['engine2_name'],
-                    results[i]['engine1_won'], results[i]['engine2_won'], results[i]['draw'],
-                    (results[i]['engine1_won'] + results[i]['draw'] / 2) / results[i]['total'] * 100))
+    commands = [args.engine1, args.engine2, args.engine3][:count]
+    names = [args.name1, args.name2, args.name3][:count]
+    run = league if count == 3 else main
+    try:
+        run(*commands, *options_list, names=names, games=args.games, resign=args.resign,
+            mate_win=args.mate_win, byoyomi=args.byoyomi, time=args.time, inc=args.inc,
+            draw=args.draw, ponder=args.ponder, no_swap=args.no_swap, opening=args.opening,
+            opening_moves=args.opening_moves, opening_seed=args.opening_seed, opening_index=args.opening_index,
+            keep_process=args.keep_process, csa=args.csa, multi_csa=args.multi_csa, pgn=args.pgn,
+            no_pgn_moves=args.no_pgn_moves, is_display=args.display, debug=args.debug,
+            concurrency=args.concurrency, worker_options=worker_options)
+    except _WorkerConfigError as exc:
+        parser.error(str(exc))
 
 
 if __name__ == '__main__':
