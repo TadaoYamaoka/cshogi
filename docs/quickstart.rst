@@ -154,3 +154,39 @@ Features
       >>> from cshogi import cli
       
       >>> cli.main('/content/LesserkaiSrc/Lesserkai/Lesserkai', '/content/LesserkaiSrc/Lesserkai/Lesserkai')
+
+  Use ``-c`` or ``--concurrency`` to play several pairs at once. Each worker plays the
+  two colors of an opening on the same hardware. Worker options override the
+  named engine's common options in command-line order. Supply one quoted
+  option string per worker for each engine that needs overrides.
+
+  .. code-block:: bash
+
+      python -m cshogi.cli yane dlshogi dlshogi --games 20 -c 2 \
+        --name2 base --name3 new --keep-process --pgn league.pgn \
+        --options2 "DNN_Model:base.onnx,UCT_Threads:3" \
+        --options3 "DNN_Model:new.onnx,UCT_Threads:3" \
+        --worker-options2 "UCT_Threads:2" "UCT_Threads:0,UCT_Threads2:2" \
+        --worker-options3 "UCT_Threads:2" "UCT_Threads:0,UCT_Threads2:2"
+
+  Here ``[worker1]`` uses GPU 0 and ``[worker2]`` uses GPU 1. Budget CPU threads
+  across workers, including both engines when pondering. For dlshogi builds
+  with a TensorRT cache, initialize each model/GPU/batch-size combination
+  once before starting workers that share the same cache file.
+
+  In a Unix shell launcher, use ``exec`` to start the engine so Ctrl+C can terminate it directly.
+
+  Head-to-head PGN records are appended in completion order. Their Round
+  tags retain the scheduled game numbers. A three-engine league plays two
+  games per pairing per opening, rounding an odd game count up for each
+  pairing. Its Round tags are 1 and 2 in every mini-match.
+
+  The Python API accepts the same overrides, for example
+  ``cli.main(a, b, concurrency=2, worker_options=[None, [{'Threads': 2}, {'Threads': 4}]])``.
+  A falsy callback result stops new games. Games already started finish
+  and contribute to the records and final totals. Parallel callbacks run
+  serially on the reporting workers. Board display requires concurrency 1.
+  Parallel debug output is queued so that a worker can keep reading engine
+  responses while another worker prints standings or runs a callback.
+  A debug label such as ``[worker1] g3 2`` identifies worker 1, scheduled game 3,
+  and the second engine on the command line.

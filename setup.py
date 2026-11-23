@@ -112,11 +112,9 @@ packages = [
 package_data = {"": ["*"], "cshogi.web": ["static/*", "templates/*"]}
 
 extras_require = {
-    ':python_version == "3.6"': ["numpy>=1.19.5,<1.20.0"],
-    ':python_version == "3.7"': ["numpy>=1.21.6,<1.22.0"],
     ':python_version >= "3.12" and python_version < "3.13"': ["numpy>=1.26.0,<1.27.0"],
     ':python_version >= "3.13" and python_version < "4.0"': ["numpy>=2.1.0"],
-    ':python_version >= "3.8" and python_version < "3.12"': ["numpy"],
+    ':python_version >= "3.10" and python_version < "3.12"': ["numpy"],
     "web": ["flask", "portpicker"],
 }
 
@@ -133,7 +131,7 @@ setup_kwargs = {
     "packages": packages,
     "package_data": package_data,
     "extras_require": extras_require,
-    "python_requires": ">=3.6",
+    "python_requires": ">=3.10",
     "ext_modules": cythonize(ext_modules, language_level="3"),
     "cmdclass": {"build_ext": MyBuildExt},
 }

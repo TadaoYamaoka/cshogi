@@ -40,7 +40,7 @@ cshogiは、盤面管理、合法手生成、指し手の検証、USIプロト�
 機能
 ------
 
-* Python 3.5以上とCython 0.29以上をサポート
+* Python 3.10以上とCython 0.29以上をサポート
 
 * IPython/Jupyter Notebookと統合
 
@@ -201,6 +201,11 @@ cshogi.webパッケージを使用する場合は、以下のコマンドで追�
 * `チュートリアル <https://colab.research.google.com/github/TadaoYamaoka/cshogi/blob/notebook/cshogi_tutorial.ipynb>`_
 * `リファレンス <https://tadaoyamaoka.github.io/cshogi/>`_
 
+
+変更履歴（未リリース）
+----------------------
+
+* ``cshogi.cli.main()`` と ``league()`` で ``names`` を指定する場合は、エンジンの台数と同じ数の表示名が必要です。
 
 謝辞
 ------
