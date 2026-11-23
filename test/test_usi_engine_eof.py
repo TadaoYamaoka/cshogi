@@ -45,6 +45,30 @@ class EngineEofTests(unittest.TestCase):
             stream.close.assert_called_once()
         self.assertIsNone(engine.proc)
 
+    def test_reap_interrupted_wait(self):
+        for returncode in (0, None):
+            with self.subTest(returncode=returncode):
+                engine = engine_module.Engine('unused', connect=False)
+                proc = engine.proc = Mock()
+                interrupt = KeyboardInterrupt()
+                proc.wait.side_effect = interrupt
+                proc.poll.return_value = returncode
+
+                with self.assertRaises(KeyboardInterrupt) as caught:
+                    engine._reap()
+
+                self.assertIs(caught.exception, interrupt)
+                if returncode is None:
+                    self.assertIs(engine.proc, proc)
+                    for stream in (proc.stdin, proc.stdout, proc.stderr):
+                        stream.close.assert_not_called()
+                    proc.wait.side_effect = None
+                    proc.poll.return_value = 0
+                    engine._reap()
+                self.assertIsNone(engine.proc)
+                for stream in (proc.stdin, proc.stdout, proc.stderr):
+                    stream.close.assert_called_once()
+
     def invoke(self, method, response):
         engine = engine_module.Engine('fake_engine', connect=False)
         process = types.SimpleNamespace(stdin=io.BytesIO(), stdout=GuardedStream(response))

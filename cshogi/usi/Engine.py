@@ -456,13 +456,18 @@ class Engine:
     def _reap(self):
         """Release a terminated process after its stdout reader has finished."""
         proc = self.proc
-        if proc is not None:
+        if proc is None:
+            return
+        try:
             proc.wait()
-            for stream in (proc.stdin, proc.stdout, proc.stderr):
-                if stream is not None:
-                    with suppress(OSError):
-                        stream.close()
-            self.proc = None
+        finally:
+            # An interrupted wait may leave a live child for the caller to terminate.
+            if proc.poll() is not None:
+                for stream in (proc.stdin, proc.stdout, proc.stderr):
+                    if stream is not None:
+                        with suppress(OSError):
+                            stream.close()
+                self.proc = None
 
     def quit(self, listener: Optional[Callable] = None):
         """Sends the 'quit' command to the engine and waits for it to exit.
