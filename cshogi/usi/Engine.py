@@ -201,10 +201,15 @@ class Engine:
 
         :param listener: Optional callback to handle engine responses.
         """
-        if self.debug: listener = print
+        self._spawn()
+        self._handshake(listener)
+
+    def _spawn(self):
         cwd = os.path.dirname(self.cmd)
         self.proc = subprocess.Popen([self.cmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd if cwd != '' else None)
 
+    def _handshake(self, listener=None):
+        if self.debug: listener = print
         cmd = 'usi'
         if listener:
             listener(cmd)
@@ -441,6 +446,22 @@ class Engine:
         self.proc.stdin.write(cmd.encode('ascii') + b'\n')
         self.proc.stdin.flush()
 
+    def kill(self):
+        """Terminate the current process, leaving its pipes available to readers."""
+        proc = self.proc
+        if proc is not None and proc.poll() is None:
+            proc.kill()
+
+    def _reap(self):
+        """Release a terminated process after its stdout reader has finished."""
+        proc = self.proc
+        if proc is not None:
+            proc.wait()
+            for stream in (proc.stdin, proc.stdout, proc.stderr):
+                if stream is not None:
+                    stream.close()
+            self.proc = None
+
     def quit(self, listener: Optional[Callable] = None):
         """Sends the 'quit' command to the engine and waits for it to exit.
 
@@ -455,5 +476,4 @@ class Engine:
             self.proc.stdin.flush()
         except BrokenPipeError:
             pass
-        self.proc.wait()
-        self.proc = None
+        self._reap()

@@ -26,8 +26,17 @@ class FakeEngine:
     def record(self, command):
         self.match.events.append((self.name, command))
 
-    def connect(self, listener=None):
+    def _spawn(self):
         self.proc = object()
+
+    def _handshake(self, listener=None):
+        pass
+
+    def kill(self):
+        self.release.set()
+
+    def _reap(self):
+        self.proc = None
 
     def setoption(self, *args, **kwargs):
         pass
