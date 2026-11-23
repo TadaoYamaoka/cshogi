@@ -329,7 +329,6 @@ class Worker:
 
     def play_pairs(self, pairs):
         last_order = ()
-        completed = 0
         try:
             for spec in chain.from_iterable(pairs):
                 if not self.match.try_start():
@@ -344,7 +343,6 @@ class Worker:
                 with ExitStack() as stack:
                     result, csa_record = self.play_game(spec, stack)
                 self.match.report(result, csa_record, self.prefix)
-                completed += 1
             # Preserve USI quit order for the final game, then release any other owned engine.
             for engine_id in dict.fromkeys((*last_order, *self.players)):
                 player = self.players[engine_id]
@@ -357,7 +355,6 @@ class Worker:
             for player in self.players.values():
                 self.group.discard(player.engine)
             self.players.clear()
-        return completed
 
     def play_game(self, spec, stack):
         config = self.config
@@ -582,26 +579,24 @@ class MatchStats:
 
 
 class LeagueTable:
-    """Publish one standings block after all three mini-matches in a stage finish."""
+    """Publish standings in stage order once all games in a stage are recorded."""
+
+    games_per_stage = 2 * len(LEAGUE_PAIRS)
 
     def __init__(self):
         self.stats = {pair: MatchStats(pair) for pair in LEAGUE_PAIRS}
         self.pending = defaultdict(list)
-        self.finished = defaultdict(int)
         self.next_stage = 0
 
     def record(self, result):
-        stage = result.spec.index // (2 * len(LEAGUE_PAIRS))
+        stage = result.spec.index // self.games_per_stage
         self.pending[stage].append((result.spec, result.names, result.winner))
 
-    def finish_pair(self, pair, games):
-        stage = pair[0].index // (2 * len(LEAGUE_PAIRS))
-        self.finished[stage] += 1
-        while self.finished.get(self.next_stage) == len(LEAGUE_PAIRS):
+    def publish_ready(self, games):
+        while len(self.pending.get(self.next_stage, ())) == self.games_per_stage:
             for spec, names, winner in self.pending.pop(self.next_stage):
                 ids = tuple(sorted((spec.black_id, spec.white_id)))
                 self.stats[ids].add(spec, names, winner)
-            del self.finished[self.next_stage]
             self.next_stage += 1
             print(f'{self.next_stage * 2} of {games} games finished.')
             for stats in self.stats.values():
@@ -679,10 +674,10 @@ class Match:
                 self._fail_locked(exc)
                 raise
 
-    def finish_pair(self, pair):
+    def publish_standings(self):
         with self._reporting():
             if self.error is None:
-                self.table.finish_pair(pair, self.games)
+                self.table.publish_ready(self.games)
 
     def report(self, result, csa_record, prefix):
         with self._reporting():
@@ -732,6 +727,8 @@ def _worker_configs(configs, concurrency, worker_options, display):
     for engine_id, items in enumerate(overrides, 1):
         if items is not None and len(items) != concurrency:
             raise _WorkerConfigError(f'--worker-options{engine_id} requires {concurrency} entries')
+    if concurrency > 1:
+        configs = tuple(replace(cfg, options=dict(cfg.options)) for cfg in configs)
     return [tuple(replace(cfg, options={**cfg.options, **items[i]}) if items is not None else cfg
                   for cfg, items in zip(configs, overrides))
             for i in range(concurrency)]
@@ -751,8 +748,8 @@ def run_workers(pairs, workers, config, group, match):
                     worker.play_pairs(jobs)
                 else:
                     for pair in jobs:
-                        if worker.play_pairs((pair,)) == len(pair):
-                            match.finish_pair(pair)
+                        worker.play_pairs((pair,))
+                        match.publish_standings()
         except BaseException as exc:
             if len(workers) == 1 and isinstance(exc, KeyboardInterrupt):
                 raise

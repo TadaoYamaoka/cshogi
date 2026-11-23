@@ -170,16 +170,16 @@ class ParallelMatchTests(unittest.TestCase):
         baseline = run_cli(Match(['resign']), *args)
         later_stage = Event()
         play_game = cli.Worker.play_game
-        finish = cli.LeagueTable.finish_pair
+        report = cli.Match.report
 
         def play(worker, spec, stack):
             if spec.index == 0:
                 self.assertTrue(later_stage.wait(4))
             return play_game(worker, spec, stack)
 
-        def finished(table, pair, games):
-            finish(table, pair, games)
-            if pair[0].index == 10:
+        def reported(state, result, *args):
+            report(state, result, *args)
+            if result.spec.index == 11:
                 later_stage.set()
 
         match = Match(['resign'])
@@ -188,7 +188,7 @@ class ParallelMatchTests(unittest.TestCase):
         def option(engine, key, value, listener):
             commands.setdefault((engine, listener.label.split()[0]), []).append((key, value))
 
-        with patch.object(cli.Worker, 'play_game', play), patch.object(cli.LeagueTable, 'finish_pair', finished), \
+        with patch.object(cli.Worker, 'play_game', play), patch.object(cli.Match, 'report', reported), \
                 patch.object(FakeEngine, 'setoption', option):
             overrides = ('UCT_Threads:2', 'UCT_Threads:0,UCT_Threads2:2')
             output = run_cli(match, *args, '--concurrency', 2,
@@ -239,24 +239,19 @@ class ParallelMatchTests(unittest.TestCase):
         self.assertEqual(result['total'], 4)
 
     def test_interrupted_league_keeps_five_games_without_publishing_six(self):
-        half_pair, two_pairs, closed = Event(), Event(), Event()
-        report, finish, close = cli.Match.report, cli.LeagueTable.finish_pair, cli.ProcessGroup.close
-        finished = []
+        recorded = {index: Event() for index in (1, 3, 4)}
+        closed = Event()
+        report, close = cli.Match.report, cli.ProcessGroup.close
 
         def reported(state, result, *args):
             report(state, result, *args)
+            if result.spec.index in recorded:
+                recorded[result.spec.index].set()
             if result.spec.index == 4:
-                half_pair.set()
                 self.assertTrue(closed.wait(4))
 
-        def finished_pair(table, pair, games):
-            finish(table, pair, games)
-            finished.append(pair[0].index)
-            if len(finished) == 2:
-                two_pairs.set()
-
         def interrupt(*args, **kwargs):
-            self.assertTrue(half_pair.wait(3) and two_pairs.wait(3))
+            self.assertTrue(all(event.wait(3) for event in recorded.values()))
             raise KeyboardInterrupt
 
         def shutdown(group):
@@ -266,14 +261,36 @@ class ParallelMatchTests(unittest.TestCase):
         output = io.StringIO()
         with tempfile.TemporaryDirectory() as directory, contextlib.redirect_stdout(output), \
                 patch.object(cli, 'Engine', Match(['resign']).engine), patch.object(cli, 'wait', interrupt), \
-                patch.object(cli.Match, 'report', reported), patch.object(cli.LeagueTable, 'finish_pair', finished_pair), \
-                patch.object(cli.ProcessGroup, 'close', shutdown):
+                patch.object(cli.Match, 'report', reported), patch.object(cli.ProcessGroup, 'close', shutdown):
             pgn = Path(directory) / 'league.pgn'
             with self.assertRaises(KeyboardInterrupt):
                 cli.league('A', 'B', 'C', games=2, concurrency=2, pgn=pgn)
             self.assertEqual(pgn.read_text().count('[Result '), 5)
-        self.assertCountEqual(finished, [0, 2])
         self.assertNotIn('games finished.', output.getvalue())
+
+    def test_parallel_options_snapshot_survives_callback_mutation(self):
+        options = {'Threads': 1, 'Hash': 16}
+        setting, changed = Event(), Event()
+        sent = []
+
+        def option(engine, key, value, listener):
+            if listener.label.startswith('[w2]'):
+                sent.append((key, value))
+                setting.set()
+                self.assertTrue(changed.wait(3))
+            else:
+                self.assertTrue(setting.wait(3))
+
+        def callback(stats):
+            options.update(Hash=32, Ponder=False)
+            changed.set()
+            return False
+
+        with patch.object(FakeEngine, 'setoption', option):
+            result = Match(['resign']).run(games=4, concurrency=2, ponder=False,
+                                           options1=options, callback=callback)
+        self.assertEqual(sent, [('Threads', 1), ('Hash', 16)])
+        self.assertEqual(result['total'], 2)
 
     def test_debug_search_can_return_while_a_callback_holds_the_match_lock(self):
         searching, reporting, logged = Event(), Event(), Event()
