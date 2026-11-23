@@ -186,3 +186,5 @@ Features
   serially on the reporting workers. Board display requires concurrency 1.
   Parallel debug output is queued so that a worker can keep reading engine
   responses while another worker prints standings or runs a callback.
+  A debug label such as ``[w1] g3 2`` identifies worker 1, scheduled game 3,
+  and the second engine on the command line.

@@ -26,6 +26,48 @@ def run_cli(match, *args):
 
 
 class SequentialMatchTests(unittest.TestCase):
+    def test_record_close_error_precedence(self):
+        close_error = OSError('record close failed')
+
+        class Record(io.StringIO):
+            def close(self):
+                super().close()
+                raise close_error
+
+        for module, options in ((cli.PGN, {'pgn': 'match.pgn'}),
+                                (cli.CSA, {'csa': 'match.csa', 'multi_csa': True}),
+                                (cli, {'csa': 'records'})):
+            for fail_search in (True, False):
+                with self.subTest(options=options, fail_search=fail_search):
+                    match = Match(['resign'])
+                    record = Record()
+                    if fail_search:
+                        match.fail_at = 0
+                    expected = match.failure if fail_search else close_error
+                    with patch.object(module, 'open', return_value=record), self.assertRaises(type(expected)) as caught:
+                        match.run(ponder=False, **options)
+                    self.assertIs(caught.exception, expected)
+                    self.assertTrue(record.closed)
+
+    def test_game_count_and_name_count_are_validated_before_start(self):
+        for commands, run in ((('A', 'B'), cli.main), (('A', 'B', 'C'), cli.league)):
+            with self.subTest(commands=commands), patch.object(cli, 'Engine') as engine:
+                count = len(commands)
+                for names in ([], ['A'], ['A'] * (count + 1)):
+                    with self.assertRaisesRegex(ValueError, f'names must have {count} entries'):
+                        run(*commands, names=names)
+                with self.assertRaisesRegex(ValueError, 'games must be non-negative'):
+                    run(*commands, games=-1)
+                stderr = io.StringIO()
+                with contextlib.redirect_stderr(stderr), self.assertRaises(SystemExit) as caught:
+                    cli._cli([*commands, '--games', '-1'])
+                self.assertEqual(caught.exception.code, 2)
+                self.assertIn('games must be non-negative', stderr.getvalue())
+                result = run(*commands, games=0)
+                totals = [result['total']] if count == 2 else [s['total'] for s in result]
+                self.assertEqual(totals, [0] if count == 2 else [0, 0, 0])
+                engine.assert_not_called()
+
     def test_individual_csa_is_closed_once_before_callback(self):
         class Record(io.StringIO):
             closes = 0
@@ -127,6 +169,14 @@ class SequentialMatchTests(unittest.TestCase):
 
 
 class ParallelMatchTests(unittest.TestCase):
+    def test_parallel_debug_labels_identify_league_games(self):
+        output = run_cli(Match(['resign']), 'A', 'B', 'C', '--concurrency', 2, '--debug', '--keep-process')
+        labels = re.findall(r'^\[w\d+\] g(\d+) (\d+):bestmove resign$', output, re.MULTILINE)
+        self.assertCountEqual(labels, [('1', '1'), ('2', '2'), ('3', '1'),
+                                       ('4', '3'), ('5', '2'), ('6', '3')])
+        sequential = run_cli(Match(['resign']), 'A', 'B', '--debug')
+        self.assertIn('\n1:bestmove resign\n', sequential)
+
     def test_ten_games_keep_openings_and_gpu_settings_with_their_pairs(self):
         match = Match(['resign'])
         barrier = Barrier(3, timeout=4)

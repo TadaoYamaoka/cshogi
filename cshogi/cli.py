@@ -5,7 +5,7 @@ import random
 import re
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed, wait
-from contextlib import ExitStack, contextmanager, suppress
+from contextlib import ExitStack, contextmanager, nullcontext, suppress
 from dataclasses import dataclass, replace
 from enum import Enum
 from io import StringIO
@@ -265,15 +265,27 @@ class GameResult:
     moves: tuple[int, ...]
 
 
+def _close_on_exit(stack, resource):
+    """Report a close failure only if cleanup started without an exception."""
+    def close(exc_type, exc, tb):
+        try:
+            resource.close()
+        except Exception:
+            if exc_type is None:
+                raise
+
+    stack.push(close)
+
+
 class Records:
     def __init__(self, stack, csa, multi_csa, pgn, no_pgn_moves, parallel):
         self.directory = csa if not multi_csa else None
         self.multi = CSA.Exporter(csa, append=True) if csa and multi_csa else None
         if self.multi:
-            stack.callback(self.multi.close)
+            _close_on_exit(stack, self.multi)
         self.pgn = PGN.Exporter(pgn, append=True) if pgn else None
         if self.pgn:
-            stack.callback(self.pgn.close)
+            _close_on_exit(stack, self.pgn)
         self.no_pgn_moves = no_pgn_moves
         self.buffer_multi = self.multi is not None and parallel
 
@@ -291,7 +303,8 @@ class Records:
                     break
                 except FileExistsError:
                     continue
-            writer = CSA.Exporter(stream=stack.enter_context(stream))
+            _close_on_exit(stack, stream)
+            writer = CSA.Exporter(stream=stream)
         if writer:
             writer.info(board, names, version='V2')
         return writer
@@ -340,6 +353,8 @@ class Worker:
                         label = f'{self.prefix}{len(self.players) + 1}'
                         listener = Listener(label, self.match.debug_log if self.config.debug else None)
                         self.players[engine_id] = Player(settings, Engine(settings.command, connect=False), listener)
+                    if self.prefix and self.config.debug:
+                        self.players[engine_id].listener.label = f'{self.prefix}g{spec.index + 1} {engine_id + 1}'
                 with ExitStack() as stack:
                     result, csa_record = self.play_game(spec, stack)
                 self.match.report(result, csa_record, self.prefix)
@@ -705,28 +720,32 @@ def _clock_values(value, count):
     raise ValueError(f'expected one or {count} clock values')
 
 
+class _MatchConfigError(ValueError):
+    pass
+
+
 def _engine_configs(commands, names, options, byoyomi, time, inc):
     count = len(commands)
+    if names is None:
+        names = [None] * count
+    elif len(names) != count:
+        raise _MatchConfigError(f'names must have {count} entries')
     return tuple(EngineConfig(*values) for values in zip(
-        commands, names or [None] * count, options, _clock_values(byoyomi, count),
+        commands, names, options, _clock_values(byoyomi, count),
         _clock_values(time, count), _clock_values(inc, count), strict=True))
-
-
-class _WorkerConfigError(ValueError):
-    pass
 
 
 def _worker_configs(configs, concurrency, worker_options, display):
     if type(concurrency) is not int or concurrency < 1:
-        raise _WorkerConfigError('concurrency must be a positive integer')
+        raise _MatchConfigError('concurrency must be a positive integer')
     if display and concurrency > 1:
-        raise _WorkerConfigError('--display requires concurrency=1')
+        raise _MatchConfigError('--display requires concurrency=1')
     overrides = worker_options if worker_options is not None else [None] * len(configs)
     if len(overrides) != len(configs):
-        raise _WorkerConfigError('worker_options must have one entry per engine')
+        raise _MatchConfigError('worker_options must have one entry per engine')
     for engine_id, items in enumerate(overrides, 1):
         if items is not None and len(items) != concurrency:
-            raise _WorkerConfigError(f'--worker-options{engine_id} requires {concurrency} entries')
+            raise _MatchConfigError(f'--worker-options{engine_id} requires {concurrency} entries')
     if concurrency > 1:
         configs = tuple(replace(cfg, options=dict(cfg.options)) for cfg in configs)
     return [tuple(replace(cfg, options={**cfg.options, **items[i]}) if items is not None else cfg
@@ -785,8 +804,8 @@ def main(engine1: str, engine2: str, options1: dict | None = None, options2: dic
     :param engine2: Path to the second USI engine.
     :param options1: Optional engine options for engine1.
     :param options2: Optional engine options for engine2.
-    :param names: Optional names for the engines.
-    :param games: Number of games to play.
+    :param names: Optional list with one display name per engine.
+    :param games: Non-negative number of games to play.
     :param resign: Resignation threshold. If a score falls below the negative of this value, the engine resigns.
     :param mate_win: Whether a checkmate is considered a win.
     :param byoyomi: Byoyomi time in milliseconds. It can be different for each engine.
@@ -835,17 +854,19 @@ def league(engine1: str, engine2: str, engine3: str, options1=None, options2=Non
 
 def _run(configs, config, games, opening, seed, index, no_swap, csa, multi_csa, pgn, no_pgn_moves,
          concurrency, worker_options, print_summary, callback):
+    if games < 0:
+        raise _MatchConfigError('games must be non-negative')
     workers = _worker_configs(configs, concurrency, worker_options, config.display)
     table = LeagueTable() if len(configs) == 3 else None
     pairs = schedule(games, load_openings(opening, seed, index), no_swap, table is not None)
     with ExitStack() as stack:
         records = Records(stack, csa, multi_csa, pgn, no_pgn_moves, concurrency > 1)
         match = Match(records, games, print_summary, callback, table)
-        if config.debug and concurrency > 1:
-            stack.enter_context(match.queued_debug_log())
-        run_workers(pairs, workers, config, ProcessGroup(), match)
-    if match.error is not None:
-        raise match.error
+        debug_output = match.queued_debug_log() if config.debug and concurrency > 1 else nullcontext()
+        with debug_output:
+            run_workers(pairs, workers, config, ProcessGroup(), match)
+        if match.error is not None:
+            raise match.error
     if table is not None:
         return [stats.snapshot() for stats in table.stats.values()]
     return match.stats.snapshot()
@@ -925,7 +946,7 @@ def _cli(argv=None):
             keep_process=args.keep_process, csa=args.csa, multi_csa=args.multi_csa, pgn=args.pgn,
             no_pgn_moves=args.no_pgn_moves, is_display=args.display, debug=args.debug,
             concurrency=args.concurrency, worker_options=worker_options)
-    except _WorkerConfigError as exc:
+    except _MatchConfigError as exc:
         parser.error(str(exc))
 
 
