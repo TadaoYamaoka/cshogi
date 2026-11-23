@@ -372,6 +372,8 @@ class Worker:
         except BaseException as exc:
             self.match.fail(exc)
             _abort_games([player.engine for player in self.players.values()], self.pending)
+            if not isinstance(exc, Exception):
+                raise
         finally:
             for player in self.players.values():
                 self.group.discard(player.engine)
