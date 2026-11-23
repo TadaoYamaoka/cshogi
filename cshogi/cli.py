@@ -339,6 +339,13 @@ class Worker:
         self.players = {}
         self.pending = {}
 
+    def _read_ponder(self, engine, listener):
+        try:
+            return engine._read_bestmove(listener)
+        except BaseException as exc:
+            self.match.fail(exc)
+            raise
+
     def play_pairs(self, pairs):
         last_order = ()
         try:
@@ -516,7 +523,7 @@ class Worker:
                 engine.position(usi_moves + [pondermove], sfen=initial_position, listener=listener)
                 listener.info = ''
                 engine._send_go(ponder=True, byoyomi=byoyomi, btime=remain_time[BLACK], wtime=remain_time[WHITE], binc=binc, winc=winc, listener=listener)
-                pending[engine] = (self.executor.submit(engine._read_bestmove, listener), pondermove)
+                pending[engine] = (self.executor.submit(self._read_ponder, engine, listener), pondermove)
 
             # 盤面表示
             if config.display:
@@ -690,8 +697,7 @@ class Match:
 
     def publish_standings(self):
         with self._reporting():
-            if self.error is None:
-                self.table.publish_ready(self.games)
+            self.table.publish_ready(self.games)
 
     def report(self, result, csa_record, prefix):
         with self._reporting():

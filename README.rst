@@ -40,7 +40,7 @@ cshogiは、盤面管理、合法手生成、指し手の検証、USIプロト�
 機能
 ------
 
-* Python 3.5以上とCython 0.29以上をサポート
+* Python 3.10以上とCython 0.29以上をサポート
 
 * IPython/Jupyter Notebookと統合
 

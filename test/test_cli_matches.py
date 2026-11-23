@@ -351,6 +351,30 @@ class ParallelMatchTests(unittest.TestCase):
             self.assertEqual(pgn.read_text().count('[Result '), 5)
         self.assertNotIn('games finished.', output.getvalue())
 
+    def test_league_publishes_completed_stage_after_next_stage_fails(self):
+        sixth_started = Event()
+        failure = RuntimeError('game seven failed')
+        play_game = cli.Worker.play_game
+
+        def play(worker, spec, stack):
+            if spec.index == 5:
+                sixth_started.set()
+                self.assertTrue(worker.match.stopped.wait(4))
+            elif spec.index == 6:
+                self.assertTrue(sixth_started.wait(3))
+                raise failure
+            return play_game(worker, spec, stack)
+
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output), patch.object(cli.Worker, 'play_game', play), \
+                patch.object(cli, 'Engine', Match(['resign']).engine):
+            with self.assertRaises(RuntimeError) as caught:
+                cli.league('A', 'B', 'C', games=4, concurrency=2)
+        self.assertIs(caught.exception, failure)
+        standings = [line for line in output.getvalue().splitlines() if not line.startswith('[w')]
+        self.assertEqual(standings, ['2 of 4 games finished.', 'A vs B: 1-1-0 (50.0%)',
+                                     'A vs C: 1-1-0 (50.0%)', 'B vs C: 1-1-0 (50.0%)'])
+
     def test_parallel_options_snapshot_survives_callback_mutation(self):
         options = {'Threads': 1, 'Hash': 16}
         setting, changed = Event(), Event()

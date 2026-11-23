@@ -358,6 +358,24 @@ class CliPonderTests(unittest.TestCase):
             match.run()
         self.assert_clean(match)
 
+    def test_ponder_failure_stops_match_during_opponents_search(self):
+        match = Match(['7g7f', 'resign'])
+        match.predictions[0] = '3c3d'
+        match.reader_error = True
+        stopped = Event()
+        go = FakeEngine.go
+
+        def search(engine, **kwargs):
+            if engine.name == 'white':
+                match.engines[0].release.set()
+                self.assertTrue(stopped.wait(3))
+            return go(engine, **kwargs)
+
+        with patch.object(cli, 'Event', return_value=stopped), patch.object(FakeEngine, 'go', search):
+            with self.assertRaisesRegex(EOFError, 'ponder EOF'):
+                match.run()
+        self.assert_clean(match)
+
     def test_ponder_eof_is_reported_inside_callers_exception_handler(self):
         match = Match(['7g7f', 'resign'])
         match.reader_error = True

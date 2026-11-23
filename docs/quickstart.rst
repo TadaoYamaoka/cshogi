@@ -174,6 +174,8 @@ Features
   with a TensorRT cache, initialize each model/GPU/batch-size combination
   once before starting workers that share the same cache file.
 
+  In a Unix shell launcher, use ``exec`` to start the engine so Ctrl+C can terminate it directly.
+
   Head-to-head PGN records are appended in completion order. Their Round
   tags retain the scheduled game numbers. A three-engine league plays two
   games per pairing per opening, rounding an odd game count up for each
