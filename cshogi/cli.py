@@ -810,7 +810,7 @@ class SprtConfig:
 
     def _for_match(self, count, games, no_swap):
         if games % 2:
-            raise _MatchConfigError('SPRTには偶数の --games を指定してください')
+            raise _MatchConfigError('SPRT requires an even --games value')
         if no_swap:
             raise _MatchConfigError('--no-swap cannot be used with SPRT')
         engines = self.engines
@@ -818,11 +818,15 @@ class SprtConfig:
             if count == 3:
                 raise _MatchConfigError('league SPRT requires --sprt-engines A B')
             engines = (1, 2)
-        if (len(engines) != 2 or any(type(i) is not int or not 1 <= i <= count for i in engines)
-                or engines[0] == engines[1]):
-            raise _MatchConfigError(f'SPRT requires two distinct engine numbers between 1 and {count}')
+        message = f'SPRT requires two distinct engine numbers between 1 and {count}'
         try:
-            return MatchSprt(self.elo0, self.elo1, self.alpha, self.beta, engines)
+            a, b = engines
+        except (TypeError, ValueError) as exc:
+            raise _MatchConfigError(message) from exc
+        if any(type(i) is not int or not 1 <= i <= count for i in (a, b)) or a == b:
+            raise _MatchConfigError(message)
+        try:
+            return MatchSprt(self.elo0, self.elo1, self.alpha, self.beta, (a, b))
         except ValueError as exc:
             raise _MatchConfigError(str(exc)) from exc
 
