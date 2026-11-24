@@ -1,9 +1,13 @@
 import io
 import unittest
-from contextlib import redirect_stdout
-from unittest.mock import Mock
+from contextlib import redirect_stderr, redirect_stdout
+from unittest.mock import Mock, patch
 
 from cshogi import cli
+if __package__:
+    from .test_cli_ponder import Match as EngineFixture
+else:
+    from test_cli_ponder import Match as EngineFixture
 
 
 class TestMatchSprt(unittest.TestCase):
@@ -28,7 +32,7 @@ class TestMatchSprt(unittest.TestCase):
             return True
 
         sprt = cli.MatchSprt(0, 5, 0.499, 0.499, (1, 2))
-        match = cli.Match(Mock(), 6, False, callback, sprt=sprt)
+        match = cli.Match(Mock(), 6, True, callback, sprt=sprt)
         first, second, third = cli.schedule(6, [('startpos', ())], False)
         for spec in second:
             self.report(match, spec, 1)
@@ -80,3 +84,76 @@ class TestMatchSprt(unittest.TestCase):
         self.assertEqual(output.count('games finished.'), 1)
         self.assertIn('game 5\nSPRT: C vs B H1 accepted after 1 pair', output)
         self.assertIn('pentanomial 0-0-0-0-1', output)
+
+
+class TestSprtInterface(unittest.TestCase):
+    def setUp(self):
+        # A plays the first move as Black; its opponent always resigns.
+        candidate = EngineFixture(['7g7f', 'resign'])
+        opponent = EngineFixture(['resign'])
+        def engine(name, **kwargs):
+            return (candidate if name == 'A' else opponent).engine(name, **kwargs)
+
+        engines = patch.object(cli, 'Engine', side_effect=engine)
+        self.engines = engines.start()
+        self.addCleanup(engines.stop)
+
+    def test_game_limit_and_summary_output(self):
+        for summary in (True, False):
+            with self.subTest(summary=summary), redirect_stdout(io.StringIO()) as output:
+                stats = cli.main('A', 'B', games=2, sprt=cli.SprtConfig(0, 5), print_summary=summary)
+                self.assertEqual(stats['engine1_won'], 2)
+                sprt = stats['sprt']
+                self.assertEqual((sprt['engines'], sprt['pairs'], sprt['result']), ((1, 2), 1, None))
+                self.assertAlmostEqual(sprt['llr'], 0.014316, places=6)
+                self.assertEqual(output.getvalue().count('no decision after 1 pair (game limit reached)'),
+                                 int(summary))
+                if not summary:
+                    self.assertNotIn('SPRT:', output.getvalue())
+
+    def test_quiet_decision_and_callback_stop(self):
+        config = cli.SprtConfig(0, 5, alpha=0.499, beta=0.499)
+        with redirect_stdout(io.StringIO()) as output:
+            result = cli.main('A', 'B', games=4, sprt=config, print_summary=False)
+        self.assertEqual((result['total'], result['sprt']['result']), (2, 'H1'))
+        self.assertNotIn('SPRT:', output.getvalue())
+        with redirect_stdout(io.StringIO()) as output:
+            result = cli.main('A', 'B', games=4, sprt=config, callback=lambda _: False)
+        self.assertEqual((result['total'], result['sprt']['pairs'], result['sprt']['result']), (1, 0, None))
+        self.assertNotIn('game limit reached', output.getvalue())
+
+    def test_zero_games(self):
+        with redirect_stdout(io.StringIO()) as output:
+            stats = cli.main('A', 'B', games=0, sprt=cli.SprtConfig(0, 5))
+        sprt = stats['sprt']
+        self.assertEqual((stats['total'], sprt['pairs'], sprt['llr'], sprt['result']), (0, 0, 0.0, None))
+        self.assertEqual(output.getvalue().count('no decision after 0 pairs (game limit reached)'), 1)
+        self.engines.assert_not_called()
+
+    def test_league_cli_decision_before_standings(self):
+        args = 'A B C --games 4 --sprt 0 5 --sprt-engines 2 1 --sprt-alpha .499 --sprt-beta .499'
+        with redirect_stdout(io.StringIO()) as output:
+            cli._cli(args.split())
+        self.assertEqual(output.getvalue().count('SPRT: B vs A H0 accepted after 1 pair'), 1)
+        self.assertNotIn('games finished.', output.getvalue())
+        self.assertNotIn('game limit reached', output.getvalue())
+
+    def test_invalid_cli_before_start(self):
+        for args, message in (
+            ('A B --sprt 0 5', '偶数の --games'),
+            ('A B --games 2 --sprt 0 5 --no-swap', '--no-swap'),
+            ('A B C --games 2 --sprt 0 5', 'requires --sprt-engines'),
+            ('A B --games 2 --sprt 0 5 --sprt-engines 0 2', 'distinct engine numbers'),
+            ('A B --games 2 --sprt 0 5 --sprt-engines 1 3', 'distinct engine numbers'),
+            ('A B --games 2 --sprt 0 5 --sprt-engines 1 1', 'distinct engine numbers'),
+            ('A B --games 2 --sprt 0 nan', 'finite'),
+            ('A B --games 2 --sprt 5 0', 'distinct increasing scores'),
+            ('A B --games 2 --sprt 0 5 --sprt-alpha .6 --sprt-beta .4', 'alpha + beta'),
+            ('A B --games 2 --sprt-alpha .1', 'require --sprt'),
+        ):
+            with self.subTest(args=args), redirect_stderr(io.StringIO()) as stderr:
+                with self.assertRaises(SystemExit) as error:
+                    cli._cli(args.split())
+                self.assertEqual(error.exception.code, 2)
+                self.assertIn(message, stderr.getvalue().split('error: ')[-1])
+        self.engines.assert_not_called()

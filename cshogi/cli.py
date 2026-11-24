@@ -681,6 +681,7 @@ class Match:
         self.records = records
         self.games = games
         self.print_summary = print_summary
+        self.show_sprt = print_summary or table is not None
         self.callback = callback
         self.stats = {pair: MatchStats(pair) for pair in (LEAGUE_PAIRS if table else ((0, 1),))}
         self.table = table
@@ -768,7 +769,7 @@ class Match:
                 decided = self.sprt.record(result, spec.index // stride)
 
             print(prefix + result.message)
-            if decided:
+            if decided and self.show_sprt:
                 self.sprt.print_status(stats.names, decision=True)
             snapshot = self.snapshot(pair)
             if self.print_summary:
@@ -795,6 +796,35 @@ def _clock_values(value, count):
 
 class _MatchConfigError(ValueError):
     pass
+
+
+@dataclass(frozen=True, slots=True)
+class SprtConfig:
+    """Logistic Elo hypotheses for engine A against B (one-based engine numbers)."""
+
+    elo0: float
+    elo1: float
+    alpha: float = 0.05
+    beta: float = 0.05
+    engines: tuple[int, int] | None = None
+
+    def _for_match(self, count, games, no_swap):
+        if games % 2:
+            raise _MatchConfigError('SPRTには偶数の --games を指定してください')
+        if no_swap:
+            raise _MatchConfigError('--no-swap cannot be used with SPRT')
+        engines = self.engines
+        if engines is None:
+            if count == 3:
+                raise _MatchConfigError('league SPRT requires --sprt-engines A B')
+            engines = (1, 2)
+        if (len(engines) != 2 or any(type(i) is not int or not 1 <= i <= count for i in engines)
+                or engines[0] == engines[1]):
+            raise _MatchConfigError(f'SPRT requires two distinct engine numbers between 1 and {count}')
+        try:
+            return MatchSprt(self.elo0, self.elo1, self.alpha, self.beta, engines)
+        except ValueError as exc:
+            raise _MatchConfigError(str(exc)) from exc
 
 
 def _engine_configs(commands, names, options, byoyomi, time, inc):
@@ -872,7 +902,7 @@ def main(engine1: str, engine2: str, options1: dict | None = None, options2: dic
          csa: str | None = None, multi_csa: bool = False, pgn: str | None = None, no_pgn_moves: bool = False,
          is_display: bool = False, debug: bool = False,
          print_summary: bool = True, callback: Callable | None = None, concurrency: int = 1,
-         worker_options: list[list[dict] | None] | None = None) -> dict:
+         worker_options: list[list[dict] | None] | None = None, sprt: SprtConfig | None = None) -> dict:
     """Executes a series of games between two USI engines.
 
     :param engine1: Path to the first USI engine.
@@ -904,6 +934,7 @@ def main(engine1: str, engine2: str, options1: dict | None = None, options2: dic
     :param callback: Optional callback function executed after each game.
     :param concurrency: Number of workers playing independently.
     :param worker_options: One entry per engine, either None or one option dictionary per worker.
+    :param sprt: Optional sequential test on color-swapped pairs. Requires an even game limit.
     :return: Dictionary containing game results and statistics.
     """
 
@@ -911,26 +942,28 @@ def main(engine1: str, engine2: str, options1: dict | None = None, options2: dic
                               byoyomi, time, inc)
     config = GameConfig(resign, mate_win, draw, ponder, opening_moves, keep_process, is_display, debug)
     return _run(configs, config, games, opening, opening_seed, opening_index, no_swap,
-                csa, multi_csa, pgn, no_pgn_moves, concurrency, worker_options, print_summary, callback)
+                csa, multi_csa, pgn, no_pgn_moves, concurrency, worker_options, print_summary, callback, sprt)
 
 
 def league(engine1: str, engine2: str, engine3: str, options1=None, options2=None, options3=None,
            names=None, *, games=1, resign=None, mate_win=False, byoyomi=None, time=None, inc=None,
            draw=256, ponder=False, no_swap=False, opening=None, opening_moves=24, opening_seed=None,
            opening_index=None, keep_process=False, csa=None, multi_csa=False, pgn=None,
-           no_pgn_moves=False, is_display=False, debug=False, concurrency=1, worker_options=None):
+           no_pgn_moves=False, is_display=False, debug=False, concurrency=1, worker_options=None,
+           sprt: SprtConfig | None = None):
     """Play two games per pairing and opening. Return standings in AB, AC, BC order."""
     configs = _engine_configs((engine1, engine2, engine3), names,
                               (options1, options2, options3), byoyomi, time, inc)
     config = GameConfig(resign, mate_win, draw, ponder, opening_moves, keep_process, is_display, debug)
     return _run(configs, config, games, opening, opening_seed, opening_index, no_swap,
-                csa, multi_csa, pgn, no_pgn_moves, concurrency, worker_options, False, None)
+                csa, multi_csa, pgn, no_pgn_moves, concurrency, worker_options, False, None, sprt)
 
 
 def _run(configs, config, games, opening, seed, index, no_swap, csa, multi_csa, pgn, no_pgn_moves,
-         concurrency, worker_options, print_summary, callback, sprt=None):
+         concurrency, worker_options, print_summary, callback, sprt_config):
     if games < 0:
         raise _MatchConfigError('games must be non-negative')
+    sprt = sprt_config._for_match(len(configs), games, no_swap) if sprt_config is not None else None
     workers = _worker_configs(configs, concurrency, worker_options, config.display)
     table = LeagueTable() if len(configs) == 3 else None
     pairs = schedule(games, load_openings(opening, seed, index), no_swap, table is not None)
@@ -942,7 +975,7 @@ def _run(configs, config, games, opening, seed, index, no_swap, csa, multi_csa, 
             run_workers(pairs, workers, config, ProcessGroup(), match)
         if match.error is not None:
             raise match.error
-    if sprt is not None and not match.stopped.is_set():
+    if sprt is not None and match.show_sprt and not match.stopped.is_set():
         pairs = sprt.next_pair
         unit = 'pair' if pairs == 1 else 'pairs'
         print(f'SPRT: no decision after {pairs} {unit} (game limit reached)')
@@ -982,6 +1015,12 @@ def _cli(argv=None):
     parser.add_argument('--name2', type=str)
     parser.add_argument('--name3', type=str)
     parser.add_argument('--games', type=int, default=1)
+    parser.add_argument('--sprt', nargs=2, type=float, metavar=('ELO0', 'ELO1'),
+                        help='test two logistic Elo hypotheses using color-swapped pairs (requires even --games)')
+    parser.add_argument('--sprt-alpha', type=float, help='type I error probability (default: 0.05)')
+    parser.add_argument('--sprt-beta', type=float, help='type II error probability (default: 0.05)')
+    parser.add_argument('--sprt-engines', nargs=2, type=int, metavar=('A', 'B'),
+                        help='test engine A against B, numbered from 1 (required in a league)')
     parser.add_argument('--resign', type=int)
     parser.add_argument('--mate-win', action='store_true')
     parser.add_argument('--byoyomi', type=int, nargs='+')
@@ -1006,6 +1045,13 @@ def _cli(argv=None):
     count = 3 if args.engine3 is not None else 2
     if count == 2 and args.worker_options3 is not None:
         parser.error('--worker-options3 requires a third engine')
+    sprt_options = {key: value for key, value in (
+        ('alpha', args.sprt_alpha), ('beta', args.sprt_beta),
+        ('engines', tuple(args.sprt_engines) if args.sprt_engines else None),
+    ) if value is not None}
+    if sprt_options and args.sprt is None:
+        parser.error('--sprt-alpha, --sprt-beta and --sprt-engines require --sprt ELO0 ELO1')
+    sprt = SprtConfig(*args.sprt, **sprt_options) if args.sprt is not None else None
     try:
         options_list = [_parse_options(getattr(args, f'options{i}')) for i in range(1, count + 1)]
         worker_options = []
@@ -1028,7 +1074,7 @@ def _cli(argv=None):
             opening_moves=args.opening_moves, opening_seed=args.opening_seed, opening_index=args.opening_index,
             keep_process=args.keep_process, csa=args.csa, multi_csa=args.multi_csa, pgn=args.pgn,
             no_pgn_moves=args.no_pgn_moves, is_display=args.display, debug=args.debug,
-            concurrency=args.concurrency, worker_options=worker_options)
+            concurrency=args.concurrency, worker_options=worker_options, sprt=sprt)
     except _MatchConfigError as exc:
         parser.error(str(exc))
 
