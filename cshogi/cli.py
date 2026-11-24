@@ -20,7 +20,7 @@ from cshogi import *
 from cshogi.usi import Engine
 from cshogi import CSA
 from cshogi import PGN
-from cshogi.elo import Elo
+from cshogi.elo import Elo, SPRT
 
 try:
     is_jupyter = get_ipython().__class__.__name__ != 'TerminalInteractiveShell'
@@ -602,6 +602,50 @@ class MatchStats:
                 elo.diff(), error_margin, elo.los(), elo.draw_ratio()))
 
 
+class MatchSprt:
+    """Feed completed pairs into the test in schedule order, from engine A's side."""
+
+    def __init__(self, elo0, elo1, alpha, beta, engines):
+        self.test = SPRT(elo0, elo1, alpha, beta)
+        self.hypotheses = (elo0, elo1)
+        self.engines = tuple(engines)
+        self.a, self.b = (engine - 1 for engine in self.engines)
+        self.pair = tuple(sorted((self.a, self.b)))
+        self.pending = defaultdict(list)
+        self.next_pair = 0
+
+    def record(self, result, pair_index):
+        spec = result.spec
+        colors = (spec.black_id, spec.white_id)
+        score = 0.5 if result.winner is None else int(colors[result.winner] == self.a)
+        self.pending[pair_index].append(score)
+        while len(self.pending.get(self.next_pair, ())) == 2:
+            self.test.add_pair(sum(self.pending.pop(self.next_pair)) / 2)
+            self.next_pair += 1
+            if self.test.status() is not None:
+                self.pending.clear()
+                return True
+        return False
+
+    def snapshot(self):
+        counts = self.test.counts
+        lower, upper = self.test.bounds()
+        return dict(engines=self.engines, result=self.test.status(), llr=self.test.llr(),
+                    lower=lower, upper=upper, pairs=sum(counts), pentanomial=counts)
+
+    def print_status(self, names, *, decision=False):
+        lower, upper = self.test.bounds()
+        llr = f'LLR {self.test.llr():.2f} [{lower:.2f}, {upper:.2f}]'
+        label = f'SPRT: {names[self.a]} vs {names[self.b]}'
+        if decision:
+            unit = 'pair' if self.next_pair == 1 else 'pairs'
+            print(f'{label} {self.test.status()} accepted after {self.next_pair} {unit} ({llr})')
+        else:
+            elo0, elo1 = self.hypotheses
+            counts = '-'.join(map(str, self.test.counts))
+            print(f'{label} {llr} ({elo0:g}, {elo1:g}) pentanomial {counts}')
+
+
 class LeagueTable:
     """Publish standings in stage order once all games in a stage are recorded."""
 
@@ -616,7 +660,7 @@ class LeagueTable:
         stage = result.spec.index // self.games_per_stage
         self.pending[stage].append((result.spec, result.names, result.winner))
 
-    def publish_ready(self, games):
+    def publish_ready(self, games, sprt=None):
         while len(self.pending.get(self.next_stage, ())) == self.games_per_stage:
             for spec, names, winner in self.pending.pop(self.next_stage):
                 ids = tuple(sorted((spec.black_id, spec.white_id)))
@@ -628,16 +672,19 @@ class LeagueTable:
                 w, l, d = result['engine1_won'], result['engine2_won'], result['draw']
                 print(f"{result['engine1_name']} vs {result['engine2_name']}: "
                       f"{w}-{l}-{d} ({rate(w, l, d):.1f}%)")
+            if sprt is not None:
+                sprt.print_status(self.stats[sprt.pair].names)
 
 
 class Match:
-    def __init__(self, records, games, print_summary, callback, table=None):
+    def __init__(self, records, games, print_summary, callback, table=None, sprt=None):
         self.records = records
         self.games = games
         self.print_summary = print_summary
         self.callback = callback
-        self.stats = MatchStats() if table is None else None
+        self.stats = {pair: MatchStats(pair) for pair in (LEAGUE_PAIRS if table else ((0, 1),))}
         self.table = table
+        self.sprt = sprt
         self.lock = Lock()
         self.stopped = Event()
         self.error = None
@@ -700,21 +747,39 @@ class Match:
 
     def publish_standings(self):
         with self._reporting():
-            self.table.publish_ready(self.games)
+            self.table.publish_ready(self.games, self.sprt)
+
+    def snapshot(self, pair):
+        snapshot = self.stats[pair].snapshot()
+        if self.sprt is not None and pair == self.sprt.pair:
+            snapshot['sprt'] = self.sprt.snapshot()
+        return snapshot
 
     def report(self, result, csa_record, prefix):
         with self._reporting():
+            active = not self.stopped.is_set()
+            spec = result.spec
+            pair = tuple(sorted((spec.black_id, spec.white_id)))
+            stats = self.stats[pair]
+            stats.add(spec, result.names, result.winner)
+            decided = False
+            if active and self.sprt is not None and pair == self.sprt.pair:
+                stride = self.table.games_per_stage if self.table else 2
+                decided = self.sprt.record(result, spec.index // stride)
+
             print(prefix + result.message)
-            if self.table is not None:
-                self.records.finish(result, csa_record)
-                self.table.record(result)
-                return
-            self.stats.add(result.spec, result.names, result.winner)
-            snapshot = self.stats.snapshot()
+            if decided:
+                self.sprt.print_status(stats.names, decision=True)
+            snapshot = self.snapshot(pair)
             if self.print_summary:
-                self.stats.summary(snapshot, self.games)
+                stats.summary(snapshot, self.games)
+                if self.sprt is not None:
+                    self.sprt.print_status(stats.names)
             self.records.finish(result, csa_record)
-            if self.callback and not self.stopped.is_set() and not self.callback(snapshot):
+            if self.table is not None:
+                self.table.record(result)
+            callback_stop = active and self.callback and not self.callback(snapshot)
+            if decided or callback_stop:
                 self.stopped.set()
 
 
@@ -863,7 +928,7 @@ def league(engine1: str, engine2: str, engine3: str, options1=None, options2=Non
 
 
 def _run(configs, config, games, opening, seed, index, no_swap, csa, multi_csa, pgn, no_pgn_moves,
-         concurrency, worker_options, print_summary, callback):
+         concurrency, worker_options, print_summary, callback, sprt=None):
     if games < 0:
         raise _MatchConfigError('games must be non-negative')
     workers = _worker_configs(configs, concurrency, worker_options, config.display)
@@ -871,15 +936,19 @@ def _run(configs, config, games, opening, seed, index, no_swap, csa, multi_csa, 
     pairs = schedule(games, load_openings(opening, seed, index), no_swap, table is not None)
     with ExitStack() as stack:
         records = Records(stack, csa, multi_csa, pgn, no_pgn_moves, concurrency > 1)
-        match = Match(records, games, print_summary, callback, table)
+        match = Match(records, games, print_summary, callback, table, sprt)
         debug_output = match.queued_debug_log() if config.debug and concurrency > 1 else nullcontext()
         with debug_output:
             run_workers(pairs, workers, config, ProcessGroup(), match)
         if match.error is not None:
             raise match.error
+    if sprt is not None and not match.stopped.is_set():
+        pairs = sprt.next_pair
+        unit = 'pair' if pairs == 1 else 'pairs'
+        print(f'SPRT: no decision after {pairs} {unit} (game limit reached)')
     if table is not None:
-        return [stats.snapshot() for stats in table.stats.values()]
-    return match.stats.snapshot()
+        return [match.snapshot(pair) for pair in LEAGUE_PAIRS]
+    return match.snapshot((0, 1))
 
 
 def _parse_options(value):
