@@ -64,6 +64,14 @@ class TestSPRT(unittest.TestCase):
         self.assertEqual(sprt.status(), 'H1')
         self.assertEqual(sprt.counts, (0, 0, 0, 0, pairs))
 
+    def test_even_scores_under_extreme_symmetric_hypotheses(self):
+        sprt = SPRT(-6000, 6000)
+        for _ in range(29):
+            sprt.add_pair(0.5)
+        self.assertAlmostEqual(sprt.llr(), 0.0, places=12)
+        self.assertIsNone(sprt.status())
+        self.assertEqual(sprt.counts, (0, 0, 29, 0, 0))
+
     def test_extreme_finite_parameters(self):
         sprt = SPRT(-120000, 5, alpha=1e-310, beta=0.05)
         lower, upper = sprt.bounds()

@@ -779,7 +779,7 @@ class Match:
             self.records.finish(result, csa_record)
             if self.table is not None:
                 self.table.record(result)
-            callback_stop = active and self.callback and not self.callback(snapshot)
+            callback_stop = self.callback and not self.stopped.is_set() and not self.callback(snapshot)
             if decided or callback_stop:
                 self.stopped.set()
 

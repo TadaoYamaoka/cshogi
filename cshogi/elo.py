@@ -86,15 +86,20 @@ class Elo:
 _PAIR_SCORES = (0.0, 0.25, 0.5, 0.75, 1.0)
 
 
-def _expected_score(elo):
+def _expected_scores(elo):
+    """Return the expected scores for both sides, computing the small tail directly."""
     if not math.isfinite(elo):
         raise ValueError('SPRT Elo hypotheses must be finite')
     odds = 10.0 ** (-abs(elo) / 400.0)
-    return (odds if elo < 0 else 1.0) / (1.0 + odds)
+    low, high = odds / (1.0 + odds), 1.0 / (1.0 + odds)
+    return (low, high) if elo < 0 else (high, low)
 
 
-def _mle_log_denominators(counts, target):
+def _mle_log_denominators(counts, target, complement):
     """Fit p_i = observed_p_i / (1 + lambda * (score_i - target))."""
+    if target > 0.5:
+        # Reflect the score bins to fit the smaller tail, then restore their order.
+        return _mle_log_denominators(counts[::-1], complement, target)[::-1]
     deviation = math.fsum(n * (a - target) for n, a in zip(counts, _PAIR_SCORES))
     if deviation == 0:
         return (0.0,) * len(counts)
@@ -104,7 +109,7 @@ def _mle_log_denominators(counts, target):
     if deviation > 0:
         at_pole = [a / target for a in _PAIR_SCORES]
     else:
-        at_pole = [(1.0 - a) / (1.0 - target) for a in _PAIR_SCORES]
+        at_pole = [(1.0 - a) / complement for a in _PAIR_SCORES]
 
     # Bisect on the fraction of the distance back from the pole to zero.
     # Forming the denominators this way avoids cancellation near the pole.
@@ -130,12 +135,11 @@ class SPRT:
     """
 
     def __init__(self, elo0: float, elo1: float, alpha: float = 0.05, beta: float = 0.05):
-        self._s0 = _expected_score(elo0)
-        self._s1 = _expected_score(elo1)
-        if not 0 < self._s0 < self._s1 < 1:
+        self._scores0 = _expected_scores(elo0)
+        self._scores1 = _expected_scores(elo1)
+        if not 0 < self._scores0[0] < self._scores1[0] < 1:
             raise ValueError('SPRT hypotheses must yield distinct increasing scores between 0 and 1')
-        if not all(math.isfinite(1.0 / s) and math.isfinite(1.0 / (1.0 - s))
-                   for s in (self._s0, self._s1)):
+        if not all(math.isfinite(1.0 / s) for s in (*self._scores0, *self._scores1)):
             raise ValueError('SPRT hypotheses must yield finite MLE search bounds')
         if not (0 < alpha < 1 and 0 < beta < 1 and alpha + beta < 1):
             raise ValueError('SPRT requires positive alpha and beta with alpha + beta < 1')
@@ -158,8 +162,8 @@ class SPRT:
             return
         self._counts[_PAIR_SCORES.index(score)] += 1
         counts = [n or 0.001 for n in self._counts]
-        log_d0 = _mle_log_denominators(counts, self._s0)
-        log_d1 = _mle_log_denominators(counts, self._s1)
+        log_d0 = _mle_log_denominators(counts, *self._scores0)
+        log_d1 = _mle_log_denominators(counts, *self._scores1)
         self._llr = math.fsum(n * (d0 - d1) for n, d0, d1 in zip(counts, log_d0, log_d1))
         if self._llr <= self._lower:
             self._result = 'H0'

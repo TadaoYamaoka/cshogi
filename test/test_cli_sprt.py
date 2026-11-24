@@ -255,6 +255,31 @@ class TestParallelSprt(unittest.TestCase):
         self.assertIsNone(stats['sprt']['result'])
         self.assertEqual(stats['sprt']['pairs'], 0)
 
+    def test_interrupt_during_recording_skips_callback(self):
+        writing, stopped = Event(), Event()
+        finish = cli.Records.finish
+        pgn = self.directory / 'interrupted.pgn'
+        callback = Mock()
+
+        def write_record(records, result, csa_record):
+            writing.set()
+            self.assertTrue(stopped.wait(5))
+            finish(records, result, csa_record)
+
+        def interrupt(*args, **kwargs):
+            self.assertTrue(writing.wait(5))
+            raise KeyboardInterrupt
+
+        # Both engines have quit before Records.finish; close signals that
+        # the main thread has handled the interrupt and set the stop event.
+        with redirect_stdout(io.StringIO()), patch.object(cli, 'wait', interrupt), \
+                patch.object(cli.Records, 'finish', write_record), \
+                patch.object(cli.ProcessGroup, 'close', side_effect=stopped.set):
+            with self.assertRaises(KeyboardInterrupt):
+                cli.main('A', 'B', concurrency=2, games=2, callback=callback, pgn=pgn)
+        self.assertEqual(pgn.read_text().count('[Result '), 1)
+        callback.assert_not_called()
+
     def test_league_stops_with_later_stage_in_flight(self):
         config = cli.SprtConfig(0, 5, alpha=0.499, beta=0.499, engines=(3, 2))
         with redirect_stdout(io.StringIO()):
