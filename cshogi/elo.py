@@ -81,3 +81,96 @@ class Elo:
         :return: The likelihood of superiority, in percentage.
         """
         return 100 * (0.5 + 0.5 * math.erf((self.wins - self.losses) / math.sqrt(2.0 * (self.wins + self.losses))))
+
+
+_PAIR_SCORES = (0.0, 0.25, 0.5, 0.75, 1.0)
+
+
+def _expected_score(elo):
+    if not math.isfinite(elo):
+        raise ValueError('SPRT Elo hypotheses must be finite')
+    odds = 10.0 ** (-abs(elo) / 400.0)
+    return (odds if elo < 0 else 1.0) / (1.0 + odds)
+
+
+def _mle_log_denominators(counts, target):
+    """Fit p_i = observed_p_i / (1 + lambda * (score_i - target))."""
+    deviation = math.fsum(n * (a - target) for n, a in zip(counts, _PAIR_SCORES))
+    if deviation == 0:
+        return (0.0,) * len(counts)
+
+    # At lambda=0 all denominators are 1. At the pole in the direction of
+    # the root (1/target or -1/(1-target)), one denominator is zero.
+    if deviation > 0:
+        at_pole = [a / target for a in _PAIR_SCORES]
+    else:
+        at_pole = [(1.0 - a) / (1.0 - target) for a in _PAIR_SCORES]
+
+    # Bisect on the fraction of the distance back from the pole to zero.
+    # Forming the denominators this way avoids cancellation near the pole.
+    lo, hi = 0.0, 1.0
+    while True:
+        fraction = (lo + hi) / 2.0
+        denominators = [fraction + (1.0 - fraction) * d for d in at_pole]
+        residual = math.fsum(n * ((d - 1.0) / fitted)
+                             for n, d, fitted in zip(counts, at_pole, denominators))
+        if residual == 0 or fraction == lo or fraction == hi:
+            return tuple(math.log(d) for d in denominators)
+        if residual < 0:
+            lo = fraction
+        else:
+            hi = fraction
+
+
+class SPRT:
+    """Pentanomial SPRT with logistic Elo hypotheses and fixed Wald bounds.
+
+    A sample is the tested engine's average score over a color-swapped pair.
+    The first decision freezes the LLR and the observed counts.
+    """
+
+    def __init__(self, elo0: float, elo1: float, alpha: float = 0.05, beta: float = 0.05):
+        self._s0 = _expected_score(elo0)
+        self._s1 = _expected_score(elo1)
+        if not 0 < self._s0 < self._s1 < 1:
+            raise ValueError('SPRT hypotheses must yield distinct increasing scores between 0 and 1')
+        if not all(math.isfinite(1.0 / s) and math.isfinite(1.0 / (1.0 - s))
+                   for s in (self._s0, self._s1)):
+            raise ValueError('SPRT hypotheses must yield finite MLE search bounds')
+        if not (0 < alpha < 1 and 0 < beta < 1 and alpha + beta < 1):
+            raise ValueError('SPRT requires positive alpha and beta with alpha + beta < 1')
+
+        self._lower = math.log(beta) - math.log1p(-alpha)
+        self._upper = math.log1p(-beta) - math.log(alpha)
+        self._counts = [0] * len(_PAIR_SCORES)
+        self._llr = 0.0
+        self._result = None
+
+    @property
+    def counts(self) -> tuple[int, ...]:
+        """Observed pair counts in ascending score order, without pseudocounts."""
+        return tuple(self._counts)
+
+    def add_pair(self, score: float) -> None:
+        if score not in _PAIR_SCORES:
+            raise ValueError('pair score must be 0, 0.25, 0.5, 0.75, or 1')
+        if self._result is not None:
+            return
+        self._counts[_PAIR_SCORES.index(score)] += 1
+        counts = [n or 0.001 for n in self._counts]
+        log_d0 = _mle_log_denominators(counts, self._s0)
+        log_d1 = _mle_log_denominators(counts, self._s1)
+        self._llr = math.fsum(n * (d0 - d1) for n, d0, d1 in zip(counts, log_d0, log_d1))
+        if self._llr <= self._lower:
+            self._result = 'H0'
+        elif self._llr >= self._upper:
+            self._result = 'H1'
+
+    def llr(self) -> float:
+        return self._llr
+
+    def bounds(self) -> tuple[float, float]:
+        return self._lower, self._upper
+
+    def status(self) -> str | None:
+        return self._result
