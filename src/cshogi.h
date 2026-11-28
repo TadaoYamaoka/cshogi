@@ -937,6 +937,9 @@ public:
     uint32_t get_searched_node() {
         return dfpn.searchedNode;
     }
+    int get_result() {
+        return dfpn.get_result();
+    }
 
     std::vector<u32> pv;
 private:
@@ -983,8 +986,11 @@ public:
         dfpn.set_hash(hash_mb);
     }
 
-    uint32_t get_searched_node() {
+    uint64_t get_searched_node() {
         return dfpn.searchedNode;
+    }
+    int get_result() {
+        return dfpn.get_result();
     }
 
     std::vector<u32> pv;

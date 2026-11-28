@@ -66,6 +66,13 @@ namespace ns_dfpn {
 
 class OslDfPn {
 public:
+    // 詰み探索の結果
+    enum Result : int {
+        Unknown = 0, // 未確定(探索ノード数の上限到達、停止など)
+        Mate = 1,    // 詰み
+        NoMate = 2,  // 不詰め
+    };
+
     OslDfPn();
     OslDfPn(const OslDfPn& dfpn);
     OslDfPn(const int max_depth, const uint32_t max_search_node, const int draw_ply);
@@ -88,12 +95,15 @@ public:
     void set_maxdepth(const int depth);
     void set_max_search_node(const uint32_t max_search_node);
     void set_hash(const uint64_t hashMB);
+    Result get_result() const { return result_; }
 
-    uint32_t searchedNode = 0;
+    // 反復深化の各反復の合計のため、ノード数の上限(uint32_t)を超えることがある
+    uint64_t searchedNode = 0;
 
 private:
     struct Impl;
     std::unique_ptr<Impl> impl_;
+    Result result_ = Unknown;
 
     void reset_config_from(const OslDfPn& other);
 };

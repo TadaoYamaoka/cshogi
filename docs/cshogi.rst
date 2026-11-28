@@ -25,6 +25,24 @@ cshogi.osl module
 
    Class to perform mate search using the OSL-based df-pn algorithm.
 
+   Limitations:
+
+   - Reaching the move limit (``depth`` or ``draw_ply``) on one branch can end
+     the current search iteration before other branches are examined. That
+     iteration is treated as :py:attr:`UNKNOWN`, and :py:meth:`search` may retry
+     with a larger per-iteration node limit, up to ``nodes``. Therefore
+     :py:attr:`result` can be :py:attr:`UNKNOWN` even when a checkmate within
+     ``draw_ply`` exists, especially when the mate ends at or near
+     ``draw_ply``. A checkmate that exceeds ``draw_ply`` is never returned as
+     :py:attr:`MATE`.
+   - A search cut off by ``draw_ply`` is :py:attr:`UNKNOWN`, not :py:attr:`NO_MATE`.
+   - ``depth`` limits the depth of the search tree with a margin of two plies,
+     so :py:meth:`search` visits no nodes when ``depth`` is 1 or 2.
+     At those depths, :py:meth:`search_andnode` can still examine the root
+     and return :py:attr:`MATE` if there is no legal reply to the check.
+
+   Use :py:class:`cshogi.DfPn` when exact results near ``draw_ply`` are needed.
+
    :param int depth: Depth of the search.
    :param int nodes: Number of nodes in the search.
    :param int draw_ply: The number of plies to consider as a draw.
@@ -63,6 +81,8 @@ cshogi.osl module
 
       Gets the principal variation (PV) of the mating sequence found by the search.
 
+      PV reconstruction can find a mating line even when :py:attr:`result` is :py:attr:`UNKNOWN`.
+
       :param Board board: Current board position.
       :return: The PV of the mating sequence.
       :rtype: list of unsigned int
@@ -87,10 +107,45 @@ cshogi.osl module
 
    .. py:property:: searched_node
 
-      Gets the number of nodes searched.
+      Gets the number of nodes searched in the last search.
+
+      It is incremented each time an attacking or defending position is
+      visited, including the root, and each time a fixed-depth check is
+      performed. Positions where the search stops before being counted,
+      because the depth limit is reached or a loop is detected, are not
+      included, so it can be 0 when the depth limit is small.
+      :py:meth:`search` repeats the search while increasing the node
+      limit (iterative deepening), and this is the total over all iterations.
+      Because the node limit (``nodes``) applies to each iteration and is
+      checked after children are expanded, the total can exceed it.
 
       :return: Number of nodes searched.
-      :rtype: unsigned int
+      :rtype: int
+
+   .. py:property:: result
+
+      Gets the result of the last search.
+
+      :return: :py:attr:`MATE` if a checkmate was proven,
+         :py:attr:`NO_MATE` if it was proven that there is no checkmate,
+         or :py:attr:`UNKNOWN` if the search ended (node limit, stop, depth limit, etc.)
+         before either was proven.
+      :rtype: int
+
+   .. py:attribute:: UNKNOWN
+      :value: 0
+
+      The search has not determined the result.
+
+   .. py:attribute:: MATE
+      :value: 1
+
+      A checkmate was proven.
+
+   .. py:attribute:: NO_MATE
+      :value: 2
+
+      It was proven that there is no checkmate.
 
 cshogi.CSA module
 -----------------

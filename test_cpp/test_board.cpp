@@ -725,6 +725,41 @@ TEST(TestSfen, rotate_sfen) {
     }
 }
 
+// 置換表を共有したまま、cshogi.DfPnの探索を行う
+struct DfPnTestAccess {
+    static ns_dfpn::TranspositionTable& tt(DfPn& dfpn) {
+        return dfpn.transposition_table;
+    }
+    static void search_andnode(DfPn& dfpn, Position& pos, const int64_t max_depth) {
+        uint32_t searched_node = 0;
+        dfpn.dfpn_inner<false>(pos, INT_MAX, INT_MAX, max_depth, searched_node);
+    }
+};
+
+TEST(TestDfPn, terminal_mate_proof_keeps_attacker_hand) {
+    initTable();
+    Position::initZobrist();
+
+    // 同じ盤面で、白が金を持てば合駒できる(9c9b+まで2手)が、黒が金を持てば応手がなく詰んでいる
+    __Board interpose("kl7/1p7/RG7/9/9/9/9/9/8K w g 2");
+    __Board mated("kl7/1p7/RG7/9/9/9/9/9/8K w G 4");
+    ASSERT_EQ(interpose.pos.getBoardKey(), mated.pos.getBoardKey());
+
+    // 合駒できる局面を探索し、2手の詰みの証明を置換表に残す
+    DfPn dfpn;
+    ASSERT_TRUE(dfpn.dfpn_andnode(interpose.pos));
+
+    // 応手がない局面を同じ置換表で処理する(優越関係で上の証明が返る)
+    auto& tt = DfPnTestAccess::tt(dfpn);
+    DfPnTestAccess::search_andnode(dfpn, mated.pos, tt.max_depth);
+
+    // 残り0手で引くと、応手がない局面だけが詰み(0手の証明)になる
+    // (ANDノードの持ち駒は攻め側の持ち駒)
+    const int last_ply = static_cast<int>(tt.max_depth);
+    EXPECT_EQ(0, tt.LookUp(mated.pos.getBoardKey(), mated.pos.hand(Black), last_ply).pn);
+    EXPECT_NE(0, tt.LookUp(interpose.pos.getBoardKey(), interpose.pos.hand(Black), last_ply).pn);
+}
+
 TEST(TestDfPn, get_pv_issue56) {
     using namespace ns_dfpn;
 

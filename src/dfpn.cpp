@@ -63,12 +63,18 @@ namespace ns_dfpn {
     };
 }
 
-TTEntry& TranspositionTable::LookUp(const Key key, const Hand hand, const uint16_t depth) {
+TTEntry& TranspositionTable::LookUp(const Key key, const Hand hand, const int depth) {
     auto& entries = tt[key];
     return LookUpDirect(entries, hand, depth);
 }
 
-TTEntry& TranspositionTable::LookUpDirect(Cluster& entries, const Hand hand, const uint16_t depth) {
+// 証明済みの詰みを、手駒の優越関係でこの局面に再利用できるか
+// 詰みは、証明に必要な手数が現在の局面からの残り手数に収まる場合だけ使う
+static bool reusable_proof(const TTEntry& entry, const Hand hand, const int depth, const int64_t max_depth) {
+    return hand.isEqualOrSuperior(entry.hand) && static_cast<int64_t>(depth) + entry.mate_ply <= max_depth && entry.num_searched != REPEAT;
+}
+
+TTEntry& TranspositionTable::LookUpDirect(Cluster& entries, const Hand hand, const int depth) {
     int max_pn = 1;
     int max_dn = 1;
     // 検索条件に合致するエントリを返す
@@ -81,7 +87,7 @@ TTEntry& TranspositionTable::LookUpDirect(Cluster& entries, const Hand hand, con
             for (i++; i < entries.size(); i++) {
                 TTEntry& entry_rest = *entries[i];
                 if (entry_rest.pn == 0) {
-                    if (hand.isEqualOrSuperior(entry_rest.hand) && entry_rest.num_searched != REPEAT) {
+                    if (reusable_proof(entry_rest, hand, depth, max_depth)) {
                         return entry_rest;
                     }
                 }
@@ -95,7 +101,7 @@ TTEntry& TranspositionTable::LookUpDirect(Cluster& entries, const Hand hand, con
         }
         // 優越関係を満たす局面に証明済みの局面がある場合、それを返す
         if (entry.pn == 0) {
-            if (hand.isEqualOrSuperior(entry.hand) && entry.num_searched != REPEAT) {
+            if (reusable_proof(entry, hand, depth, max_depth)) {
                 return entry;
             }
         }
@@ -114,7 +120,7 @@ TTEntry& TranspositionTable::LookUpDirect(Cluster& entries, const Hand hand, con
 
     // 合致するエントリが見つからなかったので
     // エントリを追加する
-    entries.emplace_back(new TTEntry{ hand, 1, 1, depth, 0 });
+    entries.emplace_back(new TTEntry{ hand, 1, 1, depth, false, 0, 0 });
     return *entries.back();
 }
 
@@ -156,11 +162,21 @@ TTEntry& TranspositionTable::LookUpChildEntry(const Position& n, const Move move
     return LookUpDirect(*entries, hand, n.gamePly() + 1);
 }
 
-void TranspositionTable::NewSearch() {
+void TranspositionTable::NewSearch(const int64_t max_depth) {
     tt.clear();
+    this->max_depth = max_depth;
 }
 
 static const constexpr int kInfinitePnDn = 100000000;
+
+// 詰みの証明を書き込む
+// LookUpは優越関係で別の持ち駒のエントリを返すことがあるため、証明手数と合わせて持ち駒も今回の証明の証明駒にする
+static void set_proof(TTEntry& entry, const Hand hand, const int dn, const int mate_ply) {
+    entry.pn = 0;
+    entry.dn = dn;
+    entry.hand = hand;
+    entry.mate_ply = mate_ply;
+}
 
 // 王手の指し手が近接王手か
 FORCE_INLINE bool moveGivesNeighborCheck(const Position& pos, const Move& move)
@@ -195,6 +211,20 @@ FORCE_INLINE bool moveGivesNeighborCheck(const Position& pos, const Move& move)
     return false;
 }
 
+// 1手詰めの局面nで、詰ます手moveの証明駒を返す
+static Hand mate1_proof_hand(const Position& n, const Move move) {
+    // 証明駒を初期化
+    Hand hand(0);
+    // 打つ手ならば証明駒に加える
+    if (move.isDrop()) {
+        hand.plusOne(move.handPieceDropped());
+    }
+    // 後手が一枚も持っていない種類の先手の持ち駒を証明駒に設定する
+    if (!moveGivesNeighborCheck(n, move))
+        hand.setPP(n.hand(n.turn()), n.hand(oppositeColor(n.turn())));
+    return hand;
+}
+
 // 反証駒を計算(持っている持ち駒を最大数にする(後手の持ち駒を加える))
 FORCE_INLINE u32 dp(const Hand& us, const Hand& them) {
     u32 dp = 0;
@@ -209,14 +239,16 @@ FORCE_INLINE u32 dp(const Hand& us, const Hand& them) {
 }
 
 template <bool or_node>
-void DfPn::dfpn_inner(Position& n, const int thpn, const int thdn/*, bool inc_flag*/, const uint16_t maxDepth, uint32_t& searchedNode) {
+void DfPn::dfpn_inner(Position& n, const int thpn, const int thdn/*, bool inc_flag*/, const int64_t maxDepth, uint32_t& searchedNode) {
     auto& entry = transposition_table.LookUp<or_node>(n);
 
     if (or_node) {
-        if (n.gamePly() + 1 > maxDepth) {
+        if (!within(n, 1, maxDepth)) {
             entry.pn = kInfinitePnDn;
             entry.dn = 0;
             entry.num_searched = REPEAT;
+            // 対局の手数上限(draw_ply)内に指せる手を打ち切った場合は、探索深さに依存した反証
+            entry.depth_limited = within(n, 1, draw_ply);
             return;
         }
     }
@@ -238,11 +270,22 @@ void DfPn::dfpn_inner(Position& n, const int thpn, const int thdn/*, bool inc_fl
         else {
             // 相手の手番でここに到達した場合は王手回避の手が無かった、
             // 1手詰めを行っているため、ここに到達することはない
-            entry.pn = 0;
-            entry.dn = kInfinitePnDn;
+            // 合駒できないことは受け側の持ち駒に依存するため、攻め側の持ち駒をすべて証明駒にする
+            set_proof(entry, n.hand(oppositeColor(n.turn())), kInfinitePnDn, 0);
         }
 
         return;
+    }
+
+    if (!or_node) {
+        // 次に詰ます手が手数の上限を超える場合は打ち切る
+        if (!within(n, 2, maxDepth)) {
+            entry.pn = kInfinitePnDn;
+            entry.dn = 0;
+            entry.num_searched = REPEAT;
+            entry.depth_limited = within(n, 2, draw_ply);
+            return;
+        }
     }
 
     // 新規節点で固定深さの探索を併用
@@ -276,29 +319,17 @@ void DfPn::dfpn_inner(Position& n, const int thpn, const int thdn/*, bool inc_fl
 
                 if (move_picker2.size() == 0) {
                     // 1手で詰んだ
+                    // 合駒できないことは受け側の持ち駒に依存するため、攻め側の持ち駒をすべて証明駒にする
+                    set_proof(entry2, n.hand(oppositeColor(n.turn())), kInfinitePnDn + 1, 0);
                     n.undoMove(m);
 
-                    entry2.pn = 0;
-                    entry2.dn = kInfinitePnDn + 1;
-
-                    entry.pn = 0;
-                    entry.dn = kInfinitePnDn;
-
-                    // 証明駒を初期化
-                    entry.hand.set(0);
-
-                    // 打つ手ならば証明駒に加える
-                    if (m.isDrop()) {
-                        entry.hand.plusOne(m.handPieceDropped());
-                    }
-                    // 後手が一枚も持っていない種類の先手の持ち駒を証明駒に設定する
-                    if (!moveGivesNeighborCheck(n, m))
-                        entry.hand.setPP(n.hand(n.turn()), n.hand(oppositeColor(n.turn())));
+                    set_proof(entry, mate1_proof_hand(n, m), kInfinitePnDn, 1);
 
                     return;
                 }
 
-                if (n.gamePly() + 2 > maxDepth) {
+                if (!within(n, 2, maxDepth)) {
+                    entry2.depth_limited = within(n, 2, draw_ply);
                     n.undoMove(m);
 
                     entry2.pn = kInfinitePnDn;
@@ -309,6 +340,7 @@ void DfPn::dfpn_inner(Position& n, const int thpn, const int thdn/*, bool inc_fl
                 }
 
                 const CheckInfo ci2(n);
+                int child_mate_ply = 1; // 応手後の局面の証明に必要な手数の最大
                 for (const auto& move : move_picker2)
                 {
                     const Move& m2 = move.move;
@@ -321,8 +353,11 @@ void DfPn::dfpn_inner(Position& n, const int thpn, const int thdn/*, bool inc_fl
 
                     if (n.mateMoveIn1Ply()) {
                         auto& entry1 = transposition_table.LookUp<true>(n);
-                        entry1.pn = 0;
-                        entry1.dn = kInfinitePnDn + 2;
+                        // 証明済みのエントリ(優越関係で取得したものを含む)は、その証明を維持する
+                        if (entry1.pn == 0)
+                            child_mate_ply = std::max(child_mate_ply, entry1.mate_ply);
+                        else
+                            set_proof(entry1, n.hand(n.turn()), kInfinitePnDn + 2, 1);
                     }
                     else {
                         // 詰んでないので、m2で詰みを逃れている。
@@ -334,13 +369,13 @@ void DfPn::dfpn_inner(Position& n, const int thpn, const int thdn/*, bool inc_fl
                 }
 
                 // すべて詰んだ
+                // 再利用できる証明がすでにあれば、その証明を維持する
+                if (entry2.pn != 0 || entry2.num_searched == REPEAT)
+                    set_proof(entry2, n.hand(oppositeColor(n.turn())), kInfinitePnDn, child_mate_ply + 1);
                 n.undoMove(m);
 
-                entry2.pn = 0;
-                entry2.dn = kInfinitePnDn;
-
-                entry.pn = 0;
-                entry.dn = kInfinitePnDn;
+                // 証明手数は、実際に保持した子の証明から求める
+                set_proof(entry, n.hand(n.turn()), kInfinitePnDn, entry2.mate_ply + 1);
 
                 return;
 
@@ -369,21 +404,9 @@ void DfPn::dfpn_inner(Position& n, const int thpn, const int thdn/*, bool inc_fl
 
                 n.doMove(m2, si2, ci2, false);
 
-                if (const Move move = n.mateMoveIn1Ply()) {
+                if (const Move mate = n.mateMoveIn1Ply()) {
                     auto& entry1 = transposition_table.LookUp<true>(n);
-                    entry1.pn = 0;
-                    entry1.dn = kInfinitePnDn + 2;
-
-                    // 証明駒を初期化
-                    entry1.hand.set(0);
-
-                    // 打つ手ならば証明駒に加える
-                    if (move.isDrop()) {
-                        entry1.hand.plusOne(move.handPieceDropped());
-                    }
-                    // 後手が一枚も持っていない種類の先手の持ち駒を証明駒に設定する
-                    if (!moveGivesNeighborCheck(n, move))
-                        entry1.hand.setPP(n.hand(n.turn()), n.hand(oppositeColor(n.turn())));
+                    set_proof(entry1, mate1_proof_hand(n, mate), kInfinitePnDn + 2, 1);
                 }
                 else {
                     // 詰んでないので、m2で詰みを逃れている。
@@ -430,8 +453,7 @@ void DfPn::dfpn_inner(Position& n, const int thpn, const int thdn/*, bool inc_fl
             }
 
             // すべて詰んだ
-            entry.pn = 0;
-            entry.dn = kInfinitePnDn;
+            set_proof(entry, n.hand(oppositeColor(n.turn())), kInfinitePnDn, 2);
             return;
 
         NO_MATE:;
@@ -529,6 +551,7 @@ void DfPn::dfpn_inner(Position& n, const int thpn, const int thdn/*, bool inc_fl
             u32 bishop = UINT_MAX;
             u32 rook = UINT_MAX;
             bool repeat = false; // 最大手数チェック用
+            bool depth_limited = false; // 探索深さの上限に依存した反証を含むか
             for (const auto& move : move_picker) {
                 auto& ttkey = ttkeys[&move - move_picker.begin()];
                 const auto& child_entry = transposition_table.LookUpDirect(*ttkey.entries, ttkey.hand, n.gamePly() + 1);
@@ -538,6 +561,7 @@ void DfPn::dfpn_inner(Position& n, const int thpn, const int thdn/*, bool inc_fl
                     //cout << bitset<32>(entry.hand.value()) << endl;
                     entry.pn = 0;
                     entry.dn = kInfinitePnDn;
+                    entry.mate_ply = child_entry.mate_ply + 1;
                     // 子局面の証明駒を設定
                     // 打つ手ならば、証明駒に追加する
                     if (move.move.isDrop()) {
@@ -593,6 +617,8 @@ void DfPn::dfpn_inner(Position& n, const int thpn, const int thdn/*, bool inc_fl
                 // 最大手数で不詰みの局面が優越関係で使用されないようにする
                 if (child_entry.dn == 0 && child_entry.num_searched == REPEAT)
                     repeat = true;
+                if (child_entry.dn == 0 && child_entry.depth_limited)
+                    depth_limited = true;
 
                 if (child_entry.pn < best_pn ||
                     child_entry.pn == best_pn && best_num_search > child_entry.num_searched) {
@@ -609,6 +635,7 @@ void DfPn::dfpn_inner(Position& n, const int thpn, const int thdn/*, bool inc_fl
             entry.dn = std::min(entry.dn, kInfinitePnDn);
             if (entry.dn == 0) {
                 // 不詰みの場合
+                entry.depth_limited = depth_limited;
                 //cout << n.hand(n.turn()).value() << "," << entry.hand.value() << ",";
                 // 最大手数で不詰みの局面が優越関係で使用されないようにする
                 if (repeat)
@@ -650,11 +677,13 @@ void DfPn::dfpn_inner(Position& n, const int thpn, const int thdn/*, bool inc_fl
             u32 bishop = 0;
             u32 rook = 0;
             bool all_mate = true;
+            int mate_ply = 0; // 子局面の証明に必要な手数の最大
             for (const auto& move : move_picker) {
                 auto& ttkey = ttkeys[&move - move_picker.begin()];
                 const auto& child_entry = transposition_table.LookUpDirect(*ttkey.entries, ttkey.hand, n.gamePly() + 1);
                 if (all_mate) {
                     if (child_entry.pn == 0) {
+                        mate_ply = std::max(mate_ply, child_entry.mate_ply);
                         const Hand& child_pp = child_entry.hand;
                         // 歩
                         const u32 child_pawn = child_pp.exists<HPawn>();
@@ -685,6 +714,7 @@ void DfPn::dfpn_inner(Position& n, const int thpn, const int thdn/*, bool inc_fl
                     // 不詰みの場合
                     entry.pn = kInfinitePnDn;
                     entry.dn = 0;
+                    entry.depth_limited = child_entry.depth_limited;
                     // 最大手数で不詰みの局面が優越関係で使用されないようにする
                     if (child_entry.num_searched == REPEAT)
                         entry.num_searched = REPEAT;
@@ -730,6 +760,7 @@ void DfPn::dfpn_inner(Position& n, const int thpn, const int thdn/*, bool inc_fl
             entry.pn = std::min(entry.pn, kInfinitePnDn);
             if (entry.pn == 0) {
                 // 詰みの場合
+                entry.mate_ply = mate_ply + 1;
                 //cout << n.toSFEN() << " and" << endl;
                 //cout << bitset<32>(entry.hand.value()) << endl;
                 // 証明駒に子局面の証明駒の和集合を設定
@@ -770,6 +801,9 @@ void DfPn::dfpn_inner(Position& n, const int thpn, const int thdn/*, bool inc_fl
 
 // 詰みの手返す
 Move DfPn::dfpn_move(Position& pos) {
+    // 手数の上限に達した局面からは指さない(子局面の手数がintで溢れないようにする)
+    if (!within(pos, 1, transposition_table.max_depth))
+        return Move::moveNone();
     MovePicker<true> move_picker(pos);
     for (const auto& move : move_picker) {
         const auto& child_entry = transposition_table.LookUpChildEntry<true>(pos, move);
@@ -783,6 +817,9 @@ Move DfPn::dfpn_move(Position& pos) {
 
 template<bool or_node>
 int DfPn::get_pv_inner(Position& pos, std::vector<u32>& pv) {
+    // 手数の上限に達した局面からは指さない(子局面の手数がintで溢れないようにする)
+    if (!within(pos, 1, transposition_table.max_depth))
+        return -kInfinitePnDn;
     if (or_node) {
         // ORノードで詰みが見つかったらその手を選ぶ
         MovePicker<true> move_picker(pos);
@@ -862,23 +899,35 @@ void DfPn::get_pv(Position& pos, std::vector<u32>& pv) {
     get_pv_inner<true>(pos, pv);
 }
 
+// ルートから探索できる手数の上限を返す
+// Positionの手数はintのため、INT_MAX手目は指せない(doMoveで溢れる)。
+// その手が対局の手数上限内なら、探索深さによる打ち切りと同様に未確定になる。
+int64_t DfPn::root_max_depth(const Position& r) const {
+    return std::min<int64_t>({ static_cast<int64_t>(r.gamePly()) + kMaxDepth, draw_ply, INT_MAX });
+}
+
 // 詰将棋探索のエントリポイント
 bool DfPn::dfpn(Position& r) {
+    const int64_t maxDepth = root_max_depth(r);
     // キャッシュの世代を進める
-    transposition_table.NewSearch();
+    transposition_table.NewSearch(maxDepth);
 
     searchedNode = 0;
-    if (!r.inCheck()) {
+    result = Unknown;
+    // 詰ます手が手数の上限を超える場合は行わない(dfpn_innerで打ち切られる)
+    if (!r.inCheck() && within(r, 1, maxDepth)) {
         // 1手詰みチェック
         Move mate1ply = r.mateMoveIn1Ply();
         if (mate1ply) {
             auto& child_entry = transposition_table.LookUpChildEntry<true>(r, mate1ply);
             child_entry.pn = 0;
             child_entry.dn = kInfinitePnDn + 1;
+            child_entry.mate_ply = 0;
+            result = Mate;
             return true;
         }
     }
-    dfpn_inner<true>(r, kInfinitePnDn, kInfinitePnDn/*, false*/, std::min(r.gamePly() + kMaxDepth, draw_ply), searchedNode);
+    dfpn_inner<true>(r, kInfinitePnDn, kInfinitePnDn/*, false*/, maxDepth, searchedNode);
     const auto& entry = transposition_table.LookUp<true>(r);
 
     //cout << searchedNode << endl;
@@ -890,6 +939,8 @@ bool DfPn::dfpn(Position& r) {
     cout << move.toUSI() << " ";
     cout << endl;*/
 
+    // 探索深さの上限に依存した反証は不詰めの証明にならない
+    result = entry.pn == 0 ? Mate : entry.dn == 0 && !entry.depth_limited ? NoMate : Unknown;
     return entry.pn == 0;
 }
 
@@ -897,12 +948,20 @@ bool DfPn::dfpn(Position& r) {
 bool DfPn::dfpn_andnode(Position& r) {
     // 自玉に王手がかかっていること
 
+    const int64_t maxDepth = root_max_depth(r);
     // キャッシュの世代を進める
-    transposition_table.NewSearch();
+    transposition_table.NewSearch(maxDepth);
 
     searchedNode = 0;
-    dfpn_inner<false>(r, kInfinitePnDn, kInfinitePnDn/*, false*/, std::min(r.gamePly() + kMaxDepth, draw_ply), searchedNode);
+    // 直前の攻め側の手が対局の手数上限(+1調整済み)を超えている場合は、詰みでも引き分けのため不詰めとする
+    if (r.gamePly() > draw_ply) {
+        result = NoMate;
+        return false;
+    }
+    dfpn_inner<false>(r, kInfinitePnDn, kInfinitePnDn/*, false*/, maxDepth, searchedNode);
     const auto& entry = transposition_table.LookUp<false>(r);
 
+    // 探索深さの上限に依存した反証は不詰めの証明にならない
+    result = entry.pn == 0 ? Mate : entry.dn == 0 && !entry.depth_limited ? NoMate : Unknown;
     return entry.pn == 0;
 }

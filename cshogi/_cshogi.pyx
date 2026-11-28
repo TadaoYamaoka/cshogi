@@ -1709,6 +1709,7 @@ cdef extern from "cshogi.h":
         void set_maxdepth(const int depth)
         void set_max_search_node(int max_search_node)
         unsigned int get_searched_node()
+        int get_result()
 
 
 cdef extern from "cshogi.h":
@@ -1724,7 +1725,8 @@ cdef extern from "cshogi.h":
         void set_draw_ply(const int draw_ply)
         void set_maxdepth(const int depth)
         void set_max_search_node(int max_search_node)
-        unsigned int get_searched_node()
+        unsigned long long get_searched_node()
+        int get_result()
 
 
 cdef class DfPn:
@@ -1739,6 +1741,13 @@ cdef class DfPn:
     """
 
     cdef __DfPn __dfpn
+
+    #: The search has not determined the result (node limit reached, stopped, etc.).
+    UNKNOWN = 0
+    #: A checkmate was proven.
+    MATE = 1
+    #: It was proven that there is no checkmate within the configured move limit (``draw_ply``).
+    NO_MATE = 2
 
     def __cinit__(self, depth=1600, nodes=4294967295, draw_ply=2147483646):
         self.__dfpn = __DfPn(depth, nodes, draw_ply)
@@ -1818,16 +1827,56 @@ cdef class DfPn:
 
     @property
     def searched_node(self):
-        """Gets the number of nodes searched.
+        """Gets the number of nodes searched in the last search.
+
+        This is the same count that is compared with the node limit (``nodes``):
+        it is incremented each time the df-pn search descends into a child
+        position. The root position and the positions examined by the
+        fixed-depth checks (the mate-in-1 check at the root, the 3-ply check at
+        new OR nodes and the 2-ply check at new AND nodes) are not counted.
+        Therefore it can be 0 even when :attr:`result` is :attr:`MATE` or
+        :attr:`NO_MATE`, for example when the root is mate in 1 or has no
+        checking move.
 
         :return: Number of nodes searched.
         :rtype: unsigned int
         """
         return self.__dfpn.get_searched_node()
 
+    @property
+    def result(self):
+        """Gets the result of the last search.
+
+        :return: :attr:`MATE` if a checkmate was proven,
+            :attr:`NO_MATE` if it was proven that there is no checkmate
+            within the configured move limit (``draw_ply``),
+            or :attr:`UNKNOWN` if the search ended (node limit, depth limit, stop, etc.)
+            before either was proven.
+        :rtype: int
+        """
+        return self.__dfpn.get_result()
+
 
 cdef class OslDfPn:
     """Class to perform mate search using the OSL-based df-pn algorithm.
+
+    Limitations:
+
+    - Reaching the move limit (``depth`` or ``draw_ply``) on one branch can end
+      the current search iteration before other branches are examined. That
+      iteration is treated as :attr:`UNKNOWN`, and :meth:`search` may retry
+      with a larger per-iteration node limit, up to ``nodes``. Therefore
+      :attr:`result` can be :attr:`UNKNOWN` even when a checkmate within
+      ``draw_ply`` exists, especially when the mate ends at or near
+      ``draw_ply``. A checkmate that exceeds ``draw_ply`` is never returned as
+      :attr:`MATE`.
+    - A search cut off by ``draw_ply`` is :attr:`UNKNOWN`, not :attr:`NO_MATE`.
+    - ``depth`` limits the depth of the search tree with a margin of two plies,
+      so :meth:`search` visits no nodes when ``depth`` is 1 or 2.
+      At those depths, :meth:`search_andnode` can still examine the root
+      and return :attr:`MATE` if there is no legal reply to the check.
+
+    Use :class:`cshogi.DfPn` when exact results near ``draw_ply`` are needed.
 
     :param int depth: Depth of the search.
     :type depth: int, optional
@@ -1838,6 +1887,13 @@ cdef class OslDfPn:
     """
 
     cdef __OslDfPn __dfpn
+
+    #: The search has not determined the result (node limit reached, stopped, etc.).
+    UNKNOWN = 0
+    #: A checkmate was proven.
+    MATE = 1
+    #: It was proven that there is no checkmate.
+    NO_MATE = 2
 
     def __cinit__(self, depth=1600, nodes=4294967295, draw_ply=2147483646):
         self.__dfpn = __OslDfPn(depth, nodes, draw_ply)
@@ -1883,6 +1939,8 @@ cdef class OslDfPn:
     def get_pv(self, Board board):
         """Gets the principal variation (PV) of the mating sequence found by the search.
 
+        PV reconstruction can find a mating line even when :attr:`result` is :attr:`UNKNOWN`.
+
         :param board: Current board position.
         :type board: Board
         :return: The PV of the mating sequence.
@@ -1917,9 +1975,31 @@ cdef class OslDfPn:
 
     @property
     def searched_node(self):
-        """Gets the number of nodes searched.
+        """Gets the number of nodes searched in the last search.
+
+        It is incremented each time an attacking or defending position is
+        visited, including the root, and each time a fixed-depth check is
+        performed. Positions where the search stops before being counted,
+        because the depth limit is reached or a loop is detected, are not
+        included, so it can be 0 when the depth limit is small.
+        :meth:`search` repeats the search while increasing the node
+        limit (iterative deepening), and this is the total over all iterations.
+        Because the node limit (``nodes``) applies to each iteration and is
+        checked after children are expanded, the total can exceed it.
 
         :return: Number of nodes searched.
-        :rtype: unsigned int
+        :rtype: int
         """
         return self.__dfpn.get_searched_node()
+
+    @property
+    def result(self):
+        """Gets the result of the last search.
+
+        :return: :attr:`MATE` if a checkmate was proven,
+            :attr:`NO_MATE` if it was proven that there is no checkmate,
+            or :attr:`UNKNOWN` if the search ended (node limit, depth limit, stop, etc.)
+            before either was proven.
+        :rtype: int
+        """
+        return self.__dfpn.get_result()

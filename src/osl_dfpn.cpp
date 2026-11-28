@@ -674,7 +674,7 @@ namespace {
     Move validated_mate_move_in_1(Position& pos);
     Move immediate_mate_move_in_1_osl(Position& pos, const OslPieceNumberState* current_piece_numbers = nullptr);
     ProofDisproof fixed_attack_osl_shortcut(Position& pos, Color attack_color, Move* best_move = nullptr,
-        Hand* proof_pieces = nullptr, OslPieceNumberState* current_piece_numbers = nullptr);
+        Hand* proof_pieces = nullptr, OslPieceNumberState* current_piece_numbers = nullptr, bool mate_in_1_only = false);
     Hand proof_pieces_leaf(const Position& pos, const Color attack_color, const Hand& max);
     Hand fixed_attack_leaf_proof_pieces(Move best_move);
     Hand proof_pieces_after_attack(const Hand& prev, const Move move, const Hand& max);
@@ -1951,7 +1951,7 @@ namespace {
         return move.isAny() && move.isOK();
     }
 
-    inline void accumulate_record_node_count(DfpnRecord& record, const uint32_t node_count_org, const uint32_t current_node_count) {
+    inline void accumulate_record_node_count(DfpnRecord& record, const uint64_t node_count_org, const uint64_t current_node_count) {
         if (current_node_count <= node_count_org) {
             return;
         }
@@ -6622,8 +6622,9 @@ namespace {
         return ProofDisproof(min_proof, sum_disproof);
     }
 
+    // mate_in_1_only: 手数の上限まで攻め方の手が1手しか残っていない場合に、1手詰めだけを調べる
     ProofDisproof fixed_attack_depth2_osl(Position& pos, const Color attack_color, Move* best_move = nullptr,
-        Hand* proof_pieces = nullptr, OslPieceNumberState* current_piece_numbers = nullptr) {
+        Hand* proof_pieces = nullptr, OslPieceNumberState* current_piece_numbers = nullptr, const bool mate_in_1_only = false) {
         if (best_move) {
             *best_move = Move::moveNone();
         }
@@ -6675,6 +6676,33 @@ namespace {
             StateInfo st;
             pos.doMove(move, st);
 
+            if (mate_in_1_only) {
+                // 3手先は読まず、この王手で受け方の合法手がなくなるか(打ち歩詰めを除く)だけを調べる。
+                // 自玉が王手の場合は上の簡易1手詰め判定を行わないため、王手を回避しながら詰ます手もここで判定する。
+                // 生成した王手は自玉を取られる手を含むことがあるため、fixed_has_escape_by_move_zeroと同様に除く
+                const Square attacker_king = pos.kingSquare(attack_color);
+                const bool mated = !(move.isDrop() && move.pieceTypeDropped() == Pawn)
+                    && !(isInSquare(attacker_king) && effect_has_at(pos, oppositeColor(attack_color), attacker_king))
+                    && MoveList<LegalAll>(pos).size() == 0;
+                // 離れた王手では合駒がないことに依存するため、着手後の局面で証明駒を求める
+                const Hand child_proof = mated ? proof_pieces_leaf(pos, attack_color, pos.hand(attack_color)) : zero_hand();
+                pos.undoMove(move);
+                if (piece_number_applied) {
+                    current_piece_numbers->undo_move(piece_undo);
+                }
+                if (mated) {
+                    if (best_move) {
+                        *best_move = move;
+                    }
+                    if (proof_pieces) {
+                        *proof_pieces = proof_pieces_after_attack(
+                            child_proof, complete_move_for_position(pos, move), attack_stand);
+                    }
+                    return ProofDisproof::Checkmate();
+                }
+                continue;
+            }
+
             Move child_best = Move::moveNone();
             Hand child_proof_storage = zero_hand();
             Hand* child_proof = proof_pieces ? proof_pieces : &child_proof_storage;
@@ -6704,6 +6732,9 @@ namespace {
             sum_disproof = saturate_sum(static_cast<uint64_t>(sum_disproof) + child.disproof, ProofDisproof::DISPROOF_MAX);
         }
 
+        if (mate_in_1_only) {
+            return ProofDisproof::Unknown();
+        }
         return ProofDisproof(min_proof, sum_disproof);
     }
 
@@ -6776,7 +6807,7 @@ namespace {
     }
 
     ProofDisproof fixed_attack_osl_shortcut(Position& pos, const Color attack_color, Move* best_move,
-        Hand* proof_pieces, OslPieceNumberState* current_piece_numbers) {
+        Hand* proof_pieces, OslPieceNumberState* current_piece_numbers, const bool mate_in_1_only) {
         if (best_move) {
             *best_move = Move::moveNone();
         }
@@ -6784,7 +6815,7 @@ namespace {
             *proof_pieces = zero_hand();
         }
 
-        return fixed_attack_depth2_osl(pos, attack_color, best_move, proof_pieces, current_piece_numbers);
+        return fixed_attack_depth2_osl(pos, attack_color, best_move, proof_pieces, current_piece_numbers, mate_in_1_only);
     }
 
     bool fixed_attack_pv(Position& pos, const int remaining_odd, std::vector<u32>& pv) {
@@ -6868,7 +6899,7 @@ struct OslDfPn::Impl {
     bool stop = false;
     uint32_t max_search_node = std::numeric_limits<uint32_t>::max();
     int max_depth = 1600;
-    int draw_ply = INT_MAX;
+    int64_t draw_ply = INT_MAX;
     uint64_t reserved_hash_mb = 64;
     Color root_attack_color = Black;
 
@@ -7011,9 +7042,10 @@ struct OslDfPn::Impl {
         std::vector<ActiveNode> active_nodes;
         std::vector<std::vector<Move>> move_scratch;
         std::vector<std::vector<ChildState>> child_scratch;
-        uint32_t node_count = 0;
+        // ノード上限を超えて応手を展開することがあるため、上限(uint32_t)付近でも溢れないよう64ビットで数える
+        uint64_t node_count = 0;
         uint32_t node_limit;
-        int max_game_ply = INT_MAX;
+        int64_t max_game_ply = INT_MAX;
         Color attack_color = Black;
         bool use_oracle_path_table = false;
         bool main_search = false;
@@ -7226,6 +7258,11 @@ struct OslDfPn::Impl {
                 }
             }
         }
+    }
+
+    // ルートからの手数の上限。オーバーフローしないよう64bitで計算する
+    int64_t game_ply_limit(const Position& pos) const {
+        return std::min<int64_t>(static_cast<int64_t>(pos.gamePly()) + max_depth, draw_ply);
     }
 
     uint16_t remaining_depth(const Position& pos, const SearchContext& ctx) const {
@@ -7538,7 +7575,7 @@ ProofDisproof OslDfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold
         ~PathRecordStackPop() { path_records.pop_back(); }
     } path_record_stack_pop{ ctx.path_records };
 
-    const uint32_t node_count_org = ctx.node_count;
+    const uint64_t node_count_org = ctx.node_count;
     ++ctx.node_count;
     const auto store_out_exact = [&](const DfpnRecord& value) {
         if (out_exact) {
@@ -7596,8 +7633,10 @@ ProofDisproof OslDfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold
     if (try_fixed_attack) {
         Move fixed_best = Move::moveNone();
         Hand fixed_proof_pieces = zero_hand();
+        // 3手先の詰ます手が手数の上限を超える場合は、1手詰めだけを調べる
         const ProofDisproof fixed_pdp = fixed_attack_osl_shortcut(pos, ctx.attack_color, &fixed_best, &fixed_proof_pieces,
-            ctx.piece_numbers ? &*ctx.piece_numbers : nullptr);
+            ctx.piece_numbers ? &*ctx.piece_numbers : nullptr,
+            static_cast<int64_t>(pos.gamePly()) + 2 >= ctx.max_game_ply);
         ++ctx.node_count;
         const bool fixed_success = fixed_pdp.isCheckmateSuccess();
         if (fixed_success) {
@@ -8198,7 +8237,7 @@ ProofDisproof OslDfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold
         ~PathRecordStackPop() { path_records.pop_back(); }
     } path_record_stack_pop{ ctx.path_records };
 
-    const uint32_t node_count_org = ctx.node_count;
+    const uint64_t node_count_org = ctx.node_count;
     ++ctx.node_count;
     if (!pos.inCheck()) {
         if (out_exact) {
@@ -8320,7 +8359,9 @@ ProofDisproof OslDfPn::Impl::attack(Position& pos, SearchContext& ctx, Threshold
             if (children[i].pdp.isCheckmateSuccess()) {
                 set_checkmate_child_in_defense(exact_record, children[i], i);
             }
-            if (children[i].pdp == ProofDisproof(1, 1)) {
+            // 応手後の1手詰めは、詰ます手が手数の上限内の場合だけ調べる
+            if (children[i].pdp == ProofDisproof(1, 1)
+                && static_cast<int64_t>(pos.gamePly()) + 1 < ctx.max_game_ply) {
                 OslPieceNumberState::Undo fixed_piece_undo;
                 const OslPieceNumberState* fixed_piece_numbers = nullptr;
                 bool fixed_piece_number_applied = false;
@@ -8945,7 +8986,7 @@ ProofDisproof OslDfPn::Impl::proof_oracle_attack(Position& pos, const OracleStat
         }
     } path_record_stack_pop{ ctx.path_records, use_table };
 
-    const uint32_t node_count_org = ctx.node_count;
+    const uint64_t node_count_org = ctx.node_count;
     ++ctx.node_count;
     if (ctx.use_oracle_path_table && ctx.node_count > kOracleNodeLimit) {
         throw DepthLimitReached();
@@ -8975,8 +9016,10 @@ ProofDisproof OslDfPn::Impl::proof_oracle_attack(Position& pos, const OracleStat
                 && ctx.move_history[4].toUSI() == "1e1f"
                 && ctx.move_history[5].toUSI() == "P*3f"
                 && ctx.move_history[6].toUSI() == "1f3f");
+        // 3手先の詰ます手が手数の上限を超える場合は、1手詰めだけを調べる
         const ProofDisproof fixed_pdp = fixed_attack_osl_shortcut(pos, ctx.attack_color, &fixed_best, &fixed_proof_pieces,
-            ctx.piece_numbers ? &*ctx.piece_numbers : nullptr);
+            ctx.piece_numbers ? &*ctx.piece_numbers : nullptr,
+            static_cast<int64_t>(pos.gamePly()) + 2 >= ctx.max_game_ply);
         ++ctx.node_count;
         const bool fixed_success = fixed_pdp.isCheckmateSuccess();
         if (fixed_success) {
@@ -9264,7 +9307,7 @@ ProofDisproof OslDfPn::Impl::proof_oracle_defense(Position& pos, const OracleSta
         }
     }
 
-    const uint32_t node_count_org = ctx.node_count;
+    const uint64_t node_count_org = ctx.node_count;
     ++ctx.node_count;
     const Square attacker_king = pos.kingSquare(ctx.attack_color);
     if (!pos.inCheck()
@@ -9370,7 +9413,9 @@ ProofDisproof OslDfPn::Impl::proof_oracle_defense(Position& pos, const OracleSta
         if (children[i].pdp.isCheckmateSuccess()) {
             set_checkmate_child_in_defense(exact_record, children[i], i);
         }
-        else if (record.node_count == 0 && child_record.node_count == 0) {
+        // 応手後の1手詰めは、詰ます手が手数の上限内の場合だけ調べる(posは応手後の局面)
+        else if (record.node_count == 0 && child_record.node_count == 0
+            && static_cast<int64_t>(pos.gamePly()) < ctx.max_game_ply) {
             Move check_move = Move::moveNone();
             Hand proof_pieces = zero_hand();
             {
@@ -9775,7 +9820,7 @@ ProofDisproof OslDfPn::Impl::ensure_attack(Position& pos) {
     }
     SearchContext ctx(*this);
     ctx.set_root(pos);
-    ctx.max_game_ply = std::min(pos.gamePly() + max_depth, draw_ply);
+    ctx.max_game_ply = game_ply_limit(pos);
     ctx.attack_color = root_attack_color;
     Move best = Move::moveNone();
     try {
@@ -9793,7 +9838,7 @@ ProofDisproof OslDfPn::Impl::ensure_defense(Position& pos) {
     }
     SearchContext ctx(*this);
     ctx.set_root(pos);
-    ctx.max_game_ply = std::min(pos.gamePly() + max_depth, draw_ply);
+    ctx.max_game_ply = game_ply_limit(pos);
     ctx.attack_color = root_attack_color;
     try {
         return defense(pos, ctx, { kRootProofTolerance, kRootDisproofTolerance });
@@ -9904,7 +9949,8 @@ bool OslDfPn::Impl::linked_pv_defense_move(Position& pos, Move& best_move, const
 
 int OslDfPn::Impl::pv_attack(Position& pos, PvDepthTable& table, Move& best_move, const int height, const Move incoming_move,
     const Key board_index, const uint64_t board_secondary, OslPieceNumberState* piece_numbers) {
-    if (height >= max_depth) {
+    // 探索と同様に、手数の上限に達した局面からは指さない
+    if (height >= max_depth || pos.gamePly() >= draw_ply) {
         best_move = Move::moveNone();
         return -1;
     }
@@ -9918,10 +9964,19 @@ int OslDfPn::Impl::pv_attack(Position& pos, PvDepthTable& table, Move& best_move
         }
     }
     if (kEnableFixedDepthShortcut) {
-        const ProofDisproof fixed_pdp = fixed_attack_depth2_pv_osl(pos, root_attack_color, &best_move, piece_numbers);
-        if (fixed_pdp.isCheckmateSuccess()) {
-            table.store(board_index, board_secondary, pos.hand(Black), 3, best_move);
-            return 3;
+        // 3手先の詰ます手が手数の上限を超える場合は、探索時と同様に1手詰めだけを調べる
+        if (static_cast<int64_t>(pos.gamePly()) + 2 >= draw_ply) {
+            if (fixed_attack_osl_shortcut(pos, root_attack_color, &best_move, nullptr, piece_numbers, true).isCheckmateSuccess()) {
+                table.store(board_index, board_secondary, pos.hand(Black), 1, best_move);
+                return 1;
+            }
+        }
+        else {
+            const ProofDisproof fixed_pdp = fixed_attack_depth2_pv_osl(pos, root_attack_color, &best_move, piece_numbers);
+            if (fixed_pdp.isCheckmateSuccess()) {
+                table.store(board_index, board_secondary, pos.hand(Black), 3, best_move);
+                return 3;
+            }
         }
     }
 
@@ -9990,6 +10045,11 @@ int OslDfPn::Impl::pv_defense(Position& pos, PvDepthTable& table, Move& best_mov
     if (height >= max_depth) {
         best_move = Move::moveNone();
         return -1;
+    }
+    // 探索と同様に、手数の上限に達した局面からは指さない。応手がなければ詰みの終端(0)、あれば打ち切り(-1)
+    if (pos.gamePly() >= draw_ply) {
+        best_move = Move::moveNone();
+        return pos.inCheck() && MoveList<LegalAll>(pos).size() == 0 ? 0 : -1;
     }
     best_move = Move::moveNone();
     int recorded = 0;
@@ -10126,6 +10186,17 @@ void OslDfPn::reset_config_from(const OslDfPn& other) {
     impl_->reserve_by_hash(other.impl_->reserved_hash_mb);
     impl_->clear_root_search_state();
     searchedNode = 0;
+    result_ = Unknown;
+}
+
+static OslDfPn::Result to_dfpn_result(const ProofDisproof& pdp) {
+    if (pdp.isCheckmateSuccess()) {
+        return OslDfPn::Mate;
+    }
+    if (pdp.isCheckmateFail()) {
+        return OslDfPn::NoMate;
+    }
+    return OslDfPn::Unknown;
 }
 
 bool OslDfPn::dfpn(Position& pos) {
@@ -10133,6 +10204,7 @@ bool OslDfPn::dfpn(Position& pos) {
     impl_->root_attack_color = pos.turn();
     impl_->clear_root_search_state();
     searchedNode = 0;
+    result_ = Unknown;
     if (impl_->max_search_node == 0) {
         return false;
     }
@@ -10150,7 +10222,7 @@ bool OslDfPn::dfpn(Position& pos) {
         ctx.main_search = true;
         ctx.node_limit = limit;
         ctx.set_root(pos);
-        ctx.max_game_ply = std::min(pos.gamePly() + impl_->max_depth, impl_->draw_ply);
+        ctx.max_game_ply = impl_->game_ply_limit(pos);
         ctx.attack_color = impl_->root_attack_color;
 
         try {
@@ -10163,7 +10235,7 @@ bool OslDfPn::dfpn(Position& pos) {
             result = ProofDisproof::LoopDetection();
         }
 
-        searchedNode = saturate_sum(static_cast<uint64_t>(searchedNode) + ctx.node_count, ProofDisproof::PROOF_MAX);
+        searchedNode += ctx.node_count;
         const uint32_t lite_children_filter = (UINT32_MAX);
         if (lite_children_filter != UINT32_MAX
             && (lite_children_filter == 0 || lite_children_filter == ctx.node_limit)) {
@@ -10182,11 +10254,12 @@ bool OslDfPn::dfpn(Position& pos) {
         if (stop_after_limit != 0 && ctx.node_limit == stop_after_limit) {
             break;
         }
-        if (result.isFinal() || result.isLoopDetection() || limit >= impl_->max_search_node) {
+        if (result.isFinal() || result.isLoopDetection() || limit >= impl_->max_search_node || impl_->stop) {
             break;
         }
         limit = next_root_search_limit(limit, impl_->max_search_node);
     }
+    result_ = to_dfpn_result(result);
     return result.isCheckmateSuccess();
 }
 
@@ -10196,30 +10269,33 @@ bool OslDfPn::dfpn_andnode(Position& pos) {
     impl_->clear_root_search_state();
     ProofDisproof result = ProofDisproof::Unknown();
     impl_->path_table.clear();
-    uint32_t searched_nodes = 0;
-    try {
+    searchedNode = 0;
+    // ルートの受けを1回探索する。深さ制限で打ち切られた場合も探索ノード数を集計し、falseを返す
+    const auto search_defense = [&]() {
         Impl::SearchContext ctx(*impl_);
         ctx.set_root(pos);
-        ctx.max_game_ply = std::min(pos.gamePly() + impl_->max_depth, impl_->draw_ply);
+        ctx.max_game_ply = impl_->game_ply_limit(pos);
         ctx.attack_color = impl_->root_attack_color;
-        result = impl_->defense(pos, ctx, { kRootProofTolerance, kRootDisproofTolerance });
-        searched_nodes = saturate_sum(static_cast<uint64_t>(searched_nodes) + ctx.node_count, ProofDisproof::PROOF_MAX);
+        bool completed = true;
+        try {
+            result = impl_->defense(pos, ctx, { kRootProofTolerance, kRootDisproofTolerance });
+        }
+        catch (const DepthLimitReached&) {
+            result = ProofDisproof::Unknown();
+            completed = false;
+        }
+        searchedNode += ctx.node_count;
+        return completed;
+    };
+    if (search_defense()) {
         const DfpnRecord* root = impl_->table.exact(pos);
         if (root && root->need_full_width) {
             // OSL hasEscapeMove clears only the root tree node before retrying
             // a root defense that requested full-width escape generation.
-            Impl::SearchContext retry_ctx(*impl_);
-            retry_ctx.set_root(pos);
-            retry_ctx.max_game_ply = std::min(pos.gamePly() + impl_->max_depth, impl_->draw_ply);
-            retry_ctx.attack_color = impl_->root_attack_color;
-            result = impl_->defense(pos, retry_ctx, { kRootProofTolerance, kRootDisproofTolerance });
-            searched_nodes = saturate_sum(static_cast<uint64_t>(searched_nodes) + retry_ctx.node_count, ProofDisproof::PROOF_MAX);
+            search_defense();
         }
     }
-    catch (const DepthLimitReached&) {
-        result = ProofDisproof::Unknown();
-    }
-    searchedNode = searched_nodes;
+    result_ = to_dfpn_result(result);
     return result.isCheckmateSuccess();
 }
 
@@ -10311,7 +10387,8 @@ int OslDfPn::pv_depth(Position& pos, const bool is_or_node) {
 }
 
 void OslDfPn::set_draw_ply(const int draw_ply) {
-    impl_->draw_ply = draw_ply + 1;
+    // 着手後の手数はintで表現できる範囲に収める(INT_MAX手目からは指せない)
+    impl_->draw_ply = std::min<int64_t>(static_cast<int64_t>(draw_ply) + 1, INT_MAX);
 }
 
 void OslDfPn::set_maxdepth(const int depth) {
