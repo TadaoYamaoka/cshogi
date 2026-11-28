@@ -382,7 +382,8 @@ void DfPn::dfpn_inner(Position& n, const int thpn, const int thdn/*, bool inc_fl
             NEXT_CHECK:;
                 n.undoMove(m);
 
-                if (entry2.num_searched == 0) {
+                // 固定深さ探索で確定した証明・反証はnum_searchedが0のままのため、未確定の場合だけ初期化する
+                if (entry2.num_searched == 0 && entry2.pn != 0 && entry2.dn != 0) {
                     entry2.num_searched = 1;
                     entry2.pn = static_cast<int>(move_picker2.size());
                     entry2.dn = static_cast<int>(move_picker2.size());
