@@ -215,6 +215,71 @@
 <span class="gp">&gt;&gt;&gt; </span><span class="n">cli</span><span class="o">.</span><span class="n">main</span><span class="p">(</span><span class="s1">&#39;/content/LesserkaiSrc/Lesserkai/Lesserkai&#39;</span><span class="p">,</span> <span class="s1">&#39;/content/LesserkaiSrc/Lesserkai/Lesserkai&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>Use <code class="docutils literal notranslate"><span class="pre">-c</span></code> or <code class="docutils literal notranslate"><span class="pre">--concurrency</span></code> to play several pairs at once. Each worker plays the
+two colors of an opening on the same hardware. Worker options override the
+named engine’s common options in command-line order. Supply one quoted
+option string per worker for each engine that needs overrides.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>cshogi.cli<span class="w"> </span>yane<span class="w"> </span>dlshogi<span class="w"> </span>dlshogi<span class="w"> </span>--games<span class="w"> </span><span class="m">20</span><span class="w"> </span>-c<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--name2<span class="w"> </span>base<span class="w"> </span>--name3<span class="w"> </span>new<span class="w"> </span>--keep-process<span class="w"> </span>--pgn<span class="w"> </span>league.pgn<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--options2<span class="w"> </span><span class="s2">&quot;DNN_Model:base.onnx,UCT_Threads:3&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--options3<span class="w"> </span><span class="s2">&quot;DNN_Model:new.onnx,UCT_Threads:3&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--worker-options2<span class="w"> </span><span class="s2">&quot;UCT_Threads:2&quot;</span><span class="w"> </span><span class="s2">&quot;UCT_Threads:0,UCT_Threads2:2&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--worker-options3<span class="w"> </span><span class="s2">&quot;UCT_Threads:2&quot;</span><span class="w"> </span><span class="s2">&quot;UCT_Threads:0,UCT_Threads2:2&quot;</span>
+</pre></div>
+</div>
+<p>Here <code class="docutils literal notranslate"><span class="pre">[worker1]</span></code> uses GPU 0 and <code class="docutils literal notranslate"><span class="pre">[worker2]</span></code> uses GPU 1. Budget CPU threads
+across workers, including both engines when pondering. For dlshogi builds
+with a TensorRT cache, initialize each model/GPU/batch-size combination
+once before starting workers that share the same cache file.</p>
+<p>In a Unix shell launcher, use <code class="docutils literal notranslate"><span class="pre">exec</span></code> to start the engine so Ctrl+C can terminate it directly.</p>
+<p>Head-to-head PGN records are appended in completion order. Their Round
+tags retain the scheduled game numbers. A three-engine league plays two
+games per pairing per opening, rounding an odd game count up for each
+pairing. Its Round tags are 1 and 2 in every mini-match.</p>
+<p>The Python API accepts the same overrides, for example
+<code class="docutils literal notranslate"><span class="pre">cli.main(a,</span> <span class="pre">b,</span> <span class="pre">concurrency=2,</span> <span class="pre">worker_options=[None,</span> <span class="pre">[{'Threads':</span> <span class="pre">2},</span> <span class="pre">{'Threads':</span> <span class="pre">4}]])</span></code>.
+A falsy callback result stops new games. Games already started finish
+and contribute to the records and final totals. Parallel callbacks run
+serially on the reporting workers. Board display requires concurrency 1.
+Parallel debug output is queued so that a worker can keep reading engine
+responses while another worker prints standings or runs a callback.
+A debug label such as <code class="docutils literal notranslate"><span class="pre">[worker1]</span> <span class="pre">g3</span> <span class="pre">2</span></code> identifies worker 1, scheduled game 3,
+and the second engine on the command line.</p>
+</li>
+<li><p>Stopping a match with SPRT</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">--sprt</span> <span class="pre">ELO0</span> <span class="pre">ELO1</span></code> to compare two hypotheses about the tested engine’s
+logistic Elo difference against its opponent. For example, this tests equal
+strength (H0) against a five-point improvement (H1), up to 40,000 games.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>cshogi.cli<span class="w"> </span>new<span class="w"> </span>base<span class="w"> </span>--sprt<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">5</span><span class="w"> </span>--games<span class="w"> </span><span class="m">40000</span><span class="w"> </span>-c<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--opening<span class="w"> </span>openings.sfen<span class="w"> </span>--pgn<span class="w"> </span>match.pgn
+</pre></div>
+</div>
+<p>Each observation is the tested engine’s average score over two games from
+the same opening with colors reversed. Supply an even game limit and leave
+color swapping enabled. Use a large opening book. When a book repeats,
+deterministic engines playing under identical conditions can repeat the
+same pair of games without providing an independent observation.</p>
+<p>The log-likelihood ratio (LLR) is updated in scheduled pair order. Crossing
+the lower bound accepts H0 and crossing the upper bound accepts H1. The
+type I and II error parameters, <code class="docutils literal notranslate"><span class="pre">--sprt-alpha</span></code> and <code class="docutils literal notranslate"><span class="pre">--sprt-beta</span></code>, both
+default to 0.05. Reaching the game limit can leave the test undecided.
+After a decision, games already in progress finish and count toward the
+match totals and records. The reported SPRT counts and LLR stay fixed.</p>
+<p>In a three-engine league, specify the tested engine first and its opponent
+second. Here the test compares engine 3 against engine 2, and the limit
+applies to each pairing. A decision can stop the league before the first
+standings table, which requires all six games of a stage.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>cshogi.cli<span class="w"> </span>yane<span class="w"> </span>base<span class="w"> </span>new<span class="w"> </span>--sprt<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">5</span><span class="w"> </span>--sprt-engines<span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--games<span class="w"> </span><span class="m">20000</span><span class="w"> </span>-c<span class="w"> </span><span class="m">4</span><span class="w"> </span>--opening<span class="w"> </span>openings.sfen<span class="w"> </span>--pgn<span class="w"> </span>league.pgn
+</pre></div>
+</div>
+<p>In Python, pass <code class="docutils literal notranslate"><span class="pre">sprt=cli.SprtConfig(0,</span> <span class="pre">5)</span></code> to <code class="docutils literal notranslate"><span class="pre">cli.main()</span></code> or
+<code class="docutils literal notranslate"><span class="pre">sprt=cli.SprtConfig(0,</span> <span class="pre">5,</span> <span class="pre">engines=(3,</span> <span class="pre">2))</span></code> to <code class="docutils literal notranslate"><span class="pre">cli.league()</span></code>.
+The selected pairing’s result dictionary includes a <code class="docutils literal notranslate"><span class="pre">sprt</span></code> entry with
+<code class="docutils literal notranslate"><span class="pre">engines</span></code>, <code class="docutils literal notranslate"><span class="pre">result</span></code> (<code class="docutils literal notranslate"><span class="pre">'H0'</span></code>, <code class="docutils literal notranslate"><span class="pre">'H1'</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>), <code class="docutils literal notranslate"><span class="pre">llr</span></code>, <code class="docutils literal notranslate"><span class="pre">lower</span></code>,
+<code class="docutils literal notranslate"><span class="pre">upper</span></code>, <code class="docutils literal notranslate"><span class="pre">pairs</span></code>, and <code class="docutils literal notranslate"><span class="pre">pentanomial</span></code> (counts in ascending score order).
+Head-to-head callbacks receive the same fields. Use <code class="docutils literal notranslate"><span class="pre">print_summary=False</span></code>
+to suppress head-to-head SPRT output while retaining the result.</p>
 </li>
 </ul>
 </section>

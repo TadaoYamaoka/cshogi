@@ -186,6 +186,118 @@
         <span class="k">return</span> <span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">erf</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">wins</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">losses</span><span class="p">)</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wins</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">losses</span><span class="p">))))</span></div>
 </div>
 
+
+
+<span class="n">_PAIR_SCORES</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_expected_scores</span><span class="p">(</span><span class="n">elo</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the expected scores for both sides, computing the small tail directly.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">elo</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;SPRT Elo hypotheses must be finite&#39;</span><span class="p">)</span>
+    <span class="n">odds</span> <span class="o">=</span> <span class="mf">10.0</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="nb">abs</span><span class="p">(</span><span class="n">elo</span><span class="p">)</span> <span class="o">/</span> <span class="mf">400.0</span><span class="p">)</span>
+    <span class="n">low</span><span class="p">,</span> <span class="n">high</span> <span class="o">=</span> <span class="n">odds</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">odds</span><span class="p">),</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">odds</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">)</span> <span class="k">if</span> <span class="n">elo</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">(</span><span class="n">high</span><span class="p">,</span> <span class="n">low</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_mle_log_denominators</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">complement</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fit p_i = observed_p_i / (1 + lambda * (score_i - target)).&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">target</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">:</span>
+        <span class="c1"># Reflect the score bins to fit the smaller tail, then restore their order.</span>
+        <span class="k">return</span> <span class="n">_mle_log_denominators</span><span class="p">(</span><span class="n">counts</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">complement</span><span class="p">,</span> <span class="n">target</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">deviation</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">fsum</span><span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="p">(</span><span class="n">a</span> <span class="o">-</span> <span class="n">target</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="n">_PAIR_SCORES</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">deviation</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+
+    <span class="c1"># At lambda=0 all denominators are 1. At the pole in the direction of</span>
+    <span class="c1"># the root (1/target or -1/(1-target)), one denominator is zero.</span>
+    <span class="k">if</span> <span class="n">deviation</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">at_pole</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="o">/</span> <span class="n">target</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">_PAIR_SCORES</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">at_pole</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">a</span><span class="p">)</span> <span class="o">/</span> <span class="n">complement</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">_PAIR_SCORES</span><span class="p">]</span>
+
+    <span class="c1"># Bisect on the fraction of the distance back from the pole to zero.</span>
+    <span class="c1"># Forming the denominators this way avoids cancellation near the pole.</span>
+    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">fraction</span> <span class="o">=</span> <span class="p">(</span><span class="n">lo</span> <span class="o">+</span> <span class="n">hi</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span>
+        <span class="n">denominators</span> <span class="o">=</span> <span class="p">[</span><span class="n">fraction</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">fraction</span><span class="p">)</span> <span class="o">*</span> <span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">at_pole</span><span class="p">]</span>
+        <span class="n">residual</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">fsum</span><span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="p">((</span><span class="n">d</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">/</span> <span class="n">fitted</span><span class="p">)</span>
+                             <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">fitted</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="n">at_pole</span><span class="p">,</span> <span class="n">denominators</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">residual</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">fraction</span> <span class="o">==</span> <span class="n">lo</span> <span class="ow">or</span> <span class="n">fraction</span> <span class="o">==</span> <span class="n">hi</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">denominators</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">residual</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">lo</span> <span class="o">=</span> <span class="n">fraction</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">hi</span> <span class="o">=</span> <span class="n">fraction</span>
+
+
+<div class="viewcode-block" id="SPRT">
+<a class="viewcode-back" href="../../cshogi.html#cshogi.elo.SPRT">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SPRT</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pentanomial SPRT with logistic Elo hypotheses and fixed Wald bounds.</span>
+
+<span class="sd">    A sample is the tested engine&#39;s average score over a color-swapped pair.</span>
+<span class="sd">    The first decision freezes the LLR and the observed counts.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elo0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">elo1</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span> <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scores0</span> <span class="o">=</span> <span class="n">_expected_scores</span><span class="p">(</span><span class="n">elo0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scores1</span> <span class="o">=</span> <span class="n">_expected_scores</span><span class="p">(</span><span class="n">elo1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scores0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scores1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;SPRT hypotheses must yield distinct increasing scores between 0 and 1&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_scores0</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_scores1</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;SPRT hypotheses must yield finite MLE search bounds&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;</span> <span class="n">alpha</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">beta</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">alpha</span> <span class="o">+</span> <span class="n">beta</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;SPRT requires positive alpha and beta with alpha + beta &lt; 1&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lower</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">beta</span><span class="p">)</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="o">-</span><span class="n">alpha</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_upper</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="o">-</span><span class="n">beta</span><span class="p">)</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_counts</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">_PAIR_SCORES</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_llr</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_result</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">counts</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Observed pair counts in ascending score order, without pseudocounts.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_counts</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SPRT.add_pair">
+<a class="viewcode-back" href="../../cshogi.html#cshogi.elo.SPRT.add_pair">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_pair</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">score</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">score</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_PAIR_SCORES</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;pair score must be 0, 0.25, 0.5, 0.75, or 1&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_counts</span><span class="p">[</span><span class="n">_PAIR_SCORES</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">score</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">counts</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="ow">or</span> <span class="mf">0.001</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_counts</span><span class="p">]</span>
+        <span class="n">log_d0</span> <span class="o">=</span> <span class="n">_mle_log_denominators</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_scores0</span><span class="p">)</span>
+        <span class="n">log_d1</span> <span class="o">=</span> <span class="n">_mle_log_denominators</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_scores1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_llr</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">fsum</span><span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="p">(</span><span class="n">d0</span> <span class="o">-</span> <span class="n">d1</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">d0</span><span class="p">,</span> <span class="n">d1</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="n">log_d0</span><span class="p">,</span> <span class="n">log_d1</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_llr</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lower</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_result</span> <span class="o">=</span> <span class="s1">&#39;H0&#39;</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_llr</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_upper</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_result</span> <span class="o">=</span> <span class="s1">&#39;H1&#39;</span></div>
+
+
+<div class="viewcode-block" id="SPRT.llr">
+<a class="viewcode-back" href="../../cshogi.html#cshogi.elo.SPRT.llr">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">llr</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_llr</span></div>
+
+
+<div class="viewcode-block" id="SPRT.bounds">
+<a class="viewcode-back" href="../../cshogi.html#cshogi.elo.SPRT.bounds">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lower</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_upper</span></div>
+
+
+<div class="viewcode-block" id="SPRT.status">
+<a class="viewcode-back" href="../../cshogi.html#cshogi.elo.SPRT.status">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_result</span></div>
+</div>
+
 </pre></div>
 
            </div>

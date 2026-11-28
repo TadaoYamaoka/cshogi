@@ -155,8 +155,12 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.CheckMoveList"><code class="docutils literal notranslate"><span class="pre">CheckMoveList</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.DfPn"><code class="docutils literal notranslate"><span class="pre">DfPn</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.DfPn.MATE"><code class="docutils literal notranslate"><span class="pre">DfPn.MATE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.DfPn.NO_MATE"><code class="docutils literal notranslate"><span class="pre">DfPn.NO_MATE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.DfPn.UNKNOWN"><code class="docutils literal notranslate"><span class="pre">DfPn.UNKNOWN</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.DfPn.get_move"><code class="docutils literal notranslate"><span class="pre">DfPn.get_move()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.DfPn.get_pv"><code class="docutils literal notranslate"><span class="pre">DfPn.get_pv()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.DfPn.result"><code class="docutils literal notranslate"><span class="pre">DfPn.result</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.DfPn.search"><code class="docutils literal notranslate"><span class="pre">DfPn.search()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.DfPn.search_andnode"><code class="docutils literal notranslate"><span class="pre">DfPn.search_andnode()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.DfPn.searched_node"><code class="docutils literal notranslate"><span class="pre">DfPn.searched_node</span></code></a></li>
@@ -204,6 +208,10 @@
 <li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.osl.DfPn.set_max_depth"><code class="docutils literal notranslate"><span class="pre">DfPn.set_max_depth()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.osl.DfPn.set_max_search_node"><code class="docutils literal notranslate"><span class="pre">DfPn.set_max_search_node()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.osl.DfPn.searched_node"><code class="docutils literal notranslate"><span class="pre">DfPn.searched_node</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.osl.DfPn.result"><code class="docutils literal notranslate"><span class="pre">DfPn.result</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.osl.DfPn.UNKNOWN"><code class="docutils literal notranslate"><span class="pre">DfPn.UNKNOWN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.osl.DfPn.MATE"><code class="docutils literal notranslate"><span class="pre">DfPn.MATE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.osl.DfPn.NO_MATE"><code class="docutils literal notranslate"><span class="pre">DfPn.NO_MATE</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -299,7 +307,121 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="cshogi.html#module-cshogi.cli">cshogi.cli module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.cli.Ending"><code class="docutils literal notranslate"><span class="pre">Ending</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.Ending.DECLARATION"><code class="docutils literal notranslate"><span class="pre">Ending.DECLARATION</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.Ending.ILLEGAL"><code class="docutils literal notranslate"><span class="pre">Ending.ILLEGAL</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.Ending.LOSS"><code class="docutils literal notranslate"><span class="pre">Ending.LOSS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.Ending.MOVE_LIMIT"><code class="docutils literal notranslate"><span class="pre">Ending.MOVE_LIMIT</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.Ending.REPETITION_DRAW"><code class="docutils literal notranslate"><span class="pre">Ending.REPETITION_DRAW</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.Ending.REPETITION_LOSS"><code class="docutils literal notranslate"><span class="pre">Ending.REPETITION_LOSS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.Ending.REPETITION_WIN"><code class="docutils literal notranslate"><span class="pre">Ending.REPETITION_WIN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.Ending.TIME"><code class="docutils literal notranslate"><span class="pre">Ending.TIME</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.Ending.outcome"><code class="docutils literal notranslate"><span class="pre">Ending.outcome()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.cli.EngineConfig"><code class="docutils literal notranslate"><span class="pre">EngineConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.EngineConfig.byoyomi"><code class="docutils literal notranslate"><span class="pre">EngineConfig.byoyomi</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.EngineConfig.command"><code class="docutils literal notranslate"><span class="pre">EngineConfig.command</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.EngineConfig.inc"><code class="docutils literal notranslate"><span class="pre">EngineConfig.inc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.EngineConfig.name"><code class="docutils literal notranslate"><span class="pre">EngineConfig.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.EngineConfig.options"><code class="docutils literal notranslate"><span class="pre">EngineConfig.options</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.EngineConfig.time"><code class="docutils literal notranslate"><span class="pre">EngineConfig.time</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.cli.GameConfig"><code class="docutils literal notranslate"><span class="pre">GameConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.GameConfig.debug"><code class="docutils literal notranslate"><span class="pre">GameConfig.debug</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.GameConfig.display"><code class="docutils literal notranslate"><span class="pre">GameConfig.display</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.GameConfig.draw"><code class="docutils literal notranslate"><span class="pre">GameConfig.draw</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.GameConfig.keep_process"><code class="docutils literal notranslate"><span class="pre">GameConfig.keep_process</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.GameConfig.mate_win"><code class="docutils literal notranslate"><span class="pre">GameConfig.mate_win</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.GameConfig.opening_moves"><code class="docutils literal notranslate"><span class="pre">GameConfig.opening_moves</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.GameConfig.ponder"><code class="docutils literal notranslate"><span class="pre">GameConfig.ponder</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.GameConfig.resign"><code class="docutils literal notranslate"><span class="pre">GameConfig.resign</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.cli.GameResult"><code class="docutils literal notranslate"><span class="pre">GameResult</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.GameResult.csa_code"><code class="docutils literal notranslate"><span class="pre">GameResult.csa_code</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.GameResult.message"><code class="docutils literal notranslate"><span class="pre">GameResult.message</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.GameResult.moves"><code class="docutils literal notranslate"><span class="pre">GameResult.moves</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.GameResult.names"><code class="docutils literal notranslate"><span class="pre">GameResult.names</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.GameResult.spec"><code class="docutils literal notranslate"><span class="pre">GameResult.spec</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.GameResult.winner"><code class="docutils literal notranslate"><span class="pre">GameResult.winner</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.cli.GameSpec"><code class="docutils literal notranslate"><span class="pre">GameSpec</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.GameSpec.black_id"><code class="docutils literal notranslate"><span class="pre">GameSpec.black_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.GameSpec.index"><code class="docutils literal notranslate"><span class="pre">GameSpec.index</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.GameSpec.opening"><code class="docutils literal notranslate"><span class="pre">GameSpec.opening</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.GameSpec.round"><code class="docutils literal notranslate"><span class="pre">GameSpec.round</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.GameSpec.white_id"><code class="docutils literal notranslate"><span class="pre">GameSpec.white_id</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.cli.LeagueTable"><code class="docutils literal notranslate"><span class="pre">LeagueTable</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.LeagueTable.games_per_stage"><code class="docutils literal notranslate"><span class="pre">LeagueTable.games_per_stage</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.LeagueTable.publish_ready"><code class="docutils literal notranslate"><span class="pre">LeagueTable.publish_ready()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.LeagueTable.record"><code class="docutils literal notranslate"><span class="pre">LeagueTable.record()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.cli.Listener"><code class="docutils literal notranslate"><span class="pre">Listener</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.cli.Match"><code class="docutils literal notranslate"><span class="pre">Match</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.Match.fail"><code class="docutils literal notranslate"><span class="pre">Match.fail()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.Match.log"><code class="docutils literal notranslate"><span class="pre">Match.log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.Match.publish_standings"><code class="docutils literal notranslate"><span class="pre">Match.publish_standings()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.Match.queued_debug_log"><code class="docutils literal notranslate"><span class="pre">Match.queued_debug_log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.Match.report"><code class="docutils literal notranslate"><span class="pre">Match.report()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.Match.snapshot"><code class="docutils literal notranslate"><span class="pre">Match.snapshot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.Match.take_pairs"><code class="docutils literal notranslate"><span class="pre">Match.take_pairs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.Match.try_start"><code class="docutils literal notranslate"><span class="pre">Match.try_start()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.cli.MatchSprt"><code class="docutils literal notranslate"><span class="pre">MatchSprt</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.MatchSprt.print_status"><code class="docutils literal notranslate"><span class="pre">MatchSprt.print_status()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.MatchSprt.record"><code class="docutils literal notranslate"><span class="pre">MatchSprt.record()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.MatchSprt.snapshot"><code class="docutils literal notranslate"><span class="pre">MatchSprt.snapshot()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.cli.MatchStats"><code class="docutils literal notranslate"><span class="pre">MatchStats</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.MatchStats.add"><code class="docutils literal notranslate"><span class="pre">MatchStats.add()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.MatchStats.snapshot"><code class="docutils literal notranslate"><span class="pre">MatchStats.snapshot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.MatchStats.summary"><code class="docutils literal notranslate"><span class="pre">MatchStats.summary()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.cli.Player"><code class="docutils literal notranslate"><span class="pre">Player</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.Player.config"><code class="docutils literal notranslate"><span class="pre">Player.config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.Player.engine"><code class="docutils literal notranslate"><span class="pre">Player.engine</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.Player.listener"><code class="docutils literal notranslate"><span class="pre">Player.listener</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.cli.ProcessGroup"><code class="docutils literal notranslate"><span class="pre">ProcessGroup</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.ProcessGroup.close"><code class="docutils literal notranslate"><span class="pre">ProcessGroup.close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.ProcessGroup.connect"><code class="docutils literal notranslate"><span class="pre">ProcessGroup.connect()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.ProcessGroup.discard"><code class="docutils literal notranslate"><span class="pre">ProcessGroup.discard()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.cli.Records"><code class="docutils literal notranslate"><span class="pre">Records</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.Records.finish"><code class="docutils literal notranslate"><span class="pre">Records.finish()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.Records.start"><code class="docutils literal notranslate"><span class="pre">Records.start()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.cli.SprtConfig"><code class="docutils literal notranslate"><span class="pre">SprtConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.SprtConfig.alpha"><code class="docutils literal notranslate"><span class="pre">SprtConfig.alpha</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.SprtConfig.beta"><code class="docutils literal notranslate"><span class="pre">SprtConfig.beta</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.SprtConfig.elo0"><code class="docutils literal notranslate"><span class="pre">SprtConfig.elo0</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.SprtConfig.elo1"><code class="docutils literal notranslate"><span class="pre">SprtConfig.elo1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.SprtConfig.engines"><code class="docutils literal notranslate"><span class="pre">SprtConfig.engines</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.cli.Worker"><code class="docutils literal notranslate"><span class="pre">Worker</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.Worker.play_game"><code class="docutils literal notranslate"><span class="pre">Worker.play_game()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.cli.Worker.play_pairs"><code class="docutils literal notranslate"><span class="pre">Worker.play_pairs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.cli.league"><code class="docutils literal notranslate"><span class="pre">league()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.cli.load_openings"><code class="docutils literal notranslate"><span class="pre">load_openings()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.cli.rate"><code class="docutils literal notranslate"><span class="pre">rate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.cli.run_workers"><code class="docutils literal notranslate"><span class="pre">run_workers()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.cli.schedule"><code class="docutils literal notranslate"><span class="pre">schedule()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.cli.to_score"><code class="docutils literal notranslate"><span class="pre">to_score()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.cli.usi_info_to_csa_comment"><code class="docutils literal notranslate"><span class="pre">usi_info_to_csa_comment()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.cli.usi_info_to_score"><code class="docutils literal notranslate"><span class="pre">usi_info_to_score()</span></code></a></li>
@@ -312,6 +434,14 @@
 <li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.elo.Elo.error_margin"><code class="docutils literal notranslate"><span class="pre">Elo.error_margin()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.elo.Elo.los"><code class="docutils literal notranslate"><span class="pre">Elo.los()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.elo.Elo.point_ratio"><code class="docutils literal notranslate"><span class="pre">Elo.point_ratio()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.elo.SPRT"><code class="docutils literal notranslate"><span class="pre">SPRT</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.elo.SPRT.add_pair"><code class="docutils literal notranslate"><span class="pre">SPRT.add_pair()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.elo.SPRT.bounds"><code class="docutils literal notranslate"><span class="pre">SPRT.bounds()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.elo.SPRT.counts"><code class="docutils literal notranslate"><span class="pre">SPRT.counts</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.elo.SPRT.llr"><code class="docutils literal notranslate"><span class="pre">SPRT.llr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.html#cshogi.elo.SPRT.status"><code class="docutils literal notranslate"><span class="pre">SPRT.status()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="cshogi.html#cshogi.elo.elo_diff"><code class="docutils literal notranslate"><span class="pre">elo_diff()</span></code></a></li>

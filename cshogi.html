@@ -115,8 +115,12 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#cshogi.CheckMoveList"><code class="docutils literal notranslate"><span class="pre">CheckMoveList</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#cshogi.DfPn"><code class="docutils literal notranslate"><span class="pre">DfPn</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.DfPn.MATE"><code class="docutils literal notranslate"><span class="pre">DfPn.MATE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.DfPn.NO_MATE"><code class="docutils literal notranslate"><span class="pre">DfPn.NO_MATE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.DfPn.UNKNOWN"><code class="docutils literal notranslate"><span class="pre">DfPn.UNKNOWN</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.DfPn.get_move"><code class="docutils literal notranslate"><span class="pre">DfPn.get_move()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.DfPn.get_pv"><code class="docutils literal notranslate"><span class="pre">DfPn.get_pv()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.DfPn.result"><code class="docutils literal notranslate"><span class="pre">DfPn.result</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.DfPn.search"><code class="docutils literal notranslate"><span class="pre">DfPn.search()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.DfPn.search_andnode"><code class="docutils literal notranslate"><span class="pre">DfPn.search_andnode()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.DfPn.searched_node"><code class="docutils literal notranslate"><span class="pre">DfPn.searched_node</span></code></a></li>
@@ -164,6 +168,10 @@
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.osl.DfPn.set_max_depth"><code class="docutils literal notranslate"><span class="pre">DfPn.set_max_depth()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.osl.DfPn.set_max_search_node"><code class="docutils literal notranslate"><span class="pre">DfPn.set_max_search_node()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.osl.DfPn.searched_node"><code class="docutils literal notranslate"><span class="pre">DfPn.searched_node</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.osl.DfPn.result"><code class="docutils literal notranslate"><span class="pre">DfPn.result</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.osl.DfPn.UNKNOWN"><code class="docutils literal notranslate"><span class="pre">DfPn.UNKNOWN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.osl.DfPn.MATE"><code class="docutils literal notranslate"><span class="pre">DfPn.MATE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.osl.DfPn.NO_MATE"><code class="docutils literal notranslate"><span class="pre">DfPn.NO_MATE</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -259,7 +267,121 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#module-cshogi.cli">cshogi.cli module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#cshogi.cli.Ending"><code class="docutils literal notranslate"><span class="pre">Ending</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.Ending.DECLARATION"><code class="docutils literal notranslate"><span class="pre">Ending.DECLARATION</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.Ending.ILLEGAL"><code class="docutils literal notranslate"><span class="pre">Ending.ILLEGAL</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.Ending.LOSS"><code class="docutils literal notranslate"><span class="pre">Ending.LOSS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.Ending.MOVE_LIMIT"><code class="docutils literal notranslate"><span class="pre">Ending.MOVE_LIMIT</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.Ending.REPETITION_DRAW"><code class="docutils literal notranslate"><span class="pre">Ending.REPETITION_DRAW</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.Ending.REPETITION_LOSS"><code class="docutils literal notranslate"><span class="pre">Ending.REPETITION_LOSS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.Ending.REPETITION_WIN"><code class="docutils literal notranslate"><span class="pre">Ending.REPETITION_WIN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.Ending.TIME"><code class="docutils literal notranslate"><span class="pre">Ending.TIME</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.Ending.outcome"><code class="docutils literal notranslate"><span class="pre">Ending.outcome()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#cshogi.cli.EngineConfig"><code class="docutils literal notranslate"><span class="pre">EngineConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.EngineConfig.byoyomi"><code class="docutils literal notranslate"><span class="pre">EngineConfig.byoyomi</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.EngineConfig.command"><code class="docutils literal notranslate"><span class="pre">EngineConfig.command</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.EngineConfig.inc"><code class="docutils literal notranslate"><span class="pre">EngineConfig.inc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.EngineConfig.name"><code class="docutils literal notranslate"><span class="pre">EngineConfig.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.EngineConfig.options"><code class="docutils literal notranslate"><span class="pre">EngineConfig.options</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.EngineConfig.time"><code class="docutils literal notranslate"><span class="pre">EngineConfig.time</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#cshogi.cli.GameConfig"><code class="docutils literal notranslate"><span class="pre">GameConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.GameConfig.debug"><code class="docutils literal notranslate"><span class="pre">GameConfig.debug</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.GameConfig.display"><code class="docutils literal notranslate"><span class="pre">GameConfig.display</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.GameConfig.draw"><code class="docutils literal notranslate"><span class="pre">GameConfig.draw</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.GameConfig.keep_process"><code class="docutils literal notranslate"><span class="pre">GameConfig.keep_process</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.GameConfig.mate_win"><code class="docutils literal notranslate"><span class="pre">GameConfig.mate_win</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.GameConfig.opening_moves"><code class="docutils literal notranslate"><span class="pre">GameConfig.opening_moves</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.GameConfig.ponder"><code class="docutils literal notranslate"><span class="pre">GameConfig.ponder</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.GameConfig.resign"><code class="docutils literal notranslate"><span class="pre">GameConfig.resign</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#cshogi.cli.GameResult"><code class="docutils literal notranslate"><span class="pre">GameResult</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.GameResult.csa_code"><code class="docutils literal notranslate"><span class="pre">GameResult.csa_code</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.GameResult.message"><code class="docutils literal notranslate"><span class="pre">GameResult.message</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.GameResult.moves"><code class="docutils literal notranslate"><span class="pre">GameResult.moves</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.GameResult.names"><code class="docutils literal notranslate"><span class="pre">GameResult.names</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.GameResult.spec"><code class="docutils literal notranslate"><span class="pre">GameResult.spec</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.GameResult.winner"><code class="docutils literal notranslate"><span class="pre">GameResult.winner</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#cshogi.cli.GameSpec"><code class="docutils literal notranslate"><span class="pre">GameSpec</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.GameSpec.black_id"><code class="docutils literal notranslate"><span class="pre">GameSpec.black_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.GameSpec.index"><code class="docutils literal notranslate"><span class="pre">GameSpec.index</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.GameSpec.opening"><code class="docutils literal notranslate"><span class="pre">GameSpec.opening</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.GameSpec.round"><code class="docutils literal notranslate"><span class="pre">GameSpec.round</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.GameSpec.white_id"><code class="docutils literal notranslate"><span class="pre">GameSpec.white_id</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#cshogi.cli.LeagueTable"><code class="docutils literal notranslate"><span class="pre">LeagueTable</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.LeagueTable.games_per_stage"><code class="docutils literal notranslate"><span class="pre">LeagueTable.games_per_stage</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.LeagueTable.publish_ready"><code class="docutils literal notranslate"><span class="pre">LeagueTable.publish_ready()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.LeagueTable.record"><code class="docutils literal notranslate"><span class="pre">LeagueTable.record()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#cshogi.cli.Listener"><code class="docutils literal notranslate"><span class="pre">Listener</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cshogi.cli.Match"><code class="docutils literal notranslate"><span class="pre">Match</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.Match.fail"><code class="docutils literal notranslate"><span class="pre">Match.fail()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.Match.log"><code class="docutils literal notranslate"><span class="pre">Match.log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.Match.publish_standings"><code class="docutils literal notranslate"><span class="pre">Match.publish_standings()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.Match.queued_debug_log"><code class="docutils literal notranslate"><span class="pre">Match.queued_debug_log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.Match.report"><code class="docutils literal notranslate"><span class="pre">Match.report()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.Match.snapshot"><code class="docutils literal notranslate"><span class="pre">Match.snapshot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.Match.take_pairs"><code class="docutils literal notranslate"><span class="pre">Match.take_pairs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.Match.try_start"><code class="docutils literal notranslate"><span class="pre">Match.try_start()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#cshogi.cli.MatchSprt"><code class="docutils literal notranslate"><span class="pre">MatchSprt</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.MatchSprt.print_status"><code class="docutils literal notranslate"><span class="pre">MatchSprt.print_status()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.MatchSprt.record"><code class="docutils literal notranslate"><span class="pre">MatchSprt.record()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.MatchSprt.snapshot"><code class="docutils literal notranslate"><span class="pre">MatchSprt.snapshot()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#cshogi.cli.MatchStats"><code class="docutils literal notranslate"><span class="pre">MatchStats</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.MatchStats.add"><code class="docutils literal notranslate"><span class="pre">MatchStats.add()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.MatchStats.snapshot"><code class="docutils literal notranslate"><span class="pre">MatchStats.snapshot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.MatchStats.summary"><code class="docutils literal notranslate"><span class="pre">MatchStats.summary()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#cshogi.cli.Player"><code class="docutils literal notranslate"><span class="pre">Player</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.Player.config"><code class="docutils literal notranslate"><span class="pre">Player.config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.Player.engine"><code class="docutils literal notranslate"><span class="pre">Player.engine</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.Player.listener"><code class="docutils literal notranslate"><span class="pre">Player.listener</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#cshogi.cli.ProcessGroup"><code class="docutils literal notranslate"><span class="pre">ProcessGroup</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.ProcessGroup.close"><code class="docutils literal notranslate"><span class="pre">ProcessGroup.close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.ProcessGroup.connect"><code class="docutils literal notranslate"><span class="pre">ProcessGroup.connect()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.ProcessGroup.discard"><code class="docutils literal notranslate"><span class="pre">ProcessGroup.discard()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#cshogi.cli.Records"><code class="docutils literal notranslate"><span class="pre">Records</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.Records.finish"><code class="docutils literal notranslate"><span class="pre">Records.finish()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.Records.start"><code class="docutils literal notranslate"><span class="pre">Records.start()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#cshogi.cli.SprtConfig"><code class="docutils literal notranslate"><span class="pre">SprtConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.SprtConfig.alpha"><code class="docutils literal notranslate"><span class="pre">SprtConfig.alpha</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.SprtConfig.beta"><code class="docutils literal notranslate"><span class="pre">SprtConfig.beta</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.SprtConfig.elo0"><code class="docutils literal notranslate"><span class="pre">SprtConfig.elo0</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.SprtConfig.elo1"><code class="docutils literal notranslate"><span class="pre">SprtConfig.elo1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.SprtConfig.engines"><code class="docutils literal notranslate"><span class="pre">SprtConfig.engines</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#cshogi.cli.Worker"><code class="docutils literal notranslate"><span class="pre">Worker</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.Worker.play_game"><code class="docutils literal notranslate"><span class="pre">Worker.play_game()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.cli.Worker.play_pairs"><code class="docutils literal notranslate"><span class="pre">Worker.play_pairs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#cshogi.cli.league"><code class="docutils literal notranslate"><span class="pre">league()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cshogi.cli.load_openings"><code class="docutils literal notranslate"><span class="pre">load_openings()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#cshogi.cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cshogi.cli.rate"><code class="docutils literal notranslate"><span class="pre">rate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cshogi.cli.run_workers"><code class="docutils literal notranslate"><span class="pre">run_workers()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cshogi.cli.schedule"><code class="docutils literal notranslate"><span class="pre">schedule()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#cshogi.cli.to_score"><code class="docutils literal notranslate"><span class="pre">to_score()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#cshogi.cli.usi_info_to_csa_comment"><code class="docutils literal notranslate"><span class="pre">usi_info_to_csa_comment()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#cshogi.cli.usi_info_to_score"><code class="docutils literal notranslate"><span class="pre">usi_info_to_score()</span></code></a></li>
@@ -272,6 +394,14 @@
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.elo.Elo.error_margin"><code class="docutils literal notranslate"><span class="pre">Elo.error_margin()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.elo.Elo.los"><code class="docutils literal notranslate"><span class="pre">Elo.los()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cshogi.elo.Elo.point_ratio"><code class="docutils literal notranslate"><span class="pre">Elo.point_ratio()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#cshogi.elo.SPRT"><code class="docutils literal notranslate"><span class="pre">SPRT</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.elo.SPRT.add_pair"><code class="docutils literal notranslate"><span class="pre">SPRT.add_pair()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.elo.SPRT.bounds"><code class="docutils literal notranslate"><span class="pre">SPRT.bounds()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.elo.SPRT.counts"><code class="docutils literal notranslate"><span class="pre">SPRT.counts</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.elo.SPRT.llr"><code class="docutils literal notranslate"><span class="pre">SPRT.llr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cshogi.elo.SPRT.status"><code class="docutils literal notranslate"><span class="pre">SPRT.status()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#cshogi.elo.elo_diff"><code class="docutils literal notranslate"><span class="pre">elo_diff()</span></code></a></li>
@@ -1284,6 +1414,21 @@ points is a draw. Under the 27-point rule, the winning threshold is
 </ul>
 </dd>
 </dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.DfPn.MATE">
+<span class="sig-name descname"><span class="pre">MATE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="headerlink" href="#cshogi.DfPn.MATE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.DfPn.NO_MATE">
+<span class="sig-name descname"><span class="pre">NO_MATE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="headerlink" href="#cshogi.DfPn.NO_MATE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.DfPn.UNKNOWN">
+<span class="sig-name descname"><span class="pre">UNKNOWN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="headerlink" href="#cshogi.DfPn.UNKNOWN" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="cshogi.DfPn.get_move">
 <span class="sig-name descname"><span class="pre">get_move</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">board</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.DfPn.get_move" title="Link to this definition"></a></dt>
@@ -1314,6 +1459,24 @@ points is a draw. Under the 27-point rule, the winning threshold is
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>list of unsigned int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.DfPn.result">
+<span class="sig-name descname"><span class="pre">result</span></span><a class="headerlink" href="#cshogi.DfPn.result" title="Link to this definition"></a></dt>
+<dd><p>Gets the result of the last search.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#cshogi.DfPn.MATE" title="cshogi.DfPn.MATE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">MATE</span></code></a> if a checkmate was proven,
+<a class="reference internal" href="#cshogi.DfPn.NO_MATE" title="cshogi.DfPn.NO_MATE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">NO_MATE</span></code></a> if it was proven that there is no checkmate
+within the configured move limit (<code class="docutils literal notranslate"><span class="pre">draw_ply</span></code>),
+or <a class="reference internal" href="#cshogi.DfPn.UNKNOWN" title="cshogi.DfPn.UNKNOWN"><code class="xref py py-attr docutils literal notranslate"><span class="pre">UNKNOWN</span></code></a> if the search ended (node limit, depth limit, stop, etc.)
+before either was proven.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1355,7 +1518,15 @@ points is a draw. Under the 27-point rule, the winning threshold is
 <dl class="py attribute">
 <dt class="sig sig-object py" id="cshogi.DfPn.searched_node">
 <span class="sig-name descname"><span class="pre">searched_node</span></span><a class="headerlink" href="#cshogi.DfPn.searched_node" title="Link to this definition"></a></dt>
-<dd><p>Gets the number of nodes searched.</p>
+<dd><p>Gets the number of nodes searched in the last search.</p>
+<p>This is the same count that is compared with the node limit (<code class="docutils literal notranslate"><span class="pre">nodes</span></code>):
+it is incremented each time the df-pn search descends into a child
+position. The root position and the positions examined by the
+fixed-depth checks (the mate-in-1 check at the root, the 3-ply check at
+new OR nodes and the 2-ply check at new AND nodes) are not counted.
+Therefore it can be 0 even when <a class="reference internal" href="#cshogi.DfPn.result" title="cshogi.DfPn.result"><code class="xref py py-attr docutils literal notranslate"><span class="pre">result</span></code></a> is <a class="reference internal" href="#cshogi.DfPn.MATE" title="cshogi.DfPn.MATE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">MATE</span></code></a> or
+<a class="reference internal" href="#cshogi.DfPn.NO_MATE" title="cshogi.DfPn.NO_MATE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">NO_MATE</span></code></a>, for example when the root is mate in 1 or has no
+checking move.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Number of nodes searched.</p>
@@ -1799,6 +1970,23 @@ points is a draw. Under the 27-point rule, the winning threshold is
 <dt class="sig sig-object py" id="cshogi.osl.DfPn">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">cshogi.osl.</span></span><span class="sig-name descname"><span class="pre">DfPn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1600</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4294967295</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">draw_ply</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2147483646</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.osl.DfPn" title="Link to this definition"></a></dt>
 <dd><p>Class to perform mate search using the OSL-based df-pn algorithm.</p>
+<p>Limitations:</p>
+<ul class="simple">
+<li><p>Reaching the move limit (<code class="docutils literal notranslate"><span class="pre">depth</span></code> or <code class="docutils literal notranslate"><span class="pre">draw_ply</span></code>) on one branch can end
+the current search iteration before other branches are examined. That
+iteration is treated as <a class="reference internal" href="#cshogi.osl.DfPn.UNKNOWN" title="cshogi.osl.DfPn.UNKNOWN"><code class="xref py py-attr docutils literal notranslate"><span class="pre">UNKNOWN</span></code></a>, and <a class="reference internal" href="#cshogi.osl.DfPn.search" title="cshogi.osl.DfPn.search"><code class="xref py py-meth docutils literal notranslate"><span class="pre">search()</span></code></a> may retry
+with a larger per-iteration node limit, up to <code class="docutils literal notranslate"><span class="pre">nodes</span></code>. Therefore
+<a class="reference internal" href="#cshogi.osl.DfPn.result" title="cshogi.osl.DfPn.result"><code class="xref py py-attr docutils literal notranslate"><span class="pre">result</span></code></a> can be <a class="reference internal" href="#cshogi.osl.DfPn.UNKNOWN" title="cshogi.osl.DfPn.UNKNOWN"><code class="xref py py-attr docutils literal notranslate"><span class="pre">UNKNOWN</span></code></a> even when a checkmate within
+<code class="docutils literal notranslate"><span class="pre">draw_ply</span></code> exists, especially when the mate ends at or near
+<code class="docutils literal notranslate"><span class="pre">draw_ply</span></code>. A checkmate that exceeds <code class="docutils literal notranslate"><span class="pre">draw_ply</span></code> is never returned as
+<a class="reference internal" href="#cshogi.osl.DfPn.MATE" title="cshogi.osl.DfPn.MATE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">MATE</span></code></a>.</p></li>
+<li><p>A search cut off by <code class="docutils literal notranslate"><span class="pre">draw_ply</span></code> is <a class="reference internal" href="#cshogi.osl.DfPn.UNKNOWN" title="cshogi.osl.DfPn.UNKNOWN"><code class="xref py py-attr docutils literal notranslate"><span class="pre">UNKNOWN</span></code></a>, not <a class="reference internal" href="#cshogi.osl.DfPn.NO_MATE" title="cshogi.osl.DfPn.NO_MATE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">NO_MATE</span></code></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">depth</span></code> limits the depth of the search tree with a margin of two plies,
+so <a class="reference internal" href="#cshogi.osl.DfPn.search" title="cshogi.osl.DfPn.search"><code class="xref py py-meth docutils literal notranslate"><span class="pre">search()</span></code></a> visits no nodes when <code class="docutils literal notranslate"><span class="pre">depth</span></code> is 1 or 2.
+At those depths, <a class="reference internal" href="#cshogi.osl.DfPn.search_andnode" title="cshogi.osl.DfPn.search_andnode"><code class="xref py py-meth docutils literal notranslate"><span class="pre">search_andnode()</span></code></a> can still examine the root
+and return <a class="reference internal" href="#cshogi.osl.DfPn.MATE" title="cshogi.osl.DfPn.MATE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">MATE</span></code></a> if there is no legal reply to the check.</p></li>
+</ul>
+<p>Use <a class="reference internal" href="#cshogi.DfPn" title="cshogi.DfPn"><code class="xref py py-class docutils literal notranslate"><span class="pre">cshogi.DfPn</span></code></a> when exact results near <code class="docutils literal notranslate"><span class="pre">draw_ply</span></code> are needed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1874,6 +2062,7 @@ points is a draw. Under the 27-point rule, the winning threshold is
 <dt class="sig sig-object py" id="cshogi.osl.DfPn.get_pv">
 <span class="sig-name descname"><span class="pre">get_pv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">board</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cshogi.osl.DfPn.get_pv" title="Link to this definition"></a></dt>
 <dd><p>Gets the principal variation (PV) of the mating sequence found by the search.</p>
+<p>PV reconstruction can find a mating line even when <a class="reference internal" href="#cshogi.osl.DfPn.result" title="cshogi.osl.DfPn.result"><code class="xref py py-attr docutils literal notranslate"><span class="pre">result</span></code></a> is <a class="reference internal" href="#cshogi.osl.DfPn.UNKNOWN" title="cshogi.osl.DfPn.UNKNOWN"><code class="xref py py-attr docutils literal notranslate"><span class="pre">UNKNOWN</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>board</strong> (<a class="reference internal" href="#cshogi.Board" title="cshogi.Board"><em>Board</em></a>) – Current board position.</p>
@@ -1923,15 +2112,59 @@ points is a draw. Under the 27-point rule, the winning threshold is
 <dl class="py property">
 <dt class="sig sig-object py" id="cshogi.osl.DfPn.searched_node">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">searched_node</span></span><a class="headerlink" href="#cshogi.osl.DfPn.searched_node" title="Link to this definition"></a></dt>
-<dd><p>Gets the number of nodes searched.</p>
+<dd><p>Gets the number of nodes searched in the last search.</p>
+<p>It is incremented each time an attacking or defending position is
+visited, including the root, and each time a fixed-depth check is
+performed. Positions where the search stops before being counted,
+because the depth limit is reached or a loop is detected, are not
+included, so it can be 0 when the depth limit is small.
+<a class="reference internal" href="#cshogi.osl.DfPn.search" title="cshogi.osl.DfPn.search"><code class="xref py py-meth docutils literal notranslate"><span class="pre">search()</span></code></a> repeats the search while increasing the node
+limit (iterative deepening), and this is the total over all iterations.
+Because the node limit (<code class="docutils literal notranslate"><span class="pre">nodes</span></code>) applies to each iteration and is
+checked after children are expanded, the total can exceed it.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Number of nodes searched.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>unsigned int</p>
+<dd class="field-even"><p>int</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cshogi.osl.DfPn.result">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">result</span></span><a class="headerlink" href="#cshogi.osl.DfPn.result" title="Link to this definition"></a></dt>
+<dd><p>Gets the result of the last search.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#cshogi.osl.DfPn.MATE" title="cshogi.osl.DfPn.MATE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">MATE</span></code></a> if a checkmate was proven,
+<a class="reference internal" href="#cshogi.osl.DfPn.NO_MATE" title="cshogi.osl.DfPn.NO_MATE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">NO_MATE</span></code></a> if it was proven that there is no checkmate,
+or <a class="reference internal" href="#cshogi.osl.DfPn.UNKNOWN" title="cshogi.osl.DfPn.UNKNOWN"><code class="xref py py-attr docutils literal notranslate"><span class="pre">UNKNOWN</span></code></a> if the search ended (node limit, stop, depth limit, etc.)
+before either was proven.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.osl.DfPn.UNKNOWN">
+<span class="sig-name descname"><span class="pre">UNKNOWN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="headerlink" href="#cshogi.osl.DfPn.UNKNOWN" title="Link to this definition"></a></dt>
+<dd><p>The search has not determined the result.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.osl.DfPn.MATE">
+<span class="sig-name descname"><span class="pre">MATE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="headerlink" href="#cshogi.osl.DfPn.MATE" title="Link to this definition"></a></dt>
+<dd><p>A checkmate was proven.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.osl.DfPn.NO_MATE">
+<span class="sig-name descname"><span class="pre">NO_MATE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="headerlink" href="#cshogi.osl.DfPn.NO_MATE" title="Link to this definition"></a></dt>
+<dd><p>It was proven that there is no checkmate.</p>
 </dd></dl>
 
 </dd></dl>
@@ -1941,7 +2174,7 @@ points is a draw. Under the 27-point rule, the winning threshold is
 <span id="cshogi-csa-module"></span><h2>cshogi.CSA module<a class="headerlink" href="#module-cshogi.CSA" title="Link to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="cshogi.CSA.Exporter">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">cshogi.CSA.</span></span><span class="sig-name descname"><span class="pre">Exporter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/CSA.html#Exporter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.CSA.Exporter" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">cshogi.CSA.</span></span><span class="sig-name descname"><span class="pre">Exporter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/CSA.html#Exporter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.CSA.Exporter" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A class to handle the exporting of a game to CSA format.</p>
 <dl class="field-list simple">
@@ -2772,24 +3005,537 @@ points is a draw. Under the 27-point rule, the winning threshold is
 </section>
 <section id="module-cshogi.cli">
 <span id="cshogi-cli-module"></span><h2>cshogi.cli module<a class="headerlink" href="#module-cshogi.cli" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="cshogi.cli.Ending">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">Ending</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#Ending"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.Ending" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.Ending.DECLARATION">
+<span class="sig-name descname"><span class="pre">DECLARATION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('%KACHI',</span> <span class="pre">'入玉宣言')</span></span><a class="headerlink" href="#cshogi.cli.Ending.DECLARATION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.Ending.ILLEGAL">
+<span class="sig-name descname"><span class="pre">ILLEGAL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('%ILLEGAL_MOVE',</span> <span class="pre">'{}の反則負け')</span></span><a class="headerlink" href="#cshogi.cli.Ending.ILLEGAL" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.Ending.LOSS">
+<span class="sig-name descname"><span class="pre">LOSS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('%TORYO',</span> <span class="pre">'{}の勝ち')</span></span><a class="headerlink" href="#cshogi.cli.Ending.LOSS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.Ending.MOVE_LIMIT">
+<span class="sig-name descname"><span class="pre">MOVE_LIMIT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('%JISHOGI',</span> <span class="pre">'持将棋')</span></span><a class="headerlink" href="#cshogi.cli.Ending.MOVE_LIMIT" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.Ending.REPETITION_DRAW">
+<span class="sig-name descname"><span class="pre">REPETITION_DRAW</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('%SENNICHITE',</span> <span class="pre">'千日手')</span></span><a class="headerlink" href="#cshogi.cli.Ending.REPETITION_DRAW" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.Ending.REPETITION_LOSS">
+<span class="sig-name descname"><span class="pre">REPETITION_LOSS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(None,</span> <span class="pre">'{}の反則負け')</span></span><a class="headerlink" href="#cshogi.cli.Ending.REPETITION_LOSS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.Ending.REPETITION_WIN">
+<span class="sig-name descname"><span class="pre">REPETITION_WIN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(None,</span> <span class="pre">'{}の反則勝ち')</span></span><a class="headerlink" href="#cshogi.cli.Ending.REPETITION_WIN" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.Ending.TIME">
+<span class="sig-name descname"><span class="pre">TIME</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('%TIME_UP',</span> <span class="pre">'{}の切れ負け')</span></span><a class="headerlink" href="#cshogi.cli.Ending.TIME" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.cli.Ending.outcome">
+<span class="sig-name descname"><span class="pre">outcome</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">turn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ply</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#Ending.outcome"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.Ending.outcome" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cshogi.cli.EngineConfig">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">EngineConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">command</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">byoyomi</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#EngineConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.EngineConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>command</strong> (<em>str</em>)</p></li>
+<li><p><strong>name</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>options</strong> (<em>dict</em>)</p></li>
+<li><p><strong>byoyomi</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>time</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>inc</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.EngineConfig.byoyomi">
+<span class="sig-name descname"><span class="pre">byoyomi</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#cshogi.cli.EngineConfig.byoyomi" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.EngineConfig.command">
+<span class="sig-name descname"><span class="pre">command</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#cshogi.cli.EngineConfig.command" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.EngineConfig.inc">
+<span class="sig-name descname"><span class="pre">inc</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#cshogi.cli.EngineConfig.inc" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.EngineConfig.name">
+<span class="sig-name descname"><span class="pre">name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#cshogi.cli.EngineConfig.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.EngineConfig.options">
+<span class="sig-name descname"><span class="pre">options</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></span><a class="headerlink" href="#cshogi.cli.EngineConfig.options" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.EngineConfig.time">
+<span class="sig-name descname"><span class="pre">time</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#cshogi.cli.EngineConfig.time" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cshogi.cli.GameConfig">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">GameConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resign</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mate_win</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">draw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ponder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opening_moves</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_process</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">display</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#GameConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.GameConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>resign</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>mate_win</strong> (<em>bool</em>)</p></li>
+<li><p><strong>draw</strong> (<em>int</em>)</p></li>
+<li><p><strong>ponder</strong> (<em>bool</em>)</p></li>
+<li><p><strong>opening_moves</strong> (<em>int</em>)</p></li>
+<li><p><strong>keep_process</strong> (<em>bool</em>)</p></li>
+<li><p><strong>display</strong> (<em>bool</em>)</p></li>
+<li><p><strong>debug</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.GameConfig.debug">
+<span class="sig-name descname"><span class="pre">debug</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#cshogi.cli.GameConfig.debug" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.GameConfig.display">
+<span class="sig-name descname"><span class="pre">display</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#cshogi.cli.GameConfig.display" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.GameConfig.draw">
+<span class="sig-name descname"><span class="pre">draw</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#cshogi.cli.GameConfig.draw" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.GameConfig.keep_process">
+<span class="sig-name descname"><span class="pre">keep_process</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#cshogi.cli.GameConfig.keep_process" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.GameConfig.mate_win">
+<span class="sig-name descname"><span class="pre">mate_win</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#cshogi.cli.GameConfig.mate_win" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.GameConfig.opening_moves">
+<span class="sig-name descname"><span class="pre">opening_moves</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#cshogi.cli.GameConfig.opening_moves" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.GameConfig.ponder">
+<span class="sig-name descname"><span class="pre">ponder</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#cshogi.cli.GameConfig.ponder" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.GameConfig.resign">
+<span class="sig-name descname"><span class="pre">resign</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#cshogi.cli.GameConfig.resign" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cshogi.cli.GameResult">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">GameResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cshogi.cli.GameSpec" title="cshogi.cli.GameSpec"><span class="pre">cshogi.cli.GameSpec</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">winner</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csa_code</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">moves</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#GameResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.GameResult" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spec</strong> (<a class="reference internal" href="#cshogi.cli.GameSpec" title="cshogi.cli.GameSpec"><em>GameSpec</em></a>)</p></li>
+<li><p><strong>names</strong> (<em>tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>winner</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>csa_code</strong> (<em>str</em>)</p></li>
+<li><p><strong>message</strong> (<em>str</em>)</p></li>
+<li><p><strong>moves</strong> (<em>tuple</em><em>[</em><em>int</em><em>, </em><em>...</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.GameResult.csa_code">
+<span class="sig-name descname"><span class="pre">csa_code</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#cshogi.cli.GameResult.csa_code" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.GameResult.message">
+<span class="sig-name descname"><span class="pre">message</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#cshogi.cli.GameResult.message" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.GameResult.moves">
+<span class="sig-name descname"><span class="pre">moves</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#cshogi.cli.GameResult.moves" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.GameResult.names">
+<span class="sig-name descname"><span class="pre">names</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#cshogi.cli.GameResult.names" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.GameResult.spec">
+<span class="sig-name descname"><span class="pre">spec</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#cshogi.cli.GameSpec" title="cshogi.cli.GameSpec"><span class="pre">GameSpec</span></a></span><a class="headerlink" href="#cshogi.cli.GameResult.spec" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.GameResult.winner">
+<span class="sig-name descname"><span class="pre">winner</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#cshogi.cli.GameResult.winner" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cshogi.cli.GameSpec">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">GameSpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opening</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">black_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">white_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#GameSpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.GameSpec" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>index</strong> (<em>int</em>)</p></li>
+<li><p><strong>round</strong> (<em>int</em>)</p></li>
+<li><p><strong>opening</strong> (<em>tuple</em><em>[</em><em>str</em><em>, </em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>black_id</strong> (<em>int</em>)</p></li>
+<li><p><strong>white_id</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.GameSpec.black_id">
+<span class="sig-name descname"><span class="pre">black_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#cshogi.cli.GameSpec.black_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.GameSpec.index">
+<span class="sig-name descname"><span class="pre">index</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#cshogi.cli.GameSpec.index" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.GameSpec.opening">
+<span class="sig-name descname"><span class="pre">opening</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#cshogi.cli.GameSpec.opening" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.GameSpec.round">
+<span class="sig-name descname"><span class="pre">round</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#cshogi.cli.GameSpec.round" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.GameSpec.white_id">
+<span class="sig-name descname"><span class="pre">white_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#cshogi.cli.GameSpec.white_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cshogi.cli.LeagueTable">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">LeagueTable</span></span><a class="reference internal" href="_modules/cshogi/cli.html#LeagueTable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.LeagueTable" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Publish standings in stage order once all games in a stage are recorded.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.LeagueTable.games_per_stage">
+<span class="sig-name descname"><span class="pre">games_per_stage</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">6</span></span><a class="headerlink" href="#cshogi.cli.LeagueTable.games_per_stage" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.cli.LeagueTable.publish_ready">
+<span class="sig-name descname"><span class="pre">publish_ready</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">games</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sprt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#LeagueTable.publish_ready"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.LeagueTable.publish_ready" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.cli.LeagueTable.record">
+<span class="sig-name descname"><span class="pre">record</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">result</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#LeagueTable.record"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.LeagueTable.record" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cshogi.cli.Listener">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">Listener</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#Listener"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.Listener" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cshogi.cli.Match">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">Match</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">records</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">games</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_summary</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sprt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#Match"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.Match" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.cli.Match.fail">
+<span class="sig-name descname"><span class="pre">fail</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exc</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#Match.fail"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.Match.fail" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.cli.Match.log">
+<span class="sig-name descname"><span class="pre">log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#Match.log"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.Match.log" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.cli.Match.publish_standings">
+<span class="sig-name descname"><span class="pre">publish_standings</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#Match.publish_standings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.Match.publish_standings" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.cli.Match.queued_debug_log">
+<span class="sig-name descname"><span class="pre">queued_debug_log</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#Match.queued_debug_log"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.Match.queued_debug_log" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.cli.Match.report">
+<span class="sig-name descname"><span class="pre">report</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">result</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csa_record</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#Match.report"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.Match.report" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.cli.Match.snapshot">
+<span class="sig-name descname"><span class="pre">snapshot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pair</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#Match.snapshot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.Match.snapshot" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.cli.Match.take_pairs">
+<span class="sig-name descname"><span class="pre">take_pairs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">schedule</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#Match.take_pairs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.Match.take_pairs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.cli.Match.try_start">
+<span class="sig-name descname"><span class="pre">try_start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#Match.try_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.Match.try_start" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cshogi.cli.MatchSprt">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">MatchSprt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">elo0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elo1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engines</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#MatchSprt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.MatchSprt" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Feed completed pairs into the test in schedule order, from engine A’s side.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.cli.MatchSprt.print_status">
+<span class="sig-name descname"><span class="pre">print_status</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">names</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">decision</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#MatchSprt.print_status"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.MatchSprt.print_status" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.cli.MatchSprt.record">
+<span class="sig-name descname"><span class="pre">record</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">result</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pair_index</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#MatchSprt.record"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.MatchSprt.record" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.cli.MatchSprt.snapshot">
+<span class="sig-name descname"><span class="pre">snapshot</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#MatchSprt.snapshot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.MatchSprt.snapshot" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cshogi.cli.MatchStats">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">MatchStats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">1)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#MatchStats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.MatchStats" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.cli.MatchStats.add">
+<span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">winner</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#MatchStats.add"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.MatchStats.add" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.cli.MatchStats.snapshot">
+<span class="sig-name descname"><span class="pre">snapshot</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#MatchStats.snapshot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.MatchStats.snapshot" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.cli.MatchStats.summary">
+<span class="sig-name descname"><span class="pre">summary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stats</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">games</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#MatchStats.summary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.MatchStats.summary" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cshogi.cli.Player">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">Player</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cshogi.cli.EngineConfig" title="cshogi.cli.EngineConfig"><span class="pre">cshogi.cli.EngineConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="cshogi.usi.html#cshogi.usi.Engine" title="cshogi.usi.Engine.Engine"><span class="pre">cshogi.usi.Engine.Engine</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">listener</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cshogi.cli.Listener" title="cshogi.cli.Listener"><span class="pre">cshogi.cli.Listener</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#Player"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.Player" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> (<a class="reference internal" href="#cshogi.cli.EngineConfig" title="cshogi.cli.EngineConfig"><em>EngineConfig</em></a>)</p></li>
+<li><p><strong>engine</strong> (<a class="reference internal" href="cshogi.usi.html#cshogi.usi.Engine" title="cshogi.usi.Engine.Engine"><em>Engine</em></a>)</p></li>
+<li><p><strong>listener</strong> (<a class="reference internal" href="#cshogi.cli.Listener" title="cshogi.cli.Listener"><em>Listener</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.Player.config">
+<span class="sig-name descname"><span class="pre">config</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#cshogi.cli.EngineConfig" title="cshogi.cli.EngineConfig"><span class="pre">EngineConfig</span></a></span><a class="headerlink" href="#cshogi.cli.Player.config" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.Player.engine">
+<span class="sig-name descname"><span class="pre">engine</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="cshogi.usi.html#cshogi.usi.Engine" title="cshogi.usi.Engine.Engine"><span class="pre">Engine</span></a></span><a class="headerlink" href="#cshogi.cli.Player.engine" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.Player.listener">
+<span class="sig-name descname"><span class="pre">listener</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#cshogi.cli.Listener" title="cshogi.cli.Listener"><span class="pre">Listener</span></a></span><a class="headerlink" href="#cshogi.cli.Player.listener" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cshogi.cli.ProcessGroup">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">ProcessGroup</span></span><a class="reference internal" href="_modules/cshogi/cli.html#ProcessGroup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.ProcessGroup" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.cli.ProcessGroup.close">
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#ProcessGroup.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.ProcessGroup.close" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.cli.ProcessGroup.connect">
+<span class="sig-name descname"><span class="pre">connect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">engine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">listener</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#ProcessGroup.connect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.ProcessGroup.connect" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.cli.ProcessGroup.discard">
+<span class="sig-name descname"><span class="pre">discard</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">engine</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#ProcessGroup.discard"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.ProcessGroup.discard" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cshogi.cli.Records">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">Records</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stack</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multi_csa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pgn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_pgn_moves</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parallel</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#Records"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.Records" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.cli.Records.finish">
+<span class="sig-name descname"><span class="pre">finish</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">result</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csa_record</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#Records.finish"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.Records.finish" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.cli.Records.start">
+<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stack</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">board</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#Records.start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.Records.start" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cshogi.cli.SprtConfig">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">SprtConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">elo0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elo1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engines</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#SprtConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.SprtConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Logistic Elo hypotheses for engine A against B (one-based engine numbers).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>elo0</strong> (<em>float</em>)</p></li>
+<li><p><strong>elo1</strong> (<em>float</em>)</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>)</p></li>
+<li><p><strong>beta</strong> (<em>float</em>)</p></li>
+<li><p><strong>engines</strong> (<em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>] </em><em>| </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.SprtConfig.alpha">
+<span class="sig-name descname"><span class="pre">alpha</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#cshogi.cli.SprtConfig.alpha" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.SprtConfig.beta">
+<span class="sig-name descname"><span class="pre">beta</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#cshogi.cli.SprtConfig.beta" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.SprtConfig.elo0">
+<span class="sig-name descname"><span class="pre">elo0</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#cshogi.cli.SprtConfig.elo0" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.SprtConfig.elo1">
+<span class="sig-name descname"><span class="pre">elo1</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#cshogi.cli.SprtConfig.elo1" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cshogi.cli.SprtConfig.engines">
+<span class="sig-name descname"><span class="pre">engines</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#cshogi.cli.SprtConfig.engines" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cshogi.cli.Worker">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">Worker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">match</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">executor</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#Worker"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.Worker" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.cli.Worker.play_game">
+<span class="sig-name descname"><span class="pre">play_game</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stack</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#Worker.play_game"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.Worker.play_game" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.cli.Worker.play_pairs">
+<span class="sig-name descname"><span class="pre">play_pairs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pairs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#Worker.play_pairs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.Worker.play_pairs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cshogi.cli.league">
+<span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">league</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">engine1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options3</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">games</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resign</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mate_win</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">byoyomi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">draw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ponder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_swap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opening</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opening_moves</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">24</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opening_seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opening_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multi_csa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pgn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_pgn_moves</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_display</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">concurrency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">worker_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sprt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#league"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.league" title="Link to this definition"></a></dt>
+<dd><p>Play two games per pairing and opening. Return standings in AB, AC, BC order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>engine1</strong> (<em>str</em>)</p></li>
+<li><p><strong>engine2</strong> (<em>str</em>)</p></li>
+<li><p><strong>engine3</strong> (<em>str</em>)</p></li>
+<li><p><strong>sprt</strong> (<a class="reference internal" href="#cshogi.cli.SprtConfig" title="cshogi.cli.SprtConfig"><em>SprtConfig</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cshogi.cli.load_openings">
+<span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">load_openings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opening</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#load_openings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.load_openings" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.cli.main">
-<span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">engine1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">games</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resign</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mate_win</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">byoyomi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">draw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ponder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_swap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opening</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opening_moves</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">24</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opening_seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opening_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multi_csa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pgn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_pgn_moves</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_display</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_summary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.main" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">engine1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">games</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resign</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mate_win</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">byoyomi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">draw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ponder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_swap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opening</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opening_moves</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">24</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opening_seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opening_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multi_csa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pgn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_pgn_moves</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_display</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_summary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">concurrency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">worker_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sprt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.main" title="Link to this definition"></a></dt>
 <dd><p>Executes a series of games between two USI engines.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>engine1</strong> (<em>str</em>) – Path to the first USI engine.</p></li>
 <li><p><strong>engine2</strong> (<em>str</em>) – Path to the second USI engine.</p></li>
-<li><p><strong>options1</strong> (<em>Dict</em>) – Optional engine options for engine1.</p></li>
-<li><p><strong>options2</strong> (<em>Dict</em>) – Optional engine options for engine2.</p></li>
-<li><p><strong>names</strong> (<em>List</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional names for the engines.</p></li>
-<li><p><strong>games</strong> (<em>int</em>) – Number of games to play.</p></li>
+<li><p><strong>options1</strong> (<em>dict</em><em> | </em><em>None</em>) – Optional engine options for engine1.</p></li>
+<li><p><strong>options2</strong> (<em>dict</em><em> | </em><em>None</em>) – Optional engine options for engine2.</p></li>
+<li><p><strong>names</strong> (<em>list</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional list with one display name per engine.</p></li>
+<li><p><strong>games</strong> (<em>int</em>) – Non-negative number of games to play.</p></li>
 <li><p><strong>resign</strong> (<em>int</em><em> | </em><em>None</em>) – Resignation threshold. If a score falls below the negative of this value, the engine resigns.</p></li>
 <li><p><strong>mate_win</strong> (<em>bool</em>) – Whether a checkmate is considered a win.</p></li>
-<li><p><strong>byoyomi</strong> (<em>int</em><em> | </em><em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Byoyomi time in milliseconds. It can be different for each engine.</p></li>
-<li><p><strong>time</strong> (<em>int</em><em> | </em><em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Time control in milliseconds. It can be different for each engine.</p></li>
-<li><p><strong>inc</strong> (<em>int</em><em> | </em><em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Increment time in milliseconds per move. It can be different for each engine.</p></li>
+<li><p><strong>byoyomi</strong> (<em>int</em><em> | </em><em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Byoyomi time in milliseconds. It can be different for each engine.</p></li>
+<li><p><strong>time</strong> (<em>int</em><em> | </em><em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Time control in milliseconds. It can be different for each engine.</p></li>
+<li><p><strong>inc</strong> (<em>int</em><em> | </em><em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Increment time in milliseconds per move. It can be different for each engine.</p></li>
 <li><p><strong>draw</strong> (<em>int</em>) – Number of moves before a draw is declared.</p></li>
 <li><p><strong>ponder</strong> (<em>bool</em>) – Whether to use pondering.</p></li>
 <li><p><strong>no_swap</strong> (<em>bool</em>) – Whether to disable engine swapping.</p></li>
@@ -2806,16 +3552,34 @@ points is a draw. Under the 27-point rule, the winning threshold is
 <li><p><strong>debug</strong> (<em>bool</em>) – Whether to enable debugging mode.</p></li>
 <li><p><strong>print_summary</strong> (<em>bool</em>) – Whether to print the summary after the match.</p></li>
 <li><p><strong>callback</strong> (<em>Callable</em><em> | </em><em>None</em>) – Optional callback function executed after each game.</p></li>
+<li><p><strong>concurrency</strong> (<em>int</em>) – Number of workers playing independently.</p></li>
+<li><p><strong>worker_options</strong> (<em>list</em><em>[</em><em>list</em><em>[</em><em>dict</em><em>] </em><em>| </em><em>None</em><em>] </em><em>| </em><em>None</em>) – One entry per engine, either None or one option dictionary per worker.</p></li>
+<li><p><strong>sprt</strong> (<a class="reference internal" href="#cshogi.cli.SprtConfig" title="cshogi.cli.SprtConfig"><em>SprtConfig</em></a><em> | </em><em>None</em>) – Optional sequential test on color-swapped pairs. Requires an even game limit.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Dictionary containing game results and statistics.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Dict</em></p>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cshogi.cli.rate">
+<span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">rate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wins</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">losses</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">draws</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#rate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.rate" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cshogi.cli.run_workers">
+<span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">run_workers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pairs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">match</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#run_workers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.run_workers" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cshogi.cli.schedule">
+<span class="sig-prename descclassname"><span class="pre">cshogi.cli.</span></span><span class="sig-name descname"><span class="pre">schedule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">games</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">openings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_swap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">league</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/cli.html#schedule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.cli.schedule" title="Link to this definition"></a></dt>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.cli.to_score">
@@ -2921,6 +3685,74 @@ points is a draw. Under the 27-point rule, the winning threshold is
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="cshogi.elo.SPRT">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">cshogi.elo.</span></span><span class="sig-name descname"><span class="pre">SPRT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">elo0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elo1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/elo.html#SPRT"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.elo.SPRT" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Pentanomial SPRT with logistic Elo hypotheses and fixed Wald bounds.</p>
+<p>A sample is the tested engine’s average score over a color-swapped pair.
+The first decision freezes the LLR and the observed counts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>elo0</strong> (<em>float</em>)</p></li>
+<li><p><strong>elo1</strong> (<em>float</em>)</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>)</p></li>
+<li><p><strong>beta</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.elo.SPRT.add_pair">
+<span class="sig-name descname"><span class="pre">add_pair</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/elo.html#SPRT.add_pair"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.elo.SPRT.add_pair" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>score</strong> (<em>float</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.elo.SPRT.bounds">
+<span class="sig-name descname"><span class="pre">bounds</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/elo.html#SPRT.bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.elo.SPRT.bounds" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[float, float]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cshogi.elo.SPRT.counts">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">counts</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#cshogi.elo.SPRT.counts" title="Link to this definition"></a></dt>
+<dd><p>Observed pair counts in ascending score order, without pseudocounts.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.elo.SPRT.llr">
+<span class="sig-name descname"><span class="pre">llr</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/elo.html#SPRT.llr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.elo.SPRT.llr" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cshogi.elo.SPRT.status">
+<span class="sig-name descname"><span class="pre">status</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/elo.html#SPRT.status"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.elo.SPRT.status" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="cshogi.elo.elo_diff">
 <span class="sig-prename descclassname"><span class="pre">cshogi.elo.</span></span><span class="sig-name descname"><span class="pre">elo_diff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cshogi/elo.html#elo_diff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cshogi.elo.elo_diff" title="Link to this definition"></a></dt>
@@ -2972,6 +3804,7 @@ points is a draw. Under the 27-point rule, the winning threshold is
 <li class="toctree-l4"><a class="reference internal" href="cshogi.usi.html#cshogi.usi.Engine.go"><code class="docutils literal notranslate"><span class="pre">Engine.go()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cshogi.usi.html#cshogi.usi.Engine.go_mate"><code class="docutils literal notranslate"><span class="pre">Engine.go_mate()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cshogi.usi.html#cshogi.usi.Engine.isready"><code class="docutils literal notranslate"><span class="pre">Engine.isready()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cshogi.usi.html#cshogi.usi.Engine.kill"><code class="docutils literal notranslate"><span class="pre">Engine.kill()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cshogi.usi.html#cshogi.usi.Engine.ponderhit"><code class="docutils literal notranslate"><span class="pre">Engine.ponderhit()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cshogi.usi.html#cshogi.usi.Engine.position"><code class="docutils literal notranslate"><span class="pre">Engine.position()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cshogi.usi.html#cshogi.usi.Engine.quit"><code class="docutils literal notranslate"><span class="pre">Engine.quit()</span></code></a></li>

@@ -154,3 +154,81 @@ Features
       >>> from cshogi import cli
       
       >>> cli.main('/content/LesserkaiSrc/Lesserkai/Lesserkai', '/content/LesserkaiSrc/Lesserkai/Lesserkai')
+
+  Use ``-c`` or ``--concurrency`` to play several pairs at once. Each worker plays the
+  two colors of an opening on the same hardware. Worker options override the
+  named engine's common options in command-line order. Supply one quoted
+  option string per worker for each engine that needs overrides.
+
+  .. code-block:: bash
+
+      python -m cshogi.cli yane dlshogi dlshogi --games 20 -c 2 \
+        --name2 base --name3 new --keep-process --pgn league.pgn \
+        --options2 "DNN_Model:base.onnx,UCT_Threads:3" \
+        --options3 "DNN_Model:new.onnx,UCT_Threads:3" \
+        --worker-options2 "UCT_Threads:2" "UCT_Threads:0,UCT_Threads2:2" \
+        --worker-options3 "UCT_Threads:2" "UCT_Threads:0,UCT_Threads2:2"
+
+  Here ``[worker1]`` uses GPU 0 and ``[worker2]`` uses GPU 1. Budget CPU threads
+  across workers, including both engines when pondering. For dlshogi builds
+  with a TensorRT cache, initialize each model/GPU/batch-size combination
+  once before starting workers that share the same cache file.
+
+  In a Unix shell launcher, use ``exec`` to start the engine so Ctrl+C can terminate it directly.
+
+  Head-to-head PGN records are appended in completion order. Their Round
+  tags retain the scheduled game numbers. A three-engine league plays two
+  games per pairing per opening, rounding an odd game count up for each
+  pairing. Its Round tags are 1 and 2 in every mini-match.
+
+  The Python API accepts the same overrides, for example
+  ``cli.main(a, b, concurrency=2, worker_options=[None, [{'Threads': 2}, {'Threads': 4}]])``.
+  A falsy callback result stops new games. Games already started finish
+  and contribute to the records and final totals. Parallel callbacks run
+  serially on the reporting workers. Board display requires concurrency 1.
+  Parallel debug output is queued so that a worker can keep reading engine
+  responses while another worker prints standings or runs a callback.
+  A debug label such as ``[worker1] g3 2`` identifies worker 1, scheduled game 3,
+  and the second engine on the command line.
+
+* Stopping a match with SPRT
+
+  Use ``--sprt ELO0 ELO1`` to compare two hypotheses about the tested engine's
+  logistic Elo difference against its opponent. For example, this tests equal
+  strength (H0) against a five-point improvement (H1), up to 40,000 games.
+
+  .. code-block:: bash
+
+      python -m cshogi.cli new base --sprt 0 5 --games 40000 -c 4 \
+        --opening openings.sfen --pgn match.pgn
+
+  Each observation is the tested engine's average score over two games from
+  the same opening with colors reversed. Supply an even game limit and leave
+  color swapping enabled. Use a large opening book. When a book repeats,
+  deterministic engines playing under identical conditions can repeat the
+  same pair of games without providing an independent observation.
+
+  The log-likelihood ratio (LLR) is updated in scheduled pair order. Crossing
+  the lower bound accepts H0 and crossing the upper bound accepts H1. The
+  type I and II error parameters, ``--sprt-alpha`` and ``--sprt-beta``, both
+  default to 0.05. Reaching the game limit can leave the test undecided.
+  After a decision, games already in progress finish and count toward the
+  match totals and records. The reported SPRT counts and LLR stay fixed.
+
+  In a three-engine league, specify the tested engine first and its opponent
+  second. Here the test compares engine 3 against engine 2, and the limit
+  applies to each pairing. A decision can stop the league before the first
+  standings table, which requires all six games of a stage.
+
+  .. code-block:: bash
+
+      python -m cshogi.cli yane base new --sprt 0 5 --sprt-engines 3 2 \
+        --games 20000 -c 4 --opening openings.sfen --pgn league.pgn
+
+  In Python, pass ``sprt=cli.SprtConfig(0, 5)`` to ``cli.main()`` or
+  ``sprt=cli.SprtConfig(0, 5, engines=(3, 2))`` to ``cli.league()``.
+  The selected pairing's result dictionary includes a ``sprt`` entry with
+  ``engines``, ``result`` (``'H0'``, ``'H1'``, or ``None``), ``llr``, ``lower``,
+  ``upper``, ``pairs``, and ``pentanomial`` (counts in ascending score order).
+  Head-to-head callbacks receive the same fields. Use ``print_summary=False``
+  to suppress head-to-head SPRT output while retaining the result.
